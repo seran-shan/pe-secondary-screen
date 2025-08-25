@@ -1,0 +1,34 @@
+import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+import { auth } from '@/server/auth';
+import { SignInForm } from './sign-in-form';
+
+// Get GitHub stars for the UI
+async function getGitHubStars() {
+  try {
+    const response = await fetch('https://api.github.com/repos/seranshanmugathas/pe-secondary-screen');
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return data.stargazers_count || 0;
+  } catch {
+    return 0;
+  }
+}
+
+export default async function SignInPage() {
+  // Redirect if already signed in
+  const session = await auth();
+  if (session?.user) {
+    redirect('/dashboard');
+  }
+
+  const stars = await getGitHubStars();
+
+  return (
+    <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-1 lg:px-0">
+      <Suspense fallback={<div>Loading...</div>}>
+        <SignInForm stars={stars} />
+      </Suspense>
+    </div>
+  );
+}
