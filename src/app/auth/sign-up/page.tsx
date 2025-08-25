@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 };
 
 // Get GitHub stars for the UI
-async function getGitHubStars() {
+async function getGitHubStars(): Promise<number> {
   try {
     const response = await fetch('https://api.github.com/repos/seranshanmugathas/pe-secondary-screen');
     if (!response.ok) return 0;
-    const data = await response.json();
-    return data.stargazers_count || 0;
+    const data = await response.json() as { stargazers_count?: number };
+    return data.stargazers_count ?? 0;
   } catch {
     return 0;
   }

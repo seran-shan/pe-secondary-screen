@@ -25,7 +25,7 @@ export const getSortingStateParser = <TData>(
   return createParser({
     parse: (value) => {
       try {
-        const parsed = JSON.parse(value);
+        const parsed = JSON.parse(value) as unknown;
         const result = z.array(sortingItemSchema).safeParse(parsed);
 
         if (!result.success) return null;
@@ -71,7 +71,7 @@ export const getFiltersStateParser = <TData>(
   return createParser({
     parse: (value) => {
       try {
-        const parsed = JSON.parse(value);
+        const parsed = JSON.parse(value) as unknown;
         const result = z.array(filterItemSchema).safeParse(parsed);
 
         if (!result.success) return null;
