@@ -9,7 +9,8 @@ import {
 } from 'kbar';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-// TODO: Add missing render-result and use-theme-switching components
+import RenderResults from './render-result';
+import useThemeSwitching from './use-theme-switching';
 
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -71,7 +72,7 @@ const KBarComponent = ({ children }: { children: React.ReactNode }) => {
               <KBarSearch className='bg-card w-full border-none px-6 py-4 text-lg outline-hidden focus:ring-0 focus:ring-offset-0 focus:outline-hidden' />
             </div>
             <div className='max-h-[400px]'>
-              {/* <RenderResults /> - TODO: Add missing component */}
+              <RenderResults />
             </div>
           </KBarAnimator>
         </KBarPositioner>
