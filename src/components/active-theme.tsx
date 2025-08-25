@@ -32,7 +32,7 @@ export function ActiveThemeProvider({
   initialTheme?: string;
 }) {
   const [activeTheme, setActiveTheme] = useState<string>(
-    () => initialTheme || DEFAULT_THEME
+    () => initialTheme ?? DEFAULT_THEME
   );
 
   useEffect(() => {

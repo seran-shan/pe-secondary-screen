@@ -107,7 +107,7 @@ export function SignInForm({ stars }: SignInFormProps) {
               
               <div className="text-center">
                 <span className="text-sm text-muted-foreground">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                 </span>
                 <Link
                   href="/auth/sign-up"
