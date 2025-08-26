@@ -1,11 +1,13 @@
 'use client';
 import { navItems } from '@/constants/data';
+import { api } from '@/trpc/react';
 import {
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
   KBarProvider,
-  KBarSearch
+  KBarSearch,
+  useRegisterActions,
 } from 'kbar';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
@@ -14,15 +16,16 @@ import useThemeSwitching from './use-theme-switching';
 
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const sponsors = api.sponsor.listNames.useQuery(undefined, { staleTime: 60_000 });
 
   // These action are for the navigation
-  const actions = useMemo(() => {
+  const baseNavActions = useMemo(() => {
     // Define navigateTo inside the useMemo callback to avoid dependency array issues
     const navigateTo = (url: string) => {
       router.push(url);
     };
 
-    return navItems.flatMap((navItem) => {
+    const baseNav = navItems.flatMap((navItem) => {
       // Only include base action if the navItem has a real URL and is not just a container
       const baseAction =
         navItem.url !== '#'
@@ -52,16 +55,30 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       // Return only valid actions (ignoring null base actions for containers)
       return baseAction ? [baseAction, ...childActions] : childActions;
     });
+
+    return baseNav;
   }, [router]);
 
+  const sponsorActions = useMemo(() => {
+    return (sponsors.data ?? []).map((s) => ({
+      id: `sponsor-${s.name.toLowerCase()}`,
+      name: s.name,
+      keywords: `sponsor ${s.name}`.toLowerCase(),
+      section: 'Sponsors',
+      subtitle: 'Open sponsor profile',
+      perform: () => router.push(`/sponsors?name=${encodeURIComponent(s.name)}`),
+    }));
+  }, [router, sponsors.data]);
+
   return (
-    <KBarProvider actions={actions}>
-      <KBarComponent>{children}</KBarComponent>
+    <KBarProvider actions={baseNavActions}>
+      <KBarComponent dynamicActions={sponsorActions}>{children}</KBarComponent>
     </KBarProvider>
   );
 }
-const KBarComponent = ({ children }: { children: React.ReactNode }) => {
+const KBarComponent = ({ children, dynamicActions }: { children: React.ReactNode; dynamicActions: any[] }) => {
   useThemeSwitching();
+  useRegisterActions(dynamicActions, [dynamicActions]);
 
   return (
     <>

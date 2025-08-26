@@ -47,15 +47,15 @@ import * as React from 'react';
 import { Icons } from '@/components/icons';
 import { OrgSwitcher } from '@/components/org-switcher';
 export const company = {
-  name: 'Acme Inc',
+  name: 'FSN Labs',
   logo: IconPhotoUp,
   plan: 'Enterprise'
 };
 
 const tenants = [
-  { id: '1', name: 'Acme Inc' },
-  { id: '2', name: 'Beta Corp' },
-  { id: '3', name: 'Gamma Ltd' }
+  { id: '1', name: 'FSN Labs' },
+  { id: '2', name: 'FSN Labs' },
+  { id: '3', name: 'FSN Labs' }
 ];
 
 export default function AppSidebar() {

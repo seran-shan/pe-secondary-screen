@@ -14,20 +14,68 @@ export type Product = {
 //Info: The following data is used for the sidebar navigation and Cmd K bar.
 export const navItems: NavItem[] = [
   {
-    title: 'Product',
-    url: '/dashboard/product',
-    icon: 'product',
-    shortcut: ['p', 'p'],
+    title: 'Run scan',
+    url: '/run',
+    icon: 'analytics',
+    shortcut: ['r', 'r'],
     isActive: false,
-    items: [] // No child items
+    items: []
   },
   {
-    title: 'Analytics',
-    url: '/dashboard/analytics',
-    icon: 'analytics',
+    title: 'Pipeline',
+    url: '/pipeline',
+    icon: 'kanban',
+    shortcut: ['p', 'p'],
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'Companies',
+    url: '/companies',
+    icon: 'user',
+    shortcut: ['c', 'c'],
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'Sponsors',
+    url: '/sponsors',
+    icon: 'billing',
+    shortcut: ['s', 's'],
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'Watchlist',
+    url: '/watchlist',
+    icon: 'post',
+    shortcut: ['w', 'w'],
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'Alerts',
+    url: '/alerts',
+    icon: 'warning',
     shortcut: ['a', 'a'],
     isActive: false,
-    items: [] // No child items
+    items: []
+  },
+  {
+    title: 'History',
+    url: '/history',
+    icon: 'dashboard',
+    shortcut: ['h', 'h'],
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'Settings',
+    url: '/settings',
+    icon: 'settings',
+    shortcut: ['g', 'g'],
+    isActive: false,
+    items: []
   }
 ];
 
