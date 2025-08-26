@@ -54,25 +54,6 @@ export function SignInForm({ stars }: SignInFormProps) {
       </div>
       <div className='flex h-full items-center justify-center p-4 lg:p-8'>
         <div className='flex w-full max-w-md flex-col items-center justify-center space-y-6'>
-          {/* github link  */}
-          <Link
-            className={cn('group inline-flex hover:text-yellow-200')}
-            target='_blank'
-            href={'https://github.com/kiranism/next-shadcn-dashboard-starter'}
-          >
-            <div className='flex items-center'>
-              <GitHubLogoIcon className='size-4' />
-              <span className='ml-1 inline'>Star on GitHub</span>{' '}
-            </div>
-            <div className='ml-2 flex items-center gap-1 text-sm md:flex'>
-              <IconStar
-                className='size-4 text-gray-500 transition-all duration-300 group-hover:text-yellow-300'
-                fill='currentColor'
-              />
-              <span className='font-display font-medium'>{stars}</span>
-            </div>
-          </Link>
-          
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
