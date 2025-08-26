@@ -4,9 +4,9 @@ import { auth } from "@/server/auth";
 export default async function Home() {
   const session = await auth();
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to Run scan
   if (session?.user) {
-    redirect('/dashboard');
+    redirect('/run');
   }
 
   // Redirect unauthenticated users to sign-in
