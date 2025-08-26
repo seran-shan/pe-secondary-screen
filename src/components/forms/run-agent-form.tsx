@@ -25,10 +25,13 @@ const FormSchema = z.object({
     .max(100, { message: "Sponsor name is too long." }),
 });
 
-export function RunAgentForm(props: { onCompleted: (result: RunResult) => void }) {
+export function RunAgentForm(props: {
+  onCompleted: (result: RunResult) => void;
+  defaultSponsor?: string;
+}) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { sponsorName: "" },
+    defaultValues: { sponsorName: props.defaultSponsor ?? "" },
   });
 
   const runMutation = api.agent.run.useMutation({
@@ -41,17 +44,22 @@ export function RunAgentForm(props: { onCompleted: (result: RunResult) => void }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full flex-col gap-3 md:flex-row md:items-end">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex w-full flex-col gap-3 md:flex-row md:items-end"
+      >
         <FormField
           control={form.control}
           name="sponsorName"
           render={({ field }) => (
-            <FormItem className="md:max-w-sm w-full">
+            <FormItem className="w-full md:max-w-sm">
               <FormLabel>Sponsor / GP name</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., EQT" {...field} />
               </FormControl>
-              <FormDescription>Type the private equity firm to screen.</FormDescription>
+              <FormDescription>
+                Type the private equity firm to screen.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -63,5 +71,3 @@ export function RunAgentForm(props: { onCompleted: (result: RunResult) => void }
     </Form>
   );
 }
-
-

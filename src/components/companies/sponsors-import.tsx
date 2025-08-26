@@ -59,10 +59,21 @@ export function SponsorsImport() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row">
-          <Input ref={inputRef} type="file" accept="application/json" onChange={handleFile} />
-          <Button variant="outline" onClick={() => inputRef.current?.click()}>Choose file</Button>
+          <Input
+            ref={inputRef}
+            type="file"
+            accept="application/json"
+            onChange={handleFile}
+          />
+          <Button variant="outline" onClick={() => inputRef.current?.click()}>
+            Choose file
+          </Button>
         </div>
-        {fileName && <div className="text-sm text-muted-foreground">Loaded: {fileName}</div>}
+        {fileName && (
+          <div className="text-muted-foreground text-sm">
+            Loaded: {fileName}
+          </div>
+        )}
 
         {summary.length > 0 && (
           <div className="overflow-hidden rounded-lg border">
@@ -82,7 +93,9 @@ export function SponsorsImport() {
                     <td className="px-3 py-2">
                       <div className="flex flex-wrap gap-1">
                         {s.sectors.map((sec) => (
-                          <Badge key={sec} variant="outline">{sec}</Badge>
+                          <Badge key={sec} variant="outline">
+                            {sec}
+                          </Badge>
                         ))}
                       </div>
                     </td>
@@ -96,6 +109,3 @@ export function SponsorsImport() {
     </Card>
   );
 }
-
-
-

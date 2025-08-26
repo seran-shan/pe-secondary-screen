@@ -6,9 +6,9 @@ export default async function Home() {
 
   // Redirect authenticated users to Run scan
   if (session?.user) {
-    redirect('/run');
+    redirect("/run");
   }
 
   // Redirect unauthenticated users to sign-in
-  redirect('/auth/sign-in');
+  redirect("/auth/sign-in");
 }

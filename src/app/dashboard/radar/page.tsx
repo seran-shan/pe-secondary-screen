@@ -7,7 +7,7 @@ import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 import { CompaniesTable } from "@/components/companies/companies-table";
 
 export const metadata = {
-  title: "Exit Radar"
+  title: "Exit Radar",
 };
 
 export default function SecondaryPage() {
@@ -15,7 +15,10 @@ export default function SecondaryPage() {
     <PageContainer scrollable={true}>
       <div className="flex flex-1 flex-col space-y-6">
         <div className="flex items-start justify-between">
-          <Heading title="Exit Radar" description="AI-assisted portfolio discovery and ingestion." />
+          <Heading
+            title="Exit Radar"
+            description="AI-assisted portfolio discovery and ingestion."
+          />
         </div>
         <Separator />
         <SectionCards />
@@ -28,5 +31,3 @@ export default function SecondaryPage() {
     </PageContainer>
   );
 }
-
-

@@ -9,10 +9,10 @@ const config = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'api.slingacademy.com',
-        port: '',
-        pathname: '/public/sample-products/**',
+        protocol: "https",
+        hostname: "api.slingacademy.com",
+        port: "",
+        pathname: "/public/sample-products/**",
       },
     ],
   },

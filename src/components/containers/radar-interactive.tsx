@@ -9,7 +9,7 @@ import { PipelineStepper } from "@/components/pipeline/pipeline-stepper";
 
 type RunResult = RouterOutputs["agent"]["run"];
 
-export function SecondaryInteractive() {
+export function SecondaryInteractive(props: { defaultSponsor?: string }) {
   const [result, setResult] = useState<RunResult | null>(null);
 
   return (
@@ -19,7 +19,10 @@ export function SecondaryInteractive() {
           <CardTitle>Run Exit Radar</CardTitle>
         </CardHeader>
         <CardContent>
-          <RunAgentForm onCompleted={setResult} />
+          <RunAgentForm
+            onCompleted={setResult}
+            defaultSponsor={props.defaultSponsor}
+          />
         </CardContent>
       </Card>
 
@@ -31,10 +34,15 @@ export function SecondaryInteractive() {
               <CardTitle>Portfolio Sources</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="list-disc pl-6 space-y-1">
+              <ul className="list-disc space-y-1 pl-6">
                 {result.portfolioUrls.map((u) => (
                   <li key={u}>
-                    <a className="text-blue-600 hover:underline" href={u} target="_blank" rel="noreferrer">
+                    <a
+                      className="text-blue-600 hover:underline"
+                      href={u}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       {u}
                     </a>
                   </li>
@@ -47,5 +55,3 @@ export function SecondaryInteractive() {
     </>
   );
 }
-
-

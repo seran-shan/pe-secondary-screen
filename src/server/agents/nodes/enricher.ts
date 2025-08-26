@@ -31,5 +31,3 @@ export async function enricherNode(state: typeof GraphState.State) {
   state.enriched = enriched;
   return state;
 }
-
-

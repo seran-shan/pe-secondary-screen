@@ -2,6 +2,9 @@ import { postRouter } from "@/server/api/routers/post";
 import { agentRouter } from "@/server/api/routers/agent";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { sponsorRouter } from "@/server/api/routers/sponsor";
+import { watchlistRouter } from "@/server/api/routers/watchlist";
+import { alertRouter } from "@/server/api/routers/alert";
+import { runRouter } from "@/server/api/routers/run";
 
 /**
  * This is the primary router for your server.
@@ -12,6 +15,9 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   agent: agentRouter,
   sponsor: sponsorRouter,
+  watchlist: watchlistRouter,
+  alert: alertRouter,
+  run: runRouter,
 });
 
 // export type definition of API

@@ -18,14 +18,15 @@ export async function finderNode(state: typeof GraphState.State) {
     topic: "general",
   });
 
-  const urls = (resp && (resp as any).results && Array.isArray((resp as any).results))
-    ? (resp as any).results
-        .map((r: any) => r?.url as string | undefined)
-        .filter((u: unknown): u is string => typeof u === "string" && u.length > 0)
-    : [];
+  const urls =
+    resp && (resp as any).results && Array.isArray((resp as any).results)
+      ? (resp as any).results
+          .map((r: any) => r?.url as string | undefined)
+          .filter(
+            (u: unknown): u is string => typeof u === "string" && u.length > 0,
+          )
+      : [];
 
   state.portfolioUrls = urls;
   return state;
 }
-
-

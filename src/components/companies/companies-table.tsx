@@ -2,12 +2,28 @@
 
 import * as React from "react";
 import { z } from "zod";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CompanyDrawer, type CompanyDetail } from "@/components/companies/company-drawer";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CompanyDrawer,
+  type CompanyDetail,
+} from "@/components/companies/company-drawer";
 
 const CompanySchema = z.object({
   company: z.string(),
@@ -36,7 +52,10 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
 
   const filtered = props.data.filter((r) => {
     const q = query.trim().toLowerCase();
-    const matchesQuery = !q || r.company.toLowerCase().includes(q) || r.sponsor.toLowerCase().includes(q);
+    const matchesQuery =
+      !q ||
+      r.company.toLowerCase().includes(q) ||
+      r.sponsor.toLowerCase().includes(q);
     const matchesSector = !sector || r.sector === sector;
     return matchesQuery && matchesSector;
   });
@@ -48,7 +67,11 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row">
-          <Input placeholder="Search company or sponsor" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <Input
+            placeholder="Search company or sponsor"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
           <Select value={sector} onValueChange={(v) => setSector(v)}>
             <SelectTrigger className="md:w-56">
               <SelectValue placeholder="Sector" />
@@ -106,7 +129,9 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
                     <TableCell>{r.sponsor}</TableCell>
                     <TableCell>{r.dateInvested ?? "-"}</TableCell>
                     <TableCell>{r.sector ?? "-"}</TableCell>
-                    <TableCell>{typeof r.score === "number" ? r.score.toFixed(0) : "-"}</TableCell>
+                    <TableCell>
+                      {typeof r.score === "number" ? r.score.toFixed(0) : "-"}
+                    </TableCell>
                     <TableCell className="space-x-1">
                       {(r.signals ?? []).map((s) => (
                         <Badge key={s} variant="outline">
@@ -126,5 +151,3 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
     </Card>
   );
 }
-
-

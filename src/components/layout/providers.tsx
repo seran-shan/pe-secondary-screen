@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 // import { useTheme } from 'next-themes';
-import { TRPCReactProvider } from '@/trpc/react';
-import { ActiveThemeProvider } from '@/components/active-theme';
-import { SessionProvider } from 'next-auth/react';
+import { TRPCReactProvider } from "@/trpc/react";
+import { ActiveThemeProvider } from "@/components/active-theme";
+import { SessionProvider } from "next-auth/react";
 
 export default function Providers({
   activeThemeValue,
-  children
+  children,
 }: {
   activeThemeValue: string;
   children: React.ReactNode;
@@ -19,11 +19,8 @@ export default function Providers({
   return (
     <TRPCReactProvider>
       <ActiveThemeProvider initialTheme={activeThemeValue}>
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+        <SessionProvider>{children}</SessionProvider>
       </ActiveThemeProvider>
     </TRPCReactProvider>
   );
 }
-

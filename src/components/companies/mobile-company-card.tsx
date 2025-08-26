@@ -1,37 +1,58 @@
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { IconCircleCheckFilled, IconDotsVertical, IconExternalLink } from "@tabler/icons-react"
-import { z } from "zod"
-import { companySchema } from "./companies-data-table"
+} from "@/components/ui/dropdown-menu";
+import {
+  IconCircleCheckFilled,
+  IconDotsVertical,
+  IconExternalLink,
+} from "@tabler/icons-react";
+import { z } from "zod";
+import { api } from "@/trpc/react";
+import { companySchema } from "./companies-data-table";
 
 interface MobileCompanyCardProps {
-  company: z.infer<typeof companySchema>
+  company: z.infer<typeof companySchema>;
 }
 
 export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
+  const utils = api.useUtils();
+  const toggleWatchlist = api.watchlist.toggle.useMutation({
+    onSuccess: () => utils.watchlist.list.invalidate(),
+  });
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">{company.company}</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            {company.company}
+          </CardTitle>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="data-[state=open]:bg-muted text-muted-foreground flex size-8" size="icon">
+              <Button
+                variant="ghost"
+                className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+                size="icon"
+              >
                 <IconDotsVertical />
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
               <DropdownMenuItem>View</DropdownMenuItem>
-              <DropdownMenuItem>Watchlist</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  toggleWatchlist.mutate({ companyId: String(company.id) })
+                }
+              >
+                Watchlist
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive">Remove</DropdownMenuItem>
             </DropdownMenuContent>
@@ -68,7 +89,7 @@ export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
               href={company.source}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-foreground hover:text-blue-600"
+              className="text-foreground inline-flex items-center gap-1 hover:text-blue-600"
               aria-label="Open source link"
             >
               <IconExternalLink className="size-4" />
@@ -80,6 +101,5 @@ export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-

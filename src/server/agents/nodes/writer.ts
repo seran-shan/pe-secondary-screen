@@ -5,7 +5,11 @@ export async function writerNode(state: typeof GraphState.State) {
   const items = (state.normalized as PortfolioCompany[] | undefined) ?? [];
   const sponsorNameInput = state.input?.trim();
   // prefer explicit sponsorName from items if provided, else from input
-  const sponsorName = (items[0]?.sponsorName?.trim() || sponsorNameInput || "").trim();
+  const sponsorName = (
+    items[0]?.sponsorName?.trim() ||
+    sponsorNameInput ||
+    ""
+  ).trim();
   if (!sponsorName || items.length === 0) return state;
 
   // Upsert sponsor by name

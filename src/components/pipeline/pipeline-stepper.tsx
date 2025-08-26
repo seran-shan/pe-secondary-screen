@@ -57,11 +57,16 @@ export function PipelineStepper(props: { data: RunResult }) {
         <CardContent>
           <div className="mb-4">
             <Progress value={percent} />
-            <div className="mt-2 text-sm text-muted-foreground">{percent}% complete</div>
+            <div className="text-muted-foreground mt-2 text-sm">
+              {percent}% complete
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {steps.map((step, idx) => (
-              <div key={step.key} className="flex items-center gap-3 rounded-md border p-3">
+              <div
+                key={step.key}
+                className="flex items-center gap-3 rounded-md border p-3"
+              >
                 <div className="shrink-0">
                   {step.complete ? (
                     <IconCheck className="text-emerald-600" />
@@ -73,8 +78,12 @@ export function PipelineStepper(props: { data: RunResult }) {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-medium">{step.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {step.complete ? "Completed" : idx === completed ? "In progress" : "Pending"}
+                  <span className="text-muted-foreground text-xs">
+                    {step.complete
+                      ? "Completed"
+                      : idx === completed
+                        ? "In progress"
+                        : "Pending"}
                   </span>
                 </div>
               </div>
@@ -98,5 +107,3 @@ export function PipelineStepper(props: { data: RunResult }) {
     </div>
   );
 }
-
-

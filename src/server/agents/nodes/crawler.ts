@@ -26,5 +26,3 @@ export async function crawlerNode(state: typeof GraphState.State) {
   state.crawled = { ...(state.crawled ?? {}), ...crawled };
   return state;
 }
-
-

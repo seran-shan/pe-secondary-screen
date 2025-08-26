@@ -1,4 +1,1 @@
-export { default, metadata } from '@/app/dashboard/radar/page';
-
-
-
+export { default, metadata } from "@/app/dashboard/radar/page";

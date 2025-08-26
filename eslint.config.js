@@ -1,5 +1,6 @@
 import { FlatCompat } from "@eslint/eslintrc";
 import tseslint from "typescript-eslint";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 const compat = new FlatCompat({
   baseDirectory: import.meta.dirname,
@@ -45,4 +46,6 @@ export default tseslint.config(
       },
     },
   },
+  // Keep Prettier config last to disable conflicting stylistic rules
+  eslintConfigPrettier,
 );

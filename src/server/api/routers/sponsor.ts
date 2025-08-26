@@ -9,6 +9,3 @@ export const sponsorRouter = createTRPCRouter({
     return sponsors.map((s) => ({ name: s.name }));
   }),
 });
-
-
-

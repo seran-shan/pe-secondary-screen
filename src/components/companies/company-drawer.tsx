@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -52,7 +59,9 @@ export function CompanyDrawer(props: {
                 <span className="text-muted-foreground">No signals</span>
               ) : (
                 (data?.signals ?? []).map((s) => (
-                  <Badge key={s} variant="outline">{s}</Badge>
+                  <Badge key={s} variant="outline">
+                    {s}
+                  </Badge>
                 ))
               )}
             </div>
@@ -60,11 +69,18 @@ export function CompanyDrawer(props: {
           <Separator />
           <div className="space-y-1">
             <div className="font-medium">Notes</div>
-            <p className="text-muted-foreground whitespace-pre-wrap">{data?.note ?? "-"}</p>
+            <p className="text-muted-foreground whitespace-pre-wrap">
+              {data?.note ?? "-"}
+            </p>
           </div>
           {data?.webpage && (
             <div>
-              <a className="text-blue-600 hover:underline" href={data.webpage} target="_blank" rel="noreferrer">
+              <a
+                className="text-blue-600 hover:underline"
+                href={data.webpage}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Source link
               </a>
             </div>
@@ -73,8 +89,16 @@ export function CompanyDrawer(props: {
 
         <DrawerFooter>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="default">Add to watchlist</Button>
-            <Button size="sm" variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+            <Button size="sm" variant="default">
+              Add to watchlist
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Close
+            </Button>
           </div>
         </DrawerFooter>
       </DrawerContent>
@@ -90,5 +114,3 @@ function Info({ label, value }: { label: string; value: React.ReactNode }) {
     </div>
   );
 }
-
-

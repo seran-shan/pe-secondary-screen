@@ -23,5 +23,3 @@ export const PortfolioCompanySchema = z.object({
 });
 
 export type PortfolioCompany = z.infer<typeof PortfolioCompanySchema>;
-
-

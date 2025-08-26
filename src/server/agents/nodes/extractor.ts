@@ -42,12 +42,10 @@ ${aggregatedMarkdown}`;
 
   let extracted: z.infer<typeof OutputSchema>["companies"] = [];
   try {
-    const response = await model
-      .withStructuredOutput(OutputSchema)
-      .invoke([
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ]);
+    const response = await model.withStructuredOutput(OutputSchema).invoke([
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ]);
     extracted = response?.companies ?? [];
   } catch {
     extracted = [];
@@ -55,5 +53,3 @@ ${aggregatedMarkdown}`;
   state.extracted = extracted;
   return state;
 }
-
-
