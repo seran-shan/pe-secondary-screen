@@ -14,16 +14,34 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
+model Sponsor {
+    id        String   @id @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+    name      String             @unique
+    contact   String?
+    portfolio PortfolioCompany[]
+}
 
-    @@index([name])
+model PortfolioCompany {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    asset        String
+    dateInvested DateTime?
+    fsnSector    String?
+    webpage      String?
+    note         String?
+    nextSteps    String?
+    financials   String?
+    location     String?
+
+    sponsor   Sponsor @relation(fields: [sponsorId], references: [id])
+    sponsorId String
+
+    comments Comment[]
 }
 
 // Necessary for Next auth
@@ -62,7 +80,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    comments      Comment[]
 }
 
 model VerificationToken {
@@ -71,4 +89,18 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model Comment {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    content String
+
+    author   User   @relation(fields: [authorId], references: [id])
+    authorId String
+
+    company   PortfolioCompany @relation(fields: [companyId], references: [id])
+    companyId String
 }
