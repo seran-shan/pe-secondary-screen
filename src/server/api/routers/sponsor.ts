@@ -167,4 +167,42 @@ export const sponsorRouter = createTRPCRouter({
         hasMore: input.offset + input.limit < total,
       };
     }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      // Check if sponsor exists
+      const sponsor = await ctx.db.sponsor.findUnique({
+        where: { id: input.id },
+        include: {
+          _count: {
+            select: {
+              portfolio: true,
+            },
+          },
+        },
+      });
+
+      if (!sponsor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Sponsor not found",
+        });
+      }
+
+      // Check if sponsor has portfolio companies
+      if (sponsor._count.portfolio > 0) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `Cannot delete sponsor with ${sponsor._count.portfolio} portfolio companies. Please remove or transfer all portfolio companies first.`,
+        });
+      }
+
+      // Delete the sponsor
+      await ctx.db.sponsor.delete({
+        where: { id: input.id },
+      });
+
+      return { success: true, deletedId: input.id };
+    }),
 });
