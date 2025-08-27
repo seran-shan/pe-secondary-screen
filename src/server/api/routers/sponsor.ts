@@ -29,6 +29,43 @@ export const sponsorRouter = createTRPCRouter({
       });
     }),
 
+  getByIdWithPortfolio: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const sponsor = await ctx.db.sponsor.findUnique({
+        where: { id: input.id },
+        include: {
+          portfolio: {
+            select: {
+              asset: true,
+              webpage: true,
+              fsnSector: true,
+              dateInvested: true,
+            },
+            orderBy: { dateInvested: "desc" },
+          },
+        },
+      });
+
+      if (!sponsor) {
+        return null;
+      }
+
+      return {
+        id: sponsor.id,
+        name: sponsor.name,
+        contact: sponsor.contact,
+        portfolio: sponsor.portfolio.map((p) => ({
+          asset: p.asset,
+          webpage: p.webpage ?? undefined,
+          fsnSector: p.fsnSector ?? undefined,
+          dateInvested: p.dateInvested
+            ? p.dateInvested.toISOString()
+            : undefined,
+        })),
+      };
+    }),
+
   findSimilar: publicProcedure
     .input(
       z.object({
