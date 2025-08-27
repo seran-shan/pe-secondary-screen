@@ -3,17 +3,22 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
+export type PortfolioCompany = {
+  asset?: string;
+  webpage?: string;
+  fsnSector?: string;
+  dateInvested?: string;
+  _optimistic?: boolean; // Flag for optimistic portfolio companies
+  _tempId?: string; // Temporary ID for optimistic companies
+};
+
 export type Sponsor = {
   id: string;
   name: string;
   contact?: string | null;
-  portfolio?: Array<{
-    asset?: string;
-    webpage?: string;
-    fsnSector?: string;
-    dateInvested?: string;
-  }>;
+  portfolio?: PortfolioCompany[];
   _optimistic?: boolean; // Flag for optimistic updates
+  _discoveryInProgress?: boolean; // Flag for discovery in progress
 };
 
 type OptimisticSponsor = Sponsor & {
@@ -26,6 +31,19 @@ interface SponsorsContextType {
   addOptimisticSponsor: (sponsor: Omit<Sponsor, "id">) => string;
   removeOptimisticSponsor: (tempId: string) => void;
   updateOptimisticSponsor: (tempId: string, updates: Partial<Sponsor>) => void;
+  addOptimisticPortfolioCompanies: (
+    sponsorId: string,
+    companies: PortfolioCompany[],
+    mode: "append" | "update" | "replace",
+  ) => void;
+  updateSponsorDiscoveryStatus: (
+    sponsorId: string,
+    isDiscovering: boolean,
+  ) => void;
+  updateSponsorWithRealData: (
+    sponsorId: string,
+    updatedSponsor: Sponsor,
+  ) => void;
   refreshSponsors: () => void;
 }
 
@@ -96,6 +114,84 @@ export function SponsorsProvider({
     [],
   );
 
+  const addOptimisticPortfolioCompanies = React.useCallback(
+    (
+      sponsorId: string,
+      companies: PortfolioCompany[],
+      mode: "append" | "update" | "replace",
+    ) => {
+      setSponsors((current) =>
+        current.map((sponsor) => {
+          if (sponsor.id !== sponsorId) return sponsor;
+
+          // Mark companies as optimistic
+          const optimisticCompanies = companies.map((company, index) => ({
+            ...company,
+            _optimistic: true,
+            _tempId: `optimistic-company-${Date.now()}-${index}`,
+          }));
+
+          const currentPortfolio = sponsor.portfolio ?? [];
+
+          let newPortfolio: PortfolioCompany[];
+          switch (mode) {
+            case "replace":
+              // Remove non-optimistic companies and add new optimistic ones
+              newPortfolio = [
+                ...currentPortfolio.filter((c) => c._optimistic),
+                ...optimisticCompanies,
+              ];
+              break;
+            case "update":
+              // For update mode, we append optimistic companies but indicate it's an update
+              newPortfolio = [...currentPortfolio, ...optimisticCompanies];
+              break;
+            case "append":
+            default:
+              // Add optimistic companies to existing portfolio
+              newPortfolio = [...currentPortfolio, ...optimisticCompanies];
+              break;
+          }
+
+          return {
+            ...sponsor,
+            portfolio: newPortfolio,
+          };
+        }),
+      );
+    },
+    [],
+  );
+
+  const updateSponsorDiscoveryStatus = React.useCallback(
+    (sponsorId: string, isDiscovering: boolean) => {
+      setSponsors((current) =>
+        current.map((sponsor) =>
+          sponsor.id === sponsorId
+            ? { ...sponsor, _discoveryInProgress: isDiscovering }
+            : sponsor,
+        ),
+      );
+    },
+    [],
+  );
+
+  const updateSponsorWithRealData = React.useCallback(
+    (sponsorId: string, updatedSponsor: Sponsor) => {
+      setSponsors((current) =>
+        current.map((sponsor) =>
+          sponsor.id === sponsorId
+            ? {
+                ...updatedSponsor,
+                _discoveryInProgress: false, // Clear discovery status
+              }
+            : sponsor,
+        ),
+      );
+    },
+    [],
+  );
+
   const refreshSponsors = React.useCallback(() => {
     router.refresh();
   }, [router]);
@@ -106,6 +202,9 @@ export function SponsorsProvider({
       addOptimisticSponsor,
       removeOptimisticSponsor,
       updateOptimisticSponsor,
+      addOptimisticPortfolioCompanies,
+      updateSponsorDiscoveryStatus,
+      updateSponsorWithRealData,
       refreshSponsors,
     }),
     [
@@ -113,6 +212,9 @@ export function SponsorsProvider({
       addOptimisticSponsor,
       removeOptimisticSponsor,
       updateOptimisticSponsor,
+      addOptimisticPortfolioCompanies,
+      updateSponsorDiscoveryStatus,
+      updateSponsorWithRealData,
       refreshSponsors,
     ],
   );
