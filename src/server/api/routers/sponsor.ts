@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 
 export const sponsorRouter = createTRPCRouter({
@@ -8,4 +9,13 @@ export const sponsorRouter = createTRPCRouter({
     });
     return sponsors.map((s) => ({ name: s.name }));
   }),
+
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.sponsor.findUnique({
+        where: { id: input.id },
+        select: { id: true, name: true },
+      });
+    }),
 });

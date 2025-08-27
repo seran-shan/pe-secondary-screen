@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
+import { api } from "@/trpc/react";
 
 type BreadcrumbItem = {
   title: string;
@@ -25,6 +26,16 @@ const routeMapping: Record<string, BreadcrumbItem[]> = {
 export function useBreadcrumbs() {
   const pathname = usePathname();
 
+  // Check if we're on a sponsor detail page
+  const sponsorMatch = pathname.match(/^\/sponsors\/([^\/]+)$/);
+  const sponsorId = sponsorMatch?.[1];
+
+  // Fetch sponsor data if we're on a sponsor page
+  const { data: sponsor } = api.sponsor.getById.useQuery(
+    { id: sponsorId! },
+    { enabled: !!sponsorId },
+  );
+
   const breadcrumbs = useMemo(() => {
     // Check if we have a custom mapping for this exact path
     if (routeMapping[pathname]) {
@@ -35,12 +46,26 @@ export function useBreadcrumbs() {
     const segments = pathname.split("/").filter(Boolean);
     return segments.map((segment, index) => {
       const path = `/${segments.slice(0, index + 1).join("/")}`;
-      return {
-        title: segment.charAt(0).toUpperCase() + segment.slice(1),
-        link: path,
-      };
+
+      // Special handling for sponsor pages
+      if (segment === "sponsors") {
+        return {
+          title: "Sponsors",
+          link: path,
+        };
+      } else if (sponsorId && segment === sponsorId && sponsor) {
+        return {
+          title: sponsor.name,
+          link: path,
+        };
+      } else {
+        return {
+          title: segment.charAt(0).toUpperCase() + segment.slice(1),
+          link: path,
+        };
+      }
     });
-  }, [pathname]);
+  }, [pathname, sponsor, sponsorId]);
 
   return breadcrumbs;
 }
