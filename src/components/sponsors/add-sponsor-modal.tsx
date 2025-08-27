@@ -53,7 +53,7 @@ const addSponsorSchema = z.object({
     .string()
     .max(500, "Notes must be less than 500 characters")
     .optional(),
-  forceCreate: z.boolean().default(false),
+  forceCreate: z.boolean(),
 });
 
 type AddSponsorFormData = z.infer<typeof addSponsorSchema>;
