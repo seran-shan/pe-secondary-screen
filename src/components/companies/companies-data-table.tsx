@@ -2,25 +2,6 @@
 
 import * as React from "react";
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
-} from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
   type ColumnDef,
   type ColumnFiltersState,
   flexRender,
@@ -47,7 +28,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -71,7 +51,6 @@ import {
   IconChevronsLeft,
   IconChevronsRight,
   IconDotsVertical,
-  IconGripVertical,
   IconCircleCheckFilled,
   IconExternalLink,
   IconLayoutColumns,
@@ -80,6 +59,10 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCompanyCard } from "./mobile-company-card";
 import { api } from "@/trpc/react";
+import {
+  CompanyDrawer,
+  type CompanyDetail,
+} from "@/components/companies/company-drawer";
 
 export const companySchema = z.object({
   id: z.number(),
@@ -91,29 +74,26 @@ export const companySchema = z.object({
   status: z.enum(["Active", "Exited"]).default("Active"),
 });
 
-function DragHandle({ id }: { id: number }) {
-  const { attributes, listeners } = useSortable({ id });
-  return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent"
-    >
-      <IconGripVertical className="text-muted-foreground size-3" />
-      <span className="sr-only">Drag to reorder</span>
-    </Button>
-  );
-}
+type FullCompanyData = z.infer<typeof companySchema> & {
+  location?: string;
+  financials?: string;
+  nextSteps?: string;
+  note?: string;
+  comments?: Array<{
+    id: string;
+    content: string;
+    author: {
+      id: string;
+      name?: string | null;
+      image?: string | null;
+    };
+    createdAt: string;
+  }>;
+  watchersCount?: number;
+  isWatched?: boolean;
+};
 
 const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-    size: 32,
-  },
   {
     id: "select",
     header: ({ table }) => (
@@ -238,31 +218,12 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
   },
 ];
 
-function DraggableRow({ row }: { row: Row<z.infer<typeof companySchema>> }) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,
-  });
-  return (
-    <TableRow
-      data-state={row.getIsSelected() && "selected"}
-      data-dragging={isDragging}
-      ref={setNodeRef}
-      className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-    >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id} style={{ width: cell.column.getSize() }}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
-    </TableRow>
-  );
-}
-
 export function CompaniesDataTable({
   data: initialData,
+  refetch,
 }: {
-  data: z.infer<typeof companySchema>[];
+  data: FullCompanyData[];
+  refetch: () => void;
 }) {
   const [data, setData] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
@@ -285,17 +246,37 @@ export function CompaniesDataTable({
   const [statusTab, setStatusTab] = React.useState<"all" | "active" | "exited">(
     "all",
   );
-  const sortableId = React.useId();
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {}),
-  );
   const isMobile = useIsMobile();
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [selectedCompany, setSelectedCompany] =
+    React.useState<CompanyDetail | null>(null);
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => data?.map(({ id }) => id) || [],
-    [data],
+  const handleRowClick = React.useCallback(
+    (companyId: number) => {
+      const company = initialData.find((c) => c.id === companyId);
+      if (company) {
+        const companyDetail: CompanyDetail = {
+          id: company.id.toString(),
+          company: company.company,
+          sponsor: company.sponsor,
+          dateInvested: company.invested,
+          sector: company.sector,
+          webpage: company.source,
+          note: company.note,
+          location: company.location,
+          financials: company.financials,
+          nextSteps: company.nextSteps,
+          status: company.status,
+          signals: [], // Mock data
+          comments: company.comments,
+          watchersCount: company.watchersCount,
+          isWatched: company.isWatched,
+        };
+        setSelectedCompany(companyDetail);
+        setDrawerOpen(true);
+      }
+    },
+    [initialData],
   );
 
   const displayData = React.useMemo(() => {
@@ -336,17 +317,6 @@ export function CompaniesDataTable({
   React.useEffect(() => {
     table.getColumn("sector")?.setFilterValue(sectorFilter ?? "");
   }, [sectorFilter]);
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      setData((data) => {
-        const oldIndex = dataIds.indexOf(active.id);
-        const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(data, oldIndex, newIndex);
-      });
-    }
-  }
 
   const counts = React.useMemo(
     () => ({
@@ -500,57 +470,71 @@ export function CompaniesDataTable({
         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
       >
         <div className="overflow-hidden rounded-lg border">
-          <DndContext
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
-            sensors={sensors}
-            id={sortableId}
-          >
-            <Table className="w-full" style={{ tableLayout: "fixed" }}>
-              <TableHeader className="bg-muted sticky top-0 z-10">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        style={{ width: header.getSize() }}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody className="**:data-[slot=table-cell]:first:w-8 [&_td]:truncate [&_td]:whitespace-nowrap">
-                {table.getRowModel().rows?.length ? (
-                  <SortableContext
-                    items={dataIds}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {table.getRowModel().rows.map((row) => (
-                      <DraggableRow key={row.id} row={row} />
-                    ))}
-                  </SortableContext>
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
+          <Table className="w-full" style={{ tableLayout: "fixed" }}>
+            <TableHeader className="bg-muted sticky top-0 z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{ width: header.getSize() }}
                     >
-                      No companies.
-                    </TableCell>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody className="**:data-[slot=table-cell]:first:w-8 [&_td]:truncate [&_td]:whitespace-nowrap">
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className="hover:bg-muted/50 cursor-pointer"
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      if (
+                        target.closest('input[type="checkbox"]') ||
+                        target.closest("button") ||
+                        target.closest('[role="button"]')
+                      ) {
+                        return;
+                      }
+                      handleRowClick(row.original.id);
+                    }}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        style={{ width: cell.column.getSize() }}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </DndContext>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No companies.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
         <div className="flex items-center justify-between px-4">
           <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
@@ -630,6 +614,11 @@ export function CompaniesDataTable({
           </div>
         </div>
       </TabsContent>
+      <CompanyDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        data={selectedCompany}
+      />
     </Tabs>
   );
 }
