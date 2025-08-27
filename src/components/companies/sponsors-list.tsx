@@ -23,19 +23,25 @@ export function SponsorsList() {
           ).sort();
 
           const isOptimistic = s._optimistic;
+          const isDiscovering = s._discoveryInProgress;
+          const optimisticCount = (s.portfolio ?? []).filter(
+            (p) => p._optimistic,
+          ).length;
 
           const cardContent = (
             <Card
               className={`h-full transition-colors ${
                 isOptimistic
                   ? "bg-muted/30 cursor-default opacity-70"
-                  : "hover:bg-muted/50 cursor-pointer"
+                  : isDiscovering
+                    ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20"
+                    : "hover:bg-muted/50 cursor-pointer"
               }`}
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   {s.name}
-                  {isOptimistic && (
+                  {(isOptimistic || isDiscovering) && (
                     <IconLoader2 className="text-muted-foreground size-4 animate-spin" />
                   )}
                 </CardTitle>
@@ -43,9 +49,19 @@ export function SponsorsList() {
               <CardContent className="space-y-2 text-sm">
                 <div className="text-muted-foreground">
                   Portfolio companies: {count}
+                  {optimisticCount > 0 && (
+                    <span className="ml-2 text-xs text-green-600">
+                      +{optimisticCount} discovering...
+                    </span>
+                  )}
                   {isOptimistic && (
                     <span className="ml-2 text-xs text-amber-600">
                       Creating...
+                    </span>
+                  )}
+                  {isDiscovering && optimisticCount === 0 && (
+                    <span className="ml-2 text-xs text-blue-600">
+                      Discovering...
                     </span>
                   )}
                 </div>

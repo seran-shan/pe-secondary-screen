@@ -55,6 +55,7 @@ import {
   IconPlus,
   IconSearch,
 } from "@tabler/icons-react";
+import { Loader2 } from "lucide-react";
 import {
   CompanyDrawer,
   type CompanyDetail,
@@ -82,6 +83,8 @@ type PortfolioCompany = {
     } | null;
   }>;
   watchlistedBy: Array<{ id: string }>;
+  _optimistic?: boolean; // Flag for optimistic companies
+  _tempId?: string; // Temporary ID for optimistic companies
 };
 
 interface SponsorPortfolioTableProps {
@@ -98,6 +101,7 @@ const portfolioCompanySchema = z.object({
   source: z.string().optional(),
   comments: z.number(),
   watchers: z.number(),
+  _optimistic: z.boolean().optional(),
 });
 
 type PortfolioCompanyRow = z.infer<typeof portfolioCompanySchema>;
@@ -134,7 +138,21 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
     accessorKey: "company",
     header: "Company",
     cell: ({ row }) => (
-      <span className="font-medium">{row.original.company}</span>
+      <div className="flex items-center gap-2">
+        <span
+          className={`font-medium ${row.original._optimistic ? "text-muted-foreground" : ""}`}
+        >
+          {row.original.company}
+        </span>
+        {row.original._optimistic && (
+          <>
+            <Loader2 className="size-3 animate-spin text-blue-500" />
+            <Badge variant="outline" className="text-xs text-blue-600">
+              Discovering...
+            </Badge>
+          </>
+        )}
+      </div>
     ),
     enableHiding: false,
     size: 300,
@@ -243,6 +261,8 @@ export function SponsorPortfolioTable({
   companies,
   sponsorName,
 }: SponsorPortfolioTableProps) {
+  // Count optimistic companies
+  const optimisticCount = companies.filter((c) => c._optimistic).length;
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -281,17 +301,17 @@ export function SponsorPortfolioTable({
           comments:
             company.comments?.map((comment) => ({
               id: comment.id,
-              content: comment.content || "No content available",
+              content: comment.content ?? "No content available",
               author: {
-                id: comment.author?.id || "",
+                id: comment.author?.id ?? "",
                 name:
-                  comment.author?.name ||
-                  comment.author?.email ||
+                  comment.author?.name ??
+                  comment.author?.email ??
                   "Unknown User",
-                image: comment.author?.image || null,
+                image: comment.author?.image ?? null,
               },
               createdAt:
-                comment.createdAt?.toISOString() || new Date().toISOString(),
+                comment.createdAt?.toISOString() ?? new Date().toISOString(),
             })) ?? [],
           watchersCount: company.watchlistedBy?.length ?? 0,
           isWatched: false, // Could be determined by checking if current user is in watchlistedBy
@@ -315,8 +335,9 @@ export function SponsorPortfolioTable({
         sector: company.fsnSector ?? undefined,
         location: company.location ?? undefined,
         source: company.webpage ?? undefined,
-        comments: company.comments.length,
-        watchers: company.watchlistedBy.length,
+        comments: company.comments?.length ?? 0,
+        watchers: company.watchlistedBy?.length ?? 0,
+        _optimistic: company._optimistic,
       })),
     [companies],
   );
@@ -349,7 +370,14 @@ export function SponsorPortfolioTable({
       {/* Header Section */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div>
-          <h3 className="text-lg font-semibold">Portfolio Companies</h3>
+          <h3 className="flex items-center gap-2 text-lg font-semibold">
+            Portfolio Companies
+            {optimisticCount > 0 && (
+              <Badge variant="outline" className="text-xs text-blue-600">
+                +{optimisticCount} discovering...
+              </Badge>
+            )}
+          </h3>
           <p className="text-muted-foreground text-sm">
             All companies in {sponsorName}&apos;s portfolio ({companies.length}{" "}
             total)
@@ -470,14 +498,19 @@ export function SponsorPortfolioTable({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="hover:bg-muted/50 cursor-pointer"
+                    className={`cursor-pointer transition-colors ${
+                      row.original._optimistic
+                        ? "bg-blue-50/50 hover:bg-blue-100/50 dark:bg-blue-950/20 dark:hover:bg-blue-900/30"
+                        : "hover:bg-muted/50"
+                    }`}
                     onClick={(e) => {
                       // Don't trigger row click when clicking on checkboxes or action buttons
                       const target = e.target as HTMLElement;
                       if (
                         target.closest('input[type="checkbox"]') ||
                         target.closest("button") ||
-                        target.closest('[role="button"]')
+                        target.closest('[role="button"]') ||
+                        row.original._optimistic // Don't allow clicking optimistic rows
                       ) {
                         return;
                       }
