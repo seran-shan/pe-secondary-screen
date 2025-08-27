@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GraphState, PortfolioCompanySchema } from "../state";
+import { type GraphState, PortfolioCompanySchema } from "../state";
 
 const ArraySchema = z.array(PortfolioCompanySchema).min(1).optional();
 

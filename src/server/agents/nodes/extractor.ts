@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ChatAnthropic } from "@langchain/anthropic";
-import { GraphState, PortfolioCompanySchema } from "../state";
+import { type GraphState, PortfolioCompanySchema } from "../state";
 import { env } from "@/env";
 
 const OutputSchema = z.object({

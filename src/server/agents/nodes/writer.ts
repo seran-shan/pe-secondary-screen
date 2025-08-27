@@ -1,4 +1,4 @@
-import { GraphState, type PortfolioCompany } from "../state";
+import { type GraphState, type PortfolioCompany } from "../state";
 import { db } from "@/server/db";
 
 export async function writerNode(state: typeof GraphState.State) {

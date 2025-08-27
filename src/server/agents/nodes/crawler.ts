@@ -1,5 +1,5 @@
 import Firecrawl from "@mendable/firecrawl-js";
-import { GraphState } from "../state";
+import { type GraphState } from "../state";
 import { env } from "@/env";
 
 export async function crawlerNode(state: typeof GraphState.State) {

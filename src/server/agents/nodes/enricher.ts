@@ -1,4 +1,4 @@
-import { GraphState, type PortfolioCompany } from "../state";
+import { type GraphState, type PortfolioCompany } from "../state";
 import { TavilySearch } from "@langchain/tavily";
 import { env } from "@/env";
 
@@ -21,7 +21,7 @@ export async function enricherNode(state: typeof GraphState.State) {
         searchDepth: "basic",
         topic: "general",
       });
-      const first = (resp as any)?.results?.[0]?.url as string | undefined;
+      const first = (resp)?.results?.[0]?.url as string | undefined;
       if (first) webpage = first;
     }
 

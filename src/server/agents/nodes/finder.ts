@@ -1,5 +1,5 @@
 import { TavilySearch } from "@langchain/tavily";
-import { GraphState } from "../state";
+import { type GraphState } from "../state";
 import { env } from "@/env";
 
 export async function finderNode(state: typeof GraphState.State) {
@@ -19,8 +19,8 @@ export async function finderNode(state: typeof GraphState.State) {
   });
 
   const urls =
-    resp && (resp as any).results && Array.isArray((resp as any).results)
-      ? (resp as any).results
+    resp?.results && Array.isArray((resp).results)
+      ? (resp).results
           .map((r: any) => r?.url as string | undefined)
           .filter(
             (u: unknown): u is string => typeof u === "string" && u.length > 0,
