@@ -1,7 +1,6 @@
 import PageContainer from "@/components/layout/page-container";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { SecondaryInteractive } from "@/components/containers/radar-interactive";
 import { SectionCards } from "@/components/section-cards";
 import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 import { CompaniesTable } from "@/components/companies/companies-table";
@@ -25,7 +24,6 @@ export default function SecondaryPage() {
         <div className="px-4 lg:px-6">
           <ChartAreaInteractive />
         </div>
-        <SecondaryInteractive />
         <CompaniesTable data={[]} />
       </div>
     </PageContainer>

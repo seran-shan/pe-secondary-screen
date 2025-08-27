@@ -33,7 +33,7 @@ export default function SponsorNotFound() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/run">Run New Scan</Link>
+              <Link href="/companies">View Companies</Link>
             </Button>
           </CardContent>
         </Card>

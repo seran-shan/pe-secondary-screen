@@ -1,10 +1,10 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@import 'tw-animate-css';
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-@import './theme.css';
+@import "./theme.css";
 
 :root {
   --radius: 0.625rem;
@@ -120,6 +120,19 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Spinner fallback to ensure animate-spin always works */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer utilities {
+  .animate-spin {
+    animation: spin 1s linear infinite;
   }
 }
 

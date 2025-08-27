@@ -14,25 +14,18 @@ export type Product = {
 //Info: The following data is used for the sidebar navigation and Cmd K bar.
 export const navItems: NavItem[] = [
   {
-    title: "Run scan",
-    url: "/run",
-    icon: "analytics",
-    shortcut: ["r", "r"],
+    title: "Home",
+    url: "/",
+    icon: "home",
+    shortcut: ["h", "h"],
     isActive: false,
     items: [],
   },
-  {
-    title: "Pipeline",
-    url: "/pipeline",
-    icon: "kanban",
-    shortcut: ["p", "p"],
-    isActive: false,
-    items: [],
-  },
+
   {
     title: "Companies",
     url: "/companies",
-    icon: "user",
+    icon: "company",
     shortcut: ["c", "c"],
     isActive: false,
     items: [],
@@ -40,7 +33,7 @@ export const navItems: NavItem[] = [
   {
     title: "Sponsors",
     url: "/sponsors",
-    icon: "billing",
+    icon: "sponsors",
     shortcut: ["s", "s"],
     isActive: false,
     items: [],
@@ -48,7 +41,7 @@ export const navItems: NavItem[] = [
   {
     title: "Watchlist",
     url: "/watchlist",
-    icon: "post",
+    icon: "watchlist",
     shortcut: ["w", "w"],
     isActive: false,
     items: [],
@@ -64,8 +57,8 @@ export const navItems: NavItem[] = [
   {
     title: "History",
     url: "/history",
-    icon: "dashboard",
-    shortcut: ["h", "h"],
+    icon: "history",
+    shortcut: ["h", "i"],
     isActive: false,
     items: [],
   },
