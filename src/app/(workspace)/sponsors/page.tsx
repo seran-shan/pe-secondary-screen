@@ -13,6 +13,7 @@ export default async function SponsorsPage() {
   });
 
   const sponsors = sponsorsFromDb.map((s) => ({
+    id: s.id,
     name: s.name,
     contact: s.contact,
     portfolio: s.portfolio.map((p) => ({
