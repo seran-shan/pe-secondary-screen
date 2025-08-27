@@ -13,9 +13,9 @@ import {
   IconDotsVertical,
   IconExternalLink,
 } from "@tabler/icons-react";
-import { z } from "zod";
+import { type z } from "zod";
 import { api } from "@/trpc/react";
-import { companySchema } from "./companies-data-table";
+import { type companySchema } from "./companies-data-table";
 
 interface MobileCompanyCardProps {
   company: z.infer<typeof companySchema>;

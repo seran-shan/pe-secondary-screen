@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export type Sponsor = {
+  id: string;
   name: string;
   contact?: string | null;
   portfolio?: Array<{
@@ -29,26 +31,28 @@ export function SponsorsList({ sponsors }: { sponsors: Sponsor[] }) {
             ),
           ).sort();
           return (
-            <Card key={s.name} className="h-full">
-              <CardHeader>
-                <CardTitle className="text-base">{s.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="text-muted-foreground">
-                  Portfolio companies: {count}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {sectors.slice(0, 6).map((sec) => (
-                    <Badge key={sec} variant="outline">
-                      {sec}
-                    </Badge>
-                  ))}
-                  {sectors.length > 6 && (
-                    <Badge variant="secondary">+{sectors.length - 6}</Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <Link key={s.id} href={`/sponsors/${s.id}`}>
+              <Card className="hover:bg-muted/50 h-full cursor-pointer transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">{s.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="text-muted-foreground">
+                    Portfolio companies: {count}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {sectors.slice(0, 6).map((sec) => (
+                      <Badge key={sec} variant="outline">
+                        {sec}
+                      </Badge>
+                    ))}
+                    {sectors.length > 6 && (
+                      <Badge variant="secondary">+{sectors.length - 6}</Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           );
         })}
       </div>
