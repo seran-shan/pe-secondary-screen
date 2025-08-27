@@ -1,7 +1,11 @@
 import PageContainer from "@/components/layout/page-container";
-import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { SponsorsList } from "@/components/companies/sponsors-list";
+import {
+  SponsorsHeader,
+  SponsorsProvider,
+  type Sponsor,
+} from "@/components/sponsors";
 import { db } from "@/server/db";
 
 export const metadata = { title: "Sponsors" };
@@ -12,7 +16,7 @@ export default async function SponsorsPage() {
     orderBy: { name: "asc" },
   });
 
-  const sponsors = sponsorsFromDb.map((s) => ({
+  const sponsors: Sponsor[] = sponsorsFromDb.map((s) => ({
     id: s.id,
     name: s.name,
     contact: s.contact,
@@ -26,16 +30,16 @@ export default async function SponsorsPage() {
 
   return (
     <PageContainer scrollable={true}>
-      <div className="flex flex-1 flex-col space-y-6">
-        <div className="flex items-start justify-between">
-          <Heading
+      <SponsorsProvider initialSponsors={sponsors}>
+        <div className="flex flex-1 flex-col space-y-6">
+          <SponsorsHeader
             title="Sponsors"
-            description="List of GPs and refresh status."
+            description="Manage your portfolio sponsors and their investment details."
           />
+          <Separator />
+          <SponsorsList />
         </div>
-        <Separator />
-        <SponsorsList sponsors={sponsors} />
-      </div>
+      </SponsorsProvider>
     </PageContainer>
   );
 }

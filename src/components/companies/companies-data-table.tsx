@@ -59,10 +59,8 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCompanyCard } from "./mobile-company-card";
 import { api } from "@/trpc/react";
-import {
-  CompanyDrawer,
-  type CompanyDetail,
-} from "@/components/companies/company-drawer";
+import { type CompanyDetail } from "@/components/companies/company-drawer";
+import { useCompanyDrawer } from "./company-drawer-context";
 
 export const companySchema = z.object({
   id: z.number(),
@@ -247,9 +245,7 @@ export function CompaniesDataTable({
     "all",
   );
   const isMobile = useIsMobile();
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [selectedCompany, setSelectedCompany] =
-    React.useState<CompanyDetail | null>(null);
+  const { openCompanyDrawer } = useCompanyDrawer();
 
   const handleRowClick = React.useCallback(
     (companyId: number) => {
@@ -272,11 +268,10 @@ export function CompaniesDataTable({
           watchersCount: company.watchersCount,
           isWatched: company.isWatched,
         };
-        setSelectedCompany(companyDetail);
-        setDrawerOpen(true);
+        openCompanyDrawer(companyDetail);
       }
     },
-    [initialData],
+    [initialData, openCompanyDrawer],
   );
 
   const displayData = React.useMemo(() => {
@@ -614,11 +609,6 @@ export function CompaniesDataTable({
           </div>
         </div>
       </TabsContent>
-      <CompanyDrawer
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        data={selectedCompany}
-      />
     </Tabs>
   );
 }

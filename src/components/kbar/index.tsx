@@ -13,10 +13,15 @@ import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import RenderResults from "./render-result";
 import useThemeSwitching from "./use-theme-switching";
+import { useCompanyDrawer } from "@/components/companies/company-drawer-context";
+import type { CompanyDetail } from "@/components/companies/company-drawer";
 
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const sponsors = api.sponsor.listNames.useQuery(undefined, {
+    staleTime: 60_000,
+  });
+  const companies = api.company.getAll.useQuery(undefined, {
     staleTime: 60_000,
   });
 
@@ -68,26 +73,68 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       keywords: `sponsor ${s.name}`.toLowerCase(),
       section: "Sponsors",
       subtitle: "Open sponsor profile",
-      perform: () =>
-        router.push(`/sponsors?name=${encodeURIComponent(s.name)}`),
+      perform: () => router.push(`/sponsors/${s.id}`),
     }));
   }, [router, sponsors.data]);
 
   return (
     <KBarProvider actions={baseNavActions}>
-      <KBarComponent dynamicActions={sponsorActions}>{children}</KBarComponent>
+      <KBarComponent
+        dynamicActions={sponsorActions}
+        companies={companies.data ?? []}
+      >
+        {children}
+      </KBarComponent>
     </KBarProvider>
   );
 }
 const KBarComponent = ({
   children,
   dynamicActions,
+  companies,
 }: {
   children: React.ReactNode;
   dynamicActions: any[];
+  companies: any[];
 }) => {
   useThemeSwitching();
-  useRegisterActions(dynamicActions, [dynamicActions]);
+  const { openCompanyDrawer } = useCompanyDrawer();
+
+  const companyActions = useMemo(() => {
+    return companies.map((company) => ({
+      id: `company-${company.company.toLowerCase().replace(/\s+/g, "-")}`,
+      name: company.company,
+      keywords: `company ${company.company} ${company.sponsor}`.toLowerCase(),
+      section: "Companies",
+      subtitle: `${company.sponsor} • ${company.sector || "No sector"}`,
+      perform: () => {
+        const companyDetail: CompanyDetail = {
+          id: company.id.toString(),
+          company: company.company,
+          sponsor: company.sponsor,
+          dateInvested: company.invested,
+          sector: company.sector,
+          webpage: company.source,
+          note: company.note,
+          location: company.location,
+          financials: company.financials,
+          nextSteps: company.nextSteps,
+          status: company.status,
+          signals: [], // Mock data
+          comments: company.comments || [],
+          watchersCount: company.watchersCount,
+          isWatched: company.isWatched,
+        };
+        openCompanyDrawer(companyDetail);
+      },
+    }));
+  }, [companies, openCompanyDrawer]);
+
+  const allDynamicActions = useMemo(() => {
+    return [...dynamicActions, ...companyActions];
+  }, [dynamicActions, companyActions]);
+
+  useRegisterActions(allDynamicActions, [allDynamicActions]);
 
   return (
     <>

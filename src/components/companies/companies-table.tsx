@@ -20,10 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  CompanyDrawer,
-  type CompanyDetail,
-} from "@/components/companies/company-drawer";
+import { type CompanyDetail } from "@/components/companies/company-drawer";
+import { useCompanyDrawer } from "./company-drawer-context";
 
 const CompanySchema = z.object({
   company: z.string(),
@@ -41,8 +39,7 @@ export type CompanyRow = z.infer<typeof CompanySchema>;
 export function CompaniesTable(props: { data: CompanyRow[] }) {
   const [query, setQuery] = React.useState("");
   const [sector, setSector] = React.useState<string | undefined>(undefined);
-  const [open, setOpen] = React.useState(false);
-  const [selected, setSelected] = React.useState<CompanyDetail | null>(null);
+  const { openCompanyDrawer } = useCompanyDrawer();
 
   const sectors = React.useMemo(() => {
     const s = new Set<string>();
@@ -112,7 +109,8 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
                     key={`${r.sponsor}-${r.company}`}
                     className="cursor-pointer"
                     onClick={() => {
-                      setSelected({
+                      openCompanyDrawer({
+                        id: `${r.sponsor}-${r.company}`, // Generate a simple ID
                         company: r.company,
                         sponsor: r.sponsor,
                         dateInvested: r.dateInvested,
@@ -122,7 +120,6 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
                         signals: r.signals,
                         status: r.status,
                       });
-                      setOpen(true);
                     }}
                   >
                     <TableCell className="font-medium">{r.company}</TableCell>
@@ -146,7 +143,6 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
             </TableBody>
           </Table>
         </div>
-        <CompanyDrawer open={open} onOpenChange={setOpen} data={selected} />
       </CardContent>
     </Card>
   );

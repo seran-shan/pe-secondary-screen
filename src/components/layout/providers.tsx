@@ -5,6 +5,7 @@ import React from "react";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ActiveThemeProvider } from "@/components/active-theme";
 import { SessionProvider } from "next-auth/react";
+import { CompanyDrawerProvider } from "@/components/companies/company-drawer-context";
 
 export default function Providers({
   activeThemeValue,
@@ -19,7 +20,9 @@ export default function Providers({
   return (
     <TRPCReactProvider>
       <ActiveThemeProvider initialTheme={activeThemeValue}>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <CompanyDrawerProvider>{children}</CompanyDrawerProvider>
+        </SessionProvider>
       </ActiveThemeProvider>
     </TRPCReactProvider>
   );
