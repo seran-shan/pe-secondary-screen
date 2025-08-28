@@ -19,10 +19,10 @@ export async function finderNode(state: typeof GraphState.State) {
   });
 
   const urls =
-    resp?.results &&
-    Array.isArray((resp as { results?: Array<{ url?: string }> }).results)
-      ? (resp as { results?: Array<{ url?: string }> }).results ?? []
-          .map((r) => r?.url)
+    resp?.results && Array.isArray(resp.results)
+
+      ? resp.results
+          .map((r: { url?: string }) => r?.url)
           .filter(
             (u: unknown): u is string => typeof u === "string" && u.length > 0,
           )

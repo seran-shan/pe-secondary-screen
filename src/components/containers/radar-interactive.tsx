@@ -4,7 +4,6 @@ import { useState } from "react";
 import { type RouterOutputs } from "@/trpc/react";
 import { RunAgentForm } from "@/components/forms/run-agent-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { PipelineStepper } from "@/components/pipeline/pipeline-stepper";
 
 type RunResult = RouterOutputs["agent"]["run"];

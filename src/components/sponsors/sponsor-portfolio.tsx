@@ -40,14 +40,12 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sectorFilter, setSectorFilter] = useState<string | undefined>();
   const [sortBy, setSortBy] = useState<"asset" | "dateInvested" | "sector">(
-    "asset"
+    "asset",
   );
 
   const sectors = [
     ...new Set(
-      portfolio
-        .map((company) => company.fsnSector)
-        .filter(Boolean) as string[]
+      portfolio.map((company) => company.fsnSector).filter(Boolean) as string[],
     ),
   ].sort();
 
@@ -85,11 +83,11 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
             {portfolio.length}
           </Badge>
         </CardTitle>
-        
+
         {/* Filters */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <IconSearch className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <IconSearch className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
             <Input
               placeholder="Search companies..."
               value={searchTerm}
@@ -97,7 +95,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
               className="pl-9"
             />
           </div>
-          
+
           <Select value={sectorFilter} onValueChange={setSectorFilter}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filter by sector" />
@@ -111,8 +109,13 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
               ))}
             </SelectContent>
           </Select>
-          
-          <Select value={sortBy} onValueChange={(value: "asset" | "dateInvested" | "sector") => setSortBy(value)}>
+
+          <Select
+            value={sortBy}
+            onValueChange={(value: "asset" | "dateInvested" | "sector") =>
+              setSortBy(value)
+            }
+          >
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -124,12 +127,15 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
           </Select>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {filteredPortfolio.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredPortfolio.map((company) => (
-              <Card key={company.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={company.id}
+                className="transition-shadow hover:shadow-md"
+              >
                 <CardContent className="p-4">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between">
@@ -147,7 +153,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
                         )}
                       </div>
                       {company.watchlistedBy.length > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="text-muted-foreground flex items-center gap-1 text-xs">
                           <IconEye className="h-3 w-3" />
                           {company.watchlistedBy.length}
                         </div>
@@ -156,7 +162,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
 
                     <div className="space-y-2 text-sm">
                       {company.dateInvested && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="text-muted-foreground flex items-center gap-2">
                           <IconCalendar className="h-3 w-3" />
                           <span>
                             {formatDistanceToNow(company.dateInvested, {
@@ -167,21 +173,26 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
                       )}
 
                       {company.location && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="text-muted-foreground flex items-center gap-2">
                           <IconMapPin className="h-3 w-3" />
                           <span className="truncate">{company.location}</span>
                         </div>
                       )}
 
                       {company.note && (
-                        <p className="line-clamp-2 text-muted-foreground">
+                        <p className="text-muted-foreground line-clamp-2">
                           {company.note}
                         </p>
                       )}
                     </div>
 
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" asChild className="flex-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="flex-1"
+                      >
                         <Link href={`/companies/${company.id}`}>
                           View Details
                         </Link>
@@ -205,8 +216,8 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <IconBuilding className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No companies found</h3>
+            <IconBuilding className="text-muted-foreground mb-4 h-12 w-12" />
+            <h3 className="mb-2 text-lg font-medium">No companies found</h3>
             <p className="text-muted-foreground">
               {searchTerm || sectorFilter
                 ? "Try adjusting your filters to see more results."
