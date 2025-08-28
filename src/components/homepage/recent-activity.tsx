@@ -133,7 +133,9 @@ export function RecentActivity() {
                 <IconEye className="text-primary size-5" />
                 Watchlist
               </CardTitle>
-              <CardDescription>Companies you&apos;re monitoring</CardDescription>
+              <CardDescription>
+                Companies you&apos;re monitoring
+              </CardDescription>
             </div>
             <Button
               variant="ghost"

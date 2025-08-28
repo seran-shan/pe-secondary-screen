@@ -12,12 +12,13 @@ import { cn } from "@/lib/utils";
 import { IconBrandGithub } from "@tabler/icons-react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 export function SignInForm() {
   return (
     <div className="relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <Link
-        href="/examples/authentication"
+        href="/auth/sign-in"
         className={cn(
           buttonVariants({ variant: "ghost" }),
           "absolute top-4 right-4 hidden md:top-8 md:right-8",
@@ -26,7 +27,14 @@ export function SignInForm() {
         Login
       </Link>
       <div className="bg-muted relative hidden h-full flex-col p-10 text-white lg:flex dark:border-r">
-        <div className="absolute inset-0 bg-zinc-900" />
+        <div className="absolute inset-0 bg-zinc-900">
+          <Image
+            src="/images/Vincent-Wahl-1500x1875.jpg"
+            alt="Vincent Stoltenberg Wahl"
+            fill
+            className="object-cover opacity-60"
+          />
+        </div>
         <div className="relative z-20 flex items-center text-lg font-medium">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -40,16 +48,15 @@ export function SignInForm() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          Logo
+          Exit Radar by FSN Labs
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              &ldquo;This starter template has saved me countless hours of work
-              and helped me deliver projects to my clients faster than ever
-              before.&rdquo;
+              &ldquo;We believe in the power of data to transform the way we do
+              business at FSN Capital.&rdquo;
             </p>
-            <footer className="text-sm">Random Dude</footer>
+            <footer className="text-sm">Vincent Stoltenberg Wahl</footer>
           </blockquote>
         </div>
       </div>

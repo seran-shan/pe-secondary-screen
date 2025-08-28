@@ -204,7 +204,10 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem>View</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => (row as any).toggleWatch?.()}>
+          <DropdownMenuItem onClick={() => {
+            // TODO: Implement watchlist toggle functionality
+            console.log('Toggle watchlist for:', row.original);
+          }}>
             Watchlist
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -613,8 +616,8 @@ export function CompaniesDataTable({
   );
 }
 
-function exportCsv(table: any) {
-  const rows = table.getRowModel().rows.map((r: any) => r.original);
+function exportCsv(table: ReturnType<typeof useReactTable<FullCompanyData>>) {
+  const rows = table.getRowModel().rows.map((r) => r.original);
   const headers = [
     "Company",
     "Sponsor",
@@ -625,10 +628,10 @@ function exportCsv(table: any) {
   ];
   const csv = [
     headers.join(","),
-    ...rows.map((r: any) =>
+    ...rows.map((r) =>
       [
-        safeCsv(r.company),
-        safeCsv(r.sponsor),
+        safeCsv(r.company ?? ''),
+        safeCsv(r.sponsor ?? ''),
         safeCsv(r.invested ?? ""),
         safeCsv(r.sector ?? ""),
         safeCsv(r.source ?? ""),
@@ -645,7 +648,8 @@ function exportCsv(table: any) {
   URL.revokeObjectURL(url);
 }
 
-function safeCsv(v: string) {
+function safeCsv(v: string | undefined) {
+  if (!v) return '';
   if (v.includes(",") || v.includes("\n") || v.includes('"')) {
     return `"${v.replaceAll('"', '""')}"`;
   }
