@@ -2,6 +2,10 @@ import { type GraphState, type PortfolioCompany } from "../state";
 import { TavilySearch } from "@langchain/tavily";
 import { env } from "@/env";
 
+interface TavilyResponse {
+  results?: Array<{ url?: string }>;
+}
+
 export async function enricherNode(state: typeof GraphState.State) {
   const items = (state.normalized as PortfolioCompany[] | undefined) ?? [];
   if (items.length === 0) return state;
@@ -16,13 +20,12 @@ export async function enricherNode(state: typeof GraphState.State) {
   for (const item of items) {
     let webpage = item.webpage;
     if (!webpage) {
-      const resp = await tavily.invoke({
+      const resp = (await tavily.invoke({
         query: `${item.asset} official website`,
         searchDepth: "basic",
         topic: "general",
-      });
-      const first = (resp as { results?: Array<{ url?: string }> })
-        ?.results?.[0]?.url;
+      })) as TavilyResponse;
+      const first = resp?.results?.[0]?.url;
       if (first) webpage = first;
     }
 

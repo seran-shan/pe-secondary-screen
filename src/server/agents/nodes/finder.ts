@@ -2,6 +2,10 @@ import { TavilySearch } from "@langchain/tavily";
 import { type GraphState } from "../state";
 import { env } from "@/env";
 
+interface TavilyResponse {
+  results?: Array<{ url?: string }>;
+}
+
 export async function finderNode(state: typeof GraphState.State) {
   const query = state.input?.trim();
   if (!query) return state;
@@ -12,19 +16,17 @@ export async function finderNode(state: typeof GraphState.State) {
     searchDepth: "advanced",
   });
 
-  const resp = await tavily.invoke({
+  const resp = (await tavily.invoke({
     query: `${query} private equity portfolio site:com OR site:eu`,
     searchDepth: "advanced",
     topic: "general",
-  });
+  })) as TavilyResponse;
 
   const urls =
     resp?.results && Array.isArray(resp.results)
       ? resp.results
-          .map((r: { url?: string }) => r?.url)
-          .filter(
-            (u: unknown): u is string => typeof u === "string" && u.length > 0,
-          )
+          .map((r) => r?.url)
+          .filter((u): u is string => typeof u === "string" && u.length > 0)
       : [];
 
   state.portfolioUrls = urls;
