@@ -103,7 +103,7 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
       // Add optimistic sponsor to the list
       const optimisticId = addOptimisticSponsor({
         name: variables.name,
-        contact: variables.contact || null,
+        contact: variables.contact ?? null,
         portfolio: [],
       });
 

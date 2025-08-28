@@ -32,6 +32,7 @@ import {
   KBarProvider,
   KBarSearch,
   useRegisterActions,
+  type Action,
 } from "kbar";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
@@ -118,7 +119,7 @@ const KBarComponent = ({
   companies,
 }: {
   children: React.ReactNode;
-  dynamicActions: unknown[];
+  dynamicActions: Action[];
   companies: CompanySearchData[];
 }) => {
   useThemeSwitching();

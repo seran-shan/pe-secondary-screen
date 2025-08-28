@@ -240,7 +240,7 @@ export function AgentProgressModal({
                       )}
                     </div>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {step.error || step.description}
+                      {step.error ?? step.description}
                     </p>
                   </div>
 

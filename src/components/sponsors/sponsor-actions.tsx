@@ -363,7 +363,7 @@ export function SponsorActions({
         steps={agentSteps}
         onCancel={handleCancelAgent}
         onComplete={handleAgentComplete}
-        startTime={agentStartTime || undefined}
+        startTime={agentStartTime ?? undefined}
         discoveryMode={currentMode}
       />
 
