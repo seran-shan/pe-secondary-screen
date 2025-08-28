@@ -73,7 +73,7 @@ export function SignInForm({ stars }: SignInFormProps) {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => signIn("github", { callbackUrl: "/" }))
+                onClick={() => signIn("github", { callbackUrl: "/" })}
               >
                 <IconBrandGithub className="mr-2 h-4 w-4" />
                 Continue with GitHub
