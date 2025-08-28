@@ -41,36 +41,30 @@ export async function writerNode(state: typeof GraphState.State) {
 
 /**
  * APPEND MODE: Only add new companies, never update existing ones
- * Preserves all existing data completely
+ * Preserves all existing data completely - uses batch operations for performance
  */
 async function handleAppendMode(sponsorId: string, items: PortfolioCompany[]) {
-  for (const item of items) {
-    const asset = item.asset.trim();
+  if (items.length === 0) return;
 
-    // Check if company already exists for this sponsor
-    const existing = await db.portfolioCompany.findFirst({
-      where: { sponsorId, asset },
-      select: { id: true },
-    });
+  // Prepare data for batch insert
+  const dataToInsert = items.map((item) => ({
+    asset: item.asset.trim(),
+    dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
+    fsnSector: item.fsnSector ?? null,
+    webpage: item.webpage ?? null,
+    note: item.note ?? null,
+    nextSteps: item.nextSteps ?? null,
+    financials: item.financials ?? null,
+    location: item.location ?? null,
+    sponsorId,
+  }));
 
-    // Only create if it doesn't exist
-    if (!existing) {
-      const data = {
-        asset,
-        dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
-        fsnSector: item.fsnSector ?? null,
-        webpage: item.webpage ?? null,
-        note: item.note ?? null,
-        nextSteps: item.nextSteps ?? null,
-        financials: item.financials ?? null,
-        location: item.location ?? null,
-        sponsorId,
-      };
-
-      await db.portfolioCompany.create({ data });
-    }
-    // If it exists, skip completely (preserve existing data)
-  }
+  // Use createMany with skipDuplicates for performance
+  // This handles duplicates automatically without separate existence checks
+  await db.portfolioCompany.createMany({
+    data: dataToInsert,
+    skipDuplicates: true, // Ignores records that would violate unique constraints
+  });
 }
 
 /**

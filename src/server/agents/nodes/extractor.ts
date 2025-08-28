@@ -22,7 +22,7 @@ export async function extractorNode(state: typeof GraphState.State) {
     .map(([url, md]) => {
       // Truncate per-URL content to keep prompt within model limits
       const text = (md ?? "").toString();
-      const slice = text.length > 6000 ? text.slice(0, 6000) : text;
+      const slice = text.length > 12000 ? text.slice(0, 12000) : text;
       return `URL: ${url}\n\n${slice}`;
     })
     .join("\n\n---\n\n");

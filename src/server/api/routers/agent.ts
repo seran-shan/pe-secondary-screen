@@ -2,6 +2,11 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { agentGraph } from "@/server/agents/graph";
 import { type GraphState } from "@/server/agents/state";
+import {
+  langsmithClient,
+  createRunName,
+  createRunMetadata,
+} from "@/lib/langsmith";
 
 export const agentRouter = createTRPCRouter({
   checkPortfolioStatus: publicProcedure
@@ -46,6 +51,26 @@ export const agentRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const start = Date.now();
+
+      // Create LangSmith run for tracking
+      const runName = createRunName(input.sponsorName, input.mode);
+      const metadata = createRunMetadata(input.sponsorName, input.mode);
+
+      let langsmithRunId: string | undefined;
+      if (process.env.LANGCHAIN_API_KEY) {
+        try {
+          await langsmithClient.createRun({
+            name: runName,
+            run_type: "chain",
+            inputs: { sponsorName: input.sponsorName, mode: input.mode },
+            extra: metadata,
+          });
+          // Note: LangSmith will automatically track the run through environment variables
+        } catch (error) {
+          console.error("Failed to create LangSmith run:", error);
+        }
+      }
+
       const state = await agentGraph.invoke({
         input: input.sponsorName,
         mode: input.mode,
@@ -73,6 +98,18 @@ export const agentRouter = createTRPCRouter({
           userId: ctx.session?.user?.id ?? null,
         },
       });
+
+      // Log completion to LangSmith if available
+      if (process.env.LANGCHAIN_API_KEY && langsmithRunId) {
+        try {
+          await langsmithClient.updateRun(langsmithRunId, {
+            outputs: result,
+            end_time: Date.now(),
+          });
+        } catch (error) {
+          console.error("Failed to update LangSmith run:", error);
+        }
+      }
 
       return result;
     }),

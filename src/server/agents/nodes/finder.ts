@@ -12,12 +12,12 @@ export async function finderNode(state: typeof GraphState.State) {
 
   const tavily = new TavilySearch({
     tavilyApiKey: env.TAVILY_API_KEY,
-    maxResults: 5,
+    maxResults: 3,
     searchDepth: "advanced",
   });
 
   const resp = (await tavily.invoke({
-    query: `${query} private equity portfolio site:com OR site:eu`,
+    query: `${query} portfolio companies`,
     searchDepth: "advanced",
     topic: "general",
   })) as TavilyResponse;

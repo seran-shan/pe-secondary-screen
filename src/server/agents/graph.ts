@@ -6,9 +6,10 @@ import { extractorNode } from "./nodes/extractor";
 import { normalizerNode } from "./nodes/normalizer";
 import { writerNode } from "./nodes/writer";
 import { enricherNode } from "./nodes/enricher";
+import { configureLangSmith } from "@/lib/langsmith";
 
-// Placeholder nodes (logic will be implemented in subsequent tasks)
-// finder node moved to its own file
+// Configure LangSmith tracing
+configureLangSmith();
 
 // Build the graph skeleton
 const builder = new StateGraph(GraphState)
