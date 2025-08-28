@@ -34,14 +34,14 @@ export function SponsorsImport() {
     const text = await file.text();
     try {
       const json = JSON.parse(text) as LegacySponsors;
-      const next = (json.sponsors || []).map((s) => {
+      const next = (json.sponsors ?? []).map((s) => {
         const sectors = new Set<string>();
-        (s.portfolio || []).forEach((p) => {
+        (s.portfolio ?? []).forEach((p) => {
           if (p.fsnSector) sectors.add(p.fsnSector);
         });
         return {
           name: s.name,
-          portcos: s.portfolio?.length || 0,
+          portcos: s.portfolio?.length ?? 0,
           sectors: Array.from(sectors).sort(),
         };
       });

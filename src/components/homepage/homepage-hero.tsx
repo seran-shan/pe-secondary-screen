@@ -3,7 +3,6 @@
 // Removed unused imports
 
 export function HomepageHero() {
-
   return (
     <div className="space-y-6">
       {/* Hero Title */}

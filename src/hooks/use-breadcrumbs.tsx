@@ -18,7 +18,7 @@ export function useBreadcrumbs() {
   const pathname = usePathname();
 
   // Check if we're on a sponsor detail page
-  const sponsorMatch = pathname.match(/^\/sponsors\/([^\/]+)$/);
+  const sponsorMatch = /^\/sponsors\/([^\/]+)$/.exec(pathname);
   const sponsorId = sponsorMatch?.[1];
 
   // Fetch sponsor data if we're on a sponsor page

@@ -86,7 +86,7 @@ export function ChartAreaInteractive() {
     );
   }
 
-  const filteredData = timelineData || [];
+  const filteredData = timelineData ?? [];
 
   return (
     <Card className="@container/card">
