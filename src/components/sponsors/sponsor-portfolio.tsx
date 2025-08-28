@@ -112,7 +112,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
             </SelectContent>
           </Select>
           
-          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+          <Select value={sortBy} onValueChange={(value: "asset" | "dateInvested" | "sector") => setSortBy(value)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
