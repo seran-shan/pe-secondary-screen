@@ -9,8 +9,6 @@ export const metadata: Metadata = {
   description: "Create a new account with GitHub.",
 };
 
-
-
 export default async function SignUpPage() {
   // Redirect if already signed in
   const session = await auth();

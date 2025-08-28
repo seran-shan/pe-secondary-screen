@@ -1,4 +1,28 @@
 "use client";
+
+// Define proper types for kbar data
+interface CompanySearchData {
+  id: number;
+  company: string;
+  sponsor: string;
+  invested?: string;
+  sector?: string;
+  source?: string;
+  status: "Active" | "Exited";
+  location?: string;
+  financials?: string;
+  nextSteps?: string;
+  note?: string;
+  comments?: Array<{
+    id: string;
+    content: string;
+    author: { id: string; name: string | null; image: string | null };
+    createdAt: string;
+  }>;
+  watchersCount: number;
+  isWatched: boolean;
+}
+
 import { navItems } from "@/constants/data";
 import { api } from "@/trpc/react";
 import {
@@ -94,8 +118,8 @@ const KBarComponent = ({
   companies,
 }: {
   children: React.ReactNode;
-  dynamicActions: any[];
-  companies: any[];
+  dynamicActions: unknown[];
+  companies: CompanySearchData[];
 }) => {
   useThemeSwitching();
   const { openCompanyDrawer } = useCompanyDrawer();
@@ -106,7 +130,7 @@ const KBarComponent = ({
       name: company.company,
       keywords: `company ${company.company} ${company.sponsor}`.toLowerCase(),
       section: "Companies",
-      subtitle: `${company.sponsor} • ${company.sector || "No sector"}`,
+      subtitle: `${company.sponsor} • ${company.sector ?? "No sector"}`,
       perform: () => {
         const companyDetail: CompanyDetail = {
           id: company.id.toString(),
@@ -121,7 +145,7 @@ const KBarComponent = ({
           nextSteps: company.nextSteps,
           status: company.status,
           signals: [], // Mock data
-          comments: company.comments || [],
+          comments: company.comments ?? [],
           watchersCount: company.watchersCount,
           isWatched: company.isWatched,
         };

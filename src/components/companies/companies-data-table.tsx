@@ -204,10 +204,12 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem>View</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => {
-            // TODO: Implement watchlist toggle functionality
-            console.log('Toggle watchlist for:', row.original);
-          }}>
+          <DropdownMenuItem
+            onClick={() => {
+              // TODO: Implement watchlist toggle functionality
+              console.log("Toggle watchlist for:", row.original);
+            }}
+          >
             Watchlist
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -630,8 +632,8 @@ function exportCsv(table: ReturnType<typeof useReactTable<FullCompanyData>>) {
     headers.join(","),
     ...rows.map((r) =>
       [
-        safeCsv(r.company ?? ''),
-        safeCsv(r.sponsor ?? ''),
+        safeCsv(r.company ?? ""),
+        safeCsv(r.sponsor ?? ""),
         safeCsv(r.invested ?? ""),
         safeCsv(r.sector ?? ""),
         safeCsv(r.source ?? ""),
@@ -649,7 +651,7 @@ function exportCsv(table: ReturnType<typeof useReactTable<FullCompanyData>>) {
 }
 
 function safeCsv(v: string | undefined) {
-  if (!v) return '';
+  if (!v) return "";
   if (v.includes(",") || v.includes("\n") || v.includes('"')) {
     return `"${v.replaceAll('"', '""')}"`;
   }
