@@ -13,11 +13,7 @@ import { IconBrandGithub } from "@tabler/icons-react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 
-interface SignInFormProps {
-  stars: number;
-}
-
-export function SignInForm({ stars: _stars }: SignInFormProps) {
+export function SignInForm() {
   return (
     <div className="relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <Link
