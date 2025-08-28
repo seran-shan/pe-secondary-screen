@@ -142,7 +142,7 @@ export const sponsorRouter = createTRPCRouter({
       const newSponsor = await ctx.db.sponsor.create({
         data: {
           name: trimmedName,
-          contact: input.contact || null,
+          contact: input.contact ?? null,
           // Note: We'll add normalizedName and notes when we update the schema
         },
         select: {

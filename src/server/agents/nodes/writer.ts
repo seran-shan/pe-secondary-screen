@@ -8,8 +8,8 @@ export async function writerNode(state: typeof GraphState.State) {
 
   // prefer explicit sponsorName from items if provided, else from input
   const sponsorName = (
-    items[0]?.sponsorName?.trim() ||
-    sponsorNameInput ||
+    items[0]?.sponsorName?.trim() ??
+    sponsorNameInput ??
     ""
   ).trim();
 

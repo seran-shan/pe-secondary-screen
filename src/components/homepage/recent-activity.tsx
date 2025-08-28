@@ -170,7 +170,7 @@ export function RecentActivity() {
                         {item.company}
                       </p>
                       <p className="text-muted-foreground text-xs">
-                        {item.sponsor} • {item.sector || "Unknown sector"}
+                        {item.sponsor} • {item.sector ?? "Unknown sector"}
                       </p>
                     </div>
                   </div>

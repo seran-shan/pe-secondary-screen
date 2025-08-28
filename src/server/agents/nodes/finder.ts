@@ -19,9 +19,9 @@ export async function finderNode(state: typeof GraphState.State) {
   });
 
   const urls =
-    resp?.results && Array.isArray((resp).results)
-      ? (resp).results
-          .map((r: any) => r?.url as string | undefined)
+    resp?.results && Array.isArray((resp as { results?: Array<{ url?: string }> }).results)
+      ? (resp as { results?: Array<{ url?: string }> }).results
+          .map((r) => r?.url)
           .filter(
             (u: unknown): u is string => typeof u === "string" && u.length > 0,
           )

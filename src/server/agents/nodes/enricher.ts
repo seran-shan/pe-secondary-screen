@@ -21,7 +21,7 @@ export async function enricherNode(state: typeof GraphState.State) {
         searchDepth: "basic",
         topic: "general",
       });
-      const first = (resp)?.results?.[0]?.url as string | undefined;
+      const first = (resp as { results?: Array<{ url?: string }> })?.results?.[0]?.url;
       if (first) webpage = first;
     }
 

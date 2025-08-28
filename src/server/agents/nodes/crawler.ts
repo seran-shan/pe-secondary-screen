@@ -15,7 +15,7 @@ export async function crawlerNode(state: typeof GraphState.State) {
         formats: ["markdown"],
         onlyMainContent: true,
       });
-      const content = (doc as any)?.markdown as string | undefined;
+      const content = (doc as { markdown?: string })?.markdown;
       if (content) crawled[url] = content;
     } catch (_) {
       // swallow per-URL errors; continue best-effort

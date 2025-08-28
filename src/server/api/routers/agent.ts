@@ -33,7 +33,7 @@ export const agentRouter = createTRPCRouter({
       return {
         hasExistingData: sponsor._count.portfolio > 0,
         companiesCount: sponsor._count.portfolio,
-        lastDiscoveryDate: sponsor.portfolio[0]?.createdAt || null,
+        lastDiscoveryDate: sponsor.portfolio[0]?.createdAt ?? null,
       };
     }),
 
