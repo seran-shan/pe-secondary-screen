@@ -11,7 +11,6 @@ import {
   IconHelpCircle,
   IconPhoto,
   IconDeviceLaptop,
-  IconLayoutDashboard,
   IconLoader2,
   IconLogin,
   type IconProps,
@@ -43,7 +42,6 @@ import {
 export type Icon = React.ComponentType<IconProps>;
 
 export const Icons = {
-  dashboard: IconLayoutDashboard,
   logo: IconCommand,
   login: IconLogin,
   close: IconX,

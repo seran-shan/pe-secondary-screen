@@ -27,7 +27,7 @@ export default async function SignUpPage() {
   // Redirect if already signed in
   const session = await auth();
   if (session?.user) {
-    redirect("/dashboard");
+    redirect("/");
   }
 
   const stars = await getGitHubStars();

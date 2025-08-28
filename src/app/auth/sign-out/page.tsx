@@ -49,7 +49,7 @@ export default async function SignOutPage() {
                 </Button>
               </form>
 
-              <Link href="/dashboard">
+              <Link href="/">
                 <Button variant="outline" className="w-full">
                   Cancel
                 </Button>
