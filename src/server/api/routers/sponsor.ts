@@ -126,7 +126,7 @@ export const sponsorRouter = createTRPCRouter({
         });
 
         const duplicates = existingSponsors.filter(
-          (sponsor) => isPotentialDuplicate(trimmedName, sponsor.name, 0.8), // Higher threshold for blocking
+          (sponsor) => isPotentialDuplicate(normalizedName, sponsor.name, 0.8), // Higher threshold for blocking
         );
 
         if (duplicates.length > 0) {

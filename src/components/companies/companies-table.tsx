@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type CompanyDetail } from "@/components/companies/company-drawer";
 import { useCompanyDrawer } from "./company-drawer-context";
 
 const CompanySchema = z.object({

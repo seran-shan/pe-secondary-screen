@@ -111,7 +111,7 @@ export function AgentProgressModal({
   }, [startTime, open]);
 
   const completedSteps = steps.filter((step) => step.status === "completed");
-  const currentStep = steps.find((step) => step.status === "running");
+  //   const currentStep = steps.find((step) => step.status === "running");
   const errorStep = steps.find((step) => step.status === "error");
   const isComplete = completedSteps.length === steps.length && !errorStep;
   const hasError = !!errorStep;
@@ -201,7 +201,7 @@ export function AgentProgressModal({
 
           {/* Steps List */}
           <div className="space-y-3">
-            {steps.map((step, index) => {
+            {steps.map((step, _) => {
               const Icon = step.icon;
               return (
                 <div

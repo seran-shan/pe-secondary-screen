@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
   IconFileText,
@@ -40,7 +39,7 @@ export function CompanyDetails({ company }: CompanyDetailsProps) {
         </CardHeader>
         <CardContent>
           {company.note ? (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
               {company.note}
             </p>
           ) : (
@@ -61,7 +60,7 @@ export function CompanyDetails({ company }: CompanyDetailsProps) {
         </CardHeader>
         <CardContent>
           {company.nextSteps ? (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
               {company.nextSteps}
             </p>
           ) : (
@@ -82,7 +81,7 @@ export function CompanyDetails({ company }: CompanyDetailsProps) {
         </CardHeader>
         <CardContent>
           {company.financials ? (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
               {company.financials}
             </p>
           ) : (
@@ -124,7 +123,7 @@ export function CompanyDetails({ company }: CompanyDetailsProps) {
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         {alert.createdAt.toLocaleDateString()}
                       </span>
                       {!alert.readAt && (

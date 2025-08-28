@@ -20,7 +20,6 @@ export async function finderNode(state: typeof GraphState.State) {
 
   const urls =
     resp?.results && Array.isArray(resp.results)
-
       ? resp.results
           .map((r: { url?: string }) => r?.url)
           .filter(

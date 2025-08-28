@@ -41,7 +41,7 @@ export function SponsorsList() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   {s.name}
-                  {(isOptimistic || isDiscovering) && (
+                  {(isOptimistic ?? isDiscovering) && (
                     <IconLoader2 className="text-muted-foreground size-4 animate-spin" />
                   )}
                 </CardTitle>

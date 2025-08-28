@@ -9,7 +9,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  type Row,
   type SortingState,
   useReactTable,
   type VisibilityState,
@@ -58,7 +57,6 @@ import {
 } from "@tabler/icons-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCompanyCard } from "./mobile-company-card";
-import { api } from "@/trpc/react";
 import { type CompanyDetail } from "@/components/companies/company-drawer";
 import { useCompanyDrawer } from "./company-drawer-context";
 
@@ -223,12 +221,10 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
 
 export function CompaniesDataTable({
   data: initialData,
-  refetch,
 }: {
   data: FullCompanyData[];
-  refetch: () => void;
 }) {
-  const [data, setData] = React.useState(() => initialData);
+  const [data] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -312,11 +308,11 @@ export function CompaniesDataTable({
 
   React.useEffect(() => {
     table.getColumn("sponsor")?.setFilterValue(sponsorFilter ?? "");
-  }, [sponsorFilter]);
+  }, [sponsorFilter, table]);
 
   React.useEffect(() => {
     table.getColumn("sector")?.setFilterValue(sectorFilter ?? "");
-  }, [sectorFilter]);
+  }, [sectorFilter, table]);
 
   const counts = React.useMemo(
     () => ({

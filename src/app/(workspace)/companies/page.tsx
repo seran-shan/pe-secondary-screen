@@ -7,7 +7,7 @@ import { CompaniesDataTable } from "@/components/companies/companies-data-table"
 import { api } from "@/trpc/react";
 
 export default function CompaniesPage() {
-  const { data: companies, isLoading, refetch } = api.company.getAll.useQuery(
+  const { data: companies, isLoading } = api.company.getAll.useQuery(
     undefined,
     {
       staleTime: 60_000,
@@ -42,7 +42,7 @@ export default function CompaniesPage() {
           />
         </div>
         <Separator />
-        <CompaniesDataTable data={companies ?? []} refetch={refetch} />
+        <CompaniesDataTable data={companies ?? []} />
       </div>
     </PageContainer>
   );

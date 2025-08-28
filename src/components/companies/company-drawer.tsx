@@ -26,9 +26,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   IconExternalLink,
-  IconHeart,
-  IconHeartFilled,
-  IconPlus,
   IconCalendar,
   IconBuilding,
   IconTag,
@@ -102,12 +99,11 @@ export function CompanyDrawer(props: {
     onMutate: async (newComment) => {
       if (!session?.user) return;
 
-      // Create optimistic comment
       const optimisticComment = {
         id: `optimistic-${Date.now()}`,
         content: newComment.content,
         author: {
-          id: session.user.id!,
+          id: session.user.id,
           name: session.user.name ?? session.user.email ?? "User",
           image: session.user.image ?? null,
         },
@@ -118,7 +114,6 @@ export function CompanyDrawer(props: {
       setNewComment("");
     },
     onSuccess: (newComment) => {
-      // Replace optimistic comment with real one immediately
       setOptimisticComments((prev) => {
         const withoutOptimistic = (prev ?? []).filter(
           (c) => !c.id.startsWith("optimistic-"),
@@ -283,12 +278,12 @@ export function CompanyDrawer(props: {
                     </>
                   )}
                 </Button>
-                {data?.watchersCount && (
+                {data?.watchersCount ? (
                   <span className="text-muted-foreground text-sm">
                     {data.watchersCount} watcher
                     {data.watchersCount !== 1 ? "s" : ""}
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           </DrawerHeader>
