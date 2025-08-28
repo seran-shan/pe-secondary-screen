@@ -9,8 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { GitHubLogoIcon } from "@radix-ui/react-icons";
-import { IconStar, IconBrandGithub } from "@tabler/icons-react";
+import { IconBrandGithub } from "@tabler/icons-react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 
@@ -18,7 +17,7 @@ interface SignInFormProps {
   stars: number;
 }
 
-export function SignInForm({ stars }: SignInFormProps) {
+export function SignInForm({ stars: _stars }: SignInFormProps) {
   return (
     <div className="relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <Link

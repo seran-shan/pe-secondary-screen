@@ -1,16 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import {
-  IconBuilding,
-  IconChartAreaLine,
-  IconSearch,
-} from "@tabler/icons-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// Removed unused imports
 
 export function HomepageHero() {
-  const router = useRouter();
 
   return (
     <div className="space-y-6">

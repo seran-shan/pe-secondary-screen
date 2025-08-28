@@ -262,7 +262,7 @@ export function SponsorActions({
       !portfolioStatus?.hasExistingData ||
       portfolioStatus?.companiesCount === 0
     ) {
-      simulateAgentProgressWithMode("append");
+      void simulateAgentProgressWithMode("append");
     } else {
       setConfirmationDialogOpen(true);
     }
@@ -270,7 +270,7 @@ export function SponsorActions({
 
   const handleConfirmDiscovery = (mode: DiscoveryMode) => {
     setConfirmationDialogOpen(false);
-    simulateAgentProgressWithMode(mode);
+    void simulateAgentProgressWithMode(mode);
   };
 
   const handleCancelAgent = () => {
