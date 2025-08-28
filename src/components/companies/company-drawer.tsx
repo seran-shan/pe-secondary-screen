@@ -196,7 +196,7 @@ export function CompanyDrawer(props: {
   };
 
   const handleUpdateComment = () => {
-    if (editingComment && editingComment.content.trim()) {
+    if (editingComment?.content.trim()) {
       updateComment.mutate({
         id: editingComment.id,
         content: editingComment.content,

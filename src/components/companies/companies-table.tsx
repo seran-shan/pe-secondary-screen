@@ -31,22 +31,34 @@ const CompanySchema = z.object({
   score: z.number().optional(),
   signals: z.array(z.string()).optional(),
   status: z.string().optional(),
-});
+}) satisfies z.ZodType;
 
 export type CompanyRow = z.infer<typeof CompanySchema>;
 
 export function CompaniesTable(props: { data: CompanyRow[] }) {
+  // Validate incoming data with Zod schema
+  const validatedData = React.useMemo(() => {
+    return props.data.filter((item) => {
+      const result = CompanySchema.safeParse(item);
+      if (!result.success) {
+        console.warn("Invalid company data:", item, result.error);
+        return false;
+      }
+      return true;
+    });
+  }, [props.data]);
+
   const [query, setQuery] = React.useState("");
   const [sector, setSector] = React.useState<string | undefined>(undefined);
   const { openCompanyDrawer } = useCompanyDrawer();
 
   const sectors = React.useMemo(() => {
     const s = new Set<string>();
-    props.data.forEach((r) => r.sector && s.add(r.sector));
+    validatedData.forEach((r) => r.sector && s.add(r.sector));
     return Array.from(s).sort();
-  }, [props.data]);
+  }, [validatedData]);
 
-  const filtered = props.data.filter((r) => {
+  const filtered = validatedData.filter((r) => {
     const q = query.trim().toLowerCase();
     const matchesQuery =
       !q ||
