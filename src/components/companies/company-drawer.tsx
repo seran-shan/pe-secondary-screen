@@ -95,7 +95,7 @@ export function CompanyDrawer(props: {
 
   React.useEffect(() => {
     // Always sync with server data, clear any stale optimistic updates
-    setOptimisticComments(data?.comments || []);
+    setOptimisticComments(data?.comments ?? []);
   }, [data?.comments]);
 
   const createComment = api.comment.create.useMutation({
@@ -108,19 +108,19 @@ export function CompanyDrawer(props: {
         content: newComment.content,
         author: {
           id: session.user.id!,
-          name: session.user.name || session.user.email || "User",
-          image: session.user.image || null,
+          name: session.user.name ?? session.user.email ?? "User",
+          image: session.user.image ?? null,
         },
         createdAt: new Date().toISOString(),
       };
 
-      setOptimisticComments((prev) => [optimisticComment, ...(prev || [])]);
+      setOptimisticComments((prev) => [optimisticComment, ...(prev ?? [])]);
       setNewComment("");
     },
     onSuccess: (newComment) => {
       // Replace optimistic comment with real one immediately
       setOptimisticComments((prev) => {
-        const withoutOptimistic = (prev || []).filter(
+        const withoutOptimistic = (prev ?? []).filter(
           (c) => !c.id.startsWith("optimistic-"),
         );
         const realComment = {
@@ -128,7 +128,7 @@ export function CompanyDrawer(props: {
           content: newComment.content,
           author: {
             id: newComment.author.id,
-            name: newComment.author.name || newComment.author.email || "User",
+            name: newComment.author.name ?? newComment.author.email ?? "User",
             image: newComment.author.image,
           },
           createdAt: newComment.createdAt.toISOString(),
@@ -141,7 +141,7 @@ export function CompanyDrawer(props: {
     onError: (err, variables) => {
       // Remove failed optimistic comment and restore text
       setOptimisticComments((prev) =>
-        (prev || []).filter((c) => !c.id.startsWith("optimistic-")),
+        (prev ?? []).filter((c) => !c.id.startsWith("optimistic-")),
       );
       setNewComment(variables.content);
     },
@@ -156,7 +156,7 @@ export function CompanyDrawer(props: {
             comment.id === updatedComment.id
               ? { ...comment, content: updatedComment.content }
               : comment,
-          ) || [],
+          ) ?? [],
       );
       setEditingComment(null);
     },
@@ -174,7 +174,7 @@ export function CompanyDrawer(props: {
     onMutate: async (variables) => {
       // Optimistic removal
       setOptimisticComments(
-        (prev) => prev?.filter((comment) => comment.id !== variables.id) || [],
+        (prev) => prev?.filter((comment) => comment.id !== variables.id) ?? [],
       );
     },
     onSuccess: () => {
@@ -468,7 +468,7 @@ export function CompanyDrawer(props: {
                             {comment.author.image && (
                               <AvatarImage
                                 src={comment.author.image}
-                                alt={comment.author.name || "User"}
+                                alt={comment.author.name ?? "User"}
                               />
                             )}
                             <AvatarFallback className="text-xs font-medium">
