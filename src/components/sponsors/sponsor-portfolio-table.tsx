@@ -102,7 +102,7 @@ const portfolioCompanySchema = z.object({
   comments: z.number(),
   watchers: z.number(),
   _optimistic: z.boolean().optional(),
-});
+}) satisfies z.ZodType;
 
 type PortfolioCompanyRow = z.infer<typeof portfolioCompanySchema>;
 
@@ -326,19 +326,28 @@ export function SponsorPortfolioTable({
   // Transform data for the table
   const data: PortfolioCompanyRow[] = React.useMemo(
     () =>
-      companies.map((company) => ({
-        id: company.id,
-        company: company.asset,
-        invested: company.dateInvested
-          ? company.dateInvested.toISOString().slice(0, 10)
-          : undefined,
-        sector: company.fsnSector ?? undefined,
-        location: company.location ?? undefined,
-        source: company.webpage ?? undefined,
-        comments: company.comments?.length ?? 0,
-        watchers: company.watchlistedBy?.length ?? 0,
-        _optimistic: company._optimistic,
-      })),
+      companies
+        .map((company) => ({
+          id: company.id,
+          company: company.asset,
+          invested: company.dateInvested
+            ? company.dateInvested.toISOString().slice(0, 10)
+            : undefined,
+          sector: company.fsnSector ?? undefined,
+          location: company.location ?? undefined,
+          source: company.webpage ?? undefined,
+          comments: company.comments?.length ?? 0,
+          watchers: company.watchlistedBy?.length ?? 0,
+          _optimistic: company._optimistic,
+        }))
+        .filter((row) => {
+          const result = portfolioCompanySchema.safeParse(row);
+          if (!result.success) {
+            console.warn("Invalid portfolio company data:", row, result.error);
+            return false;
+          }
+          return true;
+        }),
     [companies],
   );
 
