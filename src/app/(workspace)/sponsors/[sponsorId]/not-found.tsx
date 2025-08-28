@@ -27,13 +27,15 @@ export default function SponsorNotFound() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <Button asChild>
-              <Link href="/sponsors">
+              <Link href="/sponsors" className="flex items-center gap-2">
                 <IconArrowLeft className="size-4" />
                 Back to Sponsors
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/companies">View Companies</Link>
+              <Link href="/companies" className="flex items-center gap-2">
+                View Companies
+              </Link>
             </Button>
           </CardContent>
         </Card>
