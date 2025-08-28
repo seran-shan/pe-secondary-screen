@@ -102,8 +102,8 @@ export function DiscoveryConfirmationDialog({
             <IconSearch className="size-5 text-blue-500" />
             Portfolio Discovery for {sponsorName}
           </DialogTitle>
-          <DialogDescription className="space-y-2">
-            <div className="flex items-center gap-2 text-sm">
+          <DialogDescription>
+            <span className="flex items-center gap-2">
               <IconInfoCircle className="size-4" />
               This sponsor already has{" "}
               <Badge variant="secondary" className="text-xs">
@@ -118,7 +118,7 @@ export function DiscoveryConfirmationDialog({
                   </Badge>
                 </>
               )}
-            </div>
+            </span>
           </DialogDescription>
         </DialogHeader>
 
