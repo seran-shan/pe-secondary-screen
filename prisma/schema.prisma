@@ -1,67 +1,56 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-  // Further reading:
-  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Sponsor {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id        String             @id @default(cuid())
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
   name      String             @unique
   contact   String?
   portfolio PortfolioCompany[]
 }
 
 model PortfolioCompany {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  asset        String
-  dateInvested DateTime?
-  fsnSector    String?
-  webpage      String?
-  note         String?
-  nextSteps    String?
-  financials   String?
-  location     String?
-
-  sponsor   Sponsor @relation(fields: [sponsorId], references: [id])
-  sponsorId String
-
-  comments      Comment[]
-  watchlistedBy Watchlist[]
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  asset         String
+  dateInvested  DateTime?
+  fsnSector     String?
+  webpage       String?
+  note          String?
+  nextSteps     String?
+  financials    String?
+  location      String?
+  sponsorId     String
   Alert         Alert[]
+  comments      Comment[]
+  sponsor       Sponsor     @relation(fields: [sponsorId], references: [id])
+  watchlistedBy Watchlist[]
 }
 
-// Necessary for Next auth
 model Account {
   id                       String  @id @default(cuid())
   userId                   String
   type                     String
   provider                 String
   providerAccountId        String
-  refresh_token            String? // @db.Text
-  access_token             String? // @db.Text
+  refresh_token            String?
+  access_token             String?
   expires_at               Int?
   token_type               String?
   scope                    String?
-  id_token                 String? // @db.Text
+  id_token                 String?
   session_state            String?
-  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   refresh_token_expires_in Int?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -81,11 +70,11 @@ model User {
   emailVerified DateTime?
   image         String?
   accounts      Account[]
-  sessions      Session[]
-  comments      Comment[]
-  watchlist     Watchlist[]
   alerts        Alert[]
+  comments      Comment[]
   runs          Run[]
+  sessions      Session[]
+  watchlist     Watchlist[]
 }
 
 model VerificationToken {
@@ -97,57 +86,49 @@ model VerificationToken {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  content String
-
-  author   User   @relation(fields: [authorId], references: [id])
-  authorId String
-
-  company   PortfolioCompany @relation(fields: [companyId], references: [id])
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  content   String
+  authorId  String
   companyId String
+  author    User             @relation(fields: [authorId], references: [id])
+  company   PortfolioCompany @relation(fields: [companyId], references: [id])
 }
 
 model Watchlist {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  user      User             @relation(fields: [userId], references: [id])
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
   userId    String
-  company   PortfolioCompany @relation(fields: [companyId], references: [id])
   companyId String
+  company   PortfolioCompany @relation(fields: [companyId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
 
   @@unique([userId, companyId])
 }
 
 model Alert {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now())
+  id        String            @id @default(cuid())
+  createdAt DateTime          @default(now())
   readAt    DateTime?
-
-  type    String
-  message String
-
-  user      User              @relation(fields: [userId], references: [id])
+  type      String
+  message   String
   userId    String
-  company   PortfolioCompany? @relation(fields: [companyId], references: [id])
   companyId String?
+  company   PortfolioCompany? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user      User              @relation(fields: [userId], references: [id])
 }
 
 model Run {
-  id         String   @id @default(cuid())
-  createdAt  DateTime @default(now())
-  durationMs Int
-
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  durationMs         Int
   inputSponsor       String
   portfolioUrlsCount Int
   crawledCount       Int
   extractedCount     Int
   normalizedCount    Int
   enrichedCount      Int
-
-  user   User?   @relation(fields: [userId], references: [id])
-  userId String?
+  userId             String?
+  user               User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
 }
