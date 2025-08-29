@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { ExternalLink, BarChart3 } from "lucide-react";
-import { env } from "@/env";
 
 interface LangSmithLinkProps {
   runId?: string;
@@ -21,8 +20,8 @@ export function LangSmithLink({
   }
 
   const baseUrl =
-    process.env.NEXT_PUBLIC_LANGSMITH_ENDPOINT || "https://smith.langchain.com";
-  const project = projectName || "pe-secondary-screen";
+    process.env.NEXT_PUBLIC_LANGSMITH_ENDPOINT ?? "https://smith.langchain.com";
+  const project = projectName ?? "pe-secondary-screen";
 
   const projectUrl = `${baseUrl}/o/${project}`;
   const runUrl = runId ? `${baseUrl}/o/${project}/r/${runId}` : projectUrl;
