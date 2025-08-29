@@ -13,7 +13,7 @@ export const navItems: NavItem[] = [
 
   {
     title: "Sponsors",
-    url: "/sponsors",
+    url: "/workspace/sponsors",
     icon: "sponsors",
     shortcut: ["s", "s"],
     isActive: false,
@@ -21,7 +21,7 @@ export const navItems: NavItem[] = [
   },
   {
     title: "Companies",
-    url: "/companies",
+    url: "/workspace/companies",
     icon: "company",
     shortcut: ["c", "c"],
     isActive: false,
@@ -29,7 +29,7 @@ export const navItems: NavItem[] = [
   },
   {
     title: "Watchlist",
-    url: "/watchlist",
+    url: "/workspace/watchlist",
     icon: "watchlist",
     shortcut: ["w", "w"],
     isActive: false,
@@ -37,7 +37,7 @@ export const navItems: NavItem[] = [
   },
   {
     title: "Alerts",
-    url: "/alerts",
+    url: "/workspace/alerts",
     icon: "warning",
     shortcut: ["a", "a"],
     isActive: false,
@@ -45,7 +45,7 @@ export const navItems: NavItem[] = [
   },
   {
     title: "History",
-    url: "/history",
+    url: "/workspace/history",
     icon: "history",
     shortcut: ["h", "i"],
     isActive: false,
@@ -53,7 +53,7 @@ export const navItems: NavItem[] = [
   },
   {
     title: "Settings",
-    url: "/settings",
+    url: "/workspace/settings",
     icon: "settings",
     shortcut: ["g", "g"],
     isActive: false,

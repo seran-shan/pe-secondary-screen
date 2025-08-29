@@ -141,7 +141,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <Link
-                          href={`/companies/${company.id}`}
+                          href={`/workspace/companies/${company.id}`}
                           className="font-semibold hover:underline"
                         >
                           {company.asset}
@@ -193,7 +193,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
                         asChild
                         className="flex-1"
                       >
-                        <Link href={`/companies/${company.id}`}>
+                        <Link href={`/workspace/companies/${company.id}`}>
                           View Details
                         </Link>
                       </Button>

@@ -129,7 +129,7 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
       refreshSponsors();
 
       // Navigate to new sponsor page
-      router.push(`/sponsors/${newSponsor.id}`);
+      router.push(`/workspace/sponsors/${newSponsor.id}`);
     },
     onError: (error, variables, context) => {
       // Remove optimistic sponsor on error
@@ -168,7 +168,7 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
     setShowSimilarSponsors(false);
     setPendingFormData(null);
     onOpenChange(false);
-    router.push(`/sponsors/${sponsorId}`);
+    router.push(`/workspace/sponsors/${sponsorId}`);
   };
 
   const handleCloseModal = () => {

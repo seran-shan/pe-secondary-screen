@@ -35,7 +35,7 @@ export function DeleteSponsorDialog({
     onSuccess: () => {
       onOpenChange(false);
       // Navigate back to sponsors list
-      router.push("/sponsors");
+      router.push("/workspace/sponsors");
       // The page will automatically refetch when we navigate
     },
     onError: (error) => {

@@ -7,7 +7,7 @@ export default function WorkspacePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/sponsors");
+    router.replace("/workspace/sponsors");
   }, [router]);
 
   return null;

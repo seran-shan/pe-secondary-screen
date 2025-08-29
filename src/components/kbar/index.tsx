@@ -98,7 +98,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       keywords: `sponsor ${s.name}`.toLowerCase(),
       section: "Sponsors",
       subtitle: "Open sponsor profile",
-      perform: () => router.push(`/sponsors/${s.id}`),
+      perform: () => router.push(`/workspace/sponsors/${s.id}`),
     }));
   }, [router, sponsors.data]);
 
