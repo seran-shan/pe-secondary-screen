@@ -1,6 +1,14 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function WorkspacePage() {
-  // Redirect to sponsors as the main workspace page
-  redirect("/sponsors");
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/sponsors");
+  }, [router]);
+
+  return null;
 }

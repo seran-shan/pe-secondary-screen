@@ -16,6 +16,9 @@ const config = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
+  },
 };
 
 export default config;
