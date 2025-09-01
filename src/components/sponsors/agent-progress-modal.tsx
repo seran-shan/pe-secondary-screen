@@ -46,12 +46,6 @@ const getAgentSteps = (portfolioUrl?: string | null) => [
       : "Searching for portfolio company pages",
   },
   {
-    id: "crawler",
-    name: "Crawling Content",
-    icon: IconWorldWww,
-    description: "Extracting content from web pages",
-  },
-  {
     id: "extractor",
     name: "AI Extraction",
     icon: IconBrain,

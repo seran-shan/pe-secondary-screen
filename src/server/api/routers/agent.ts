@@ -38,6 +38,7 @@ export const agentRouter = createTRPCRouter({
       void (async () => {
         try {
           runRegistry.startRun(run.runId);
+
           const state = await agentGraph.invoke({
             input: sponsor.name,
             mode: input.mode,
@@ -52,7 +53,6 @@ export const agentRouter = createTRPCRouter({
             state.enriched?.length ?? 0,
             {
               portfolioUrls: state.portfolioUrls?.length ?? 0,
-              crawled: Object.keys(state.crawled ?? {}).length,
               extracted: state.extracted?.length ?? 0,
               normalized: state.normalized?.length ?? 0,
               enriched: state.enriched?.length ?? 0,
@@ -154,7 +154,6 @@ export const agentRouter = createTRPCRouter({
 
       const result = {
         portfolioUrls: state.portfolioUrls ?? [],
-        crawledCount: Object.keys(state.crawled ?? {}).length,
         extractedCount: state.extracted?.length ?? 0,
         normalizedCount: state.normalized?.length ?? 0,
         enrichedCount: state.enriched?.length ?? 0,
@@ -166,7 +165,6 @@ export const agentRouter = createTRPCRouter({
           durationMs,
           inputSponsor: input.sponsorName,
           portfolioUrlsCount: result.portfolioUrls.length,
-          crawledCount: result.crawledCount,
           extractedCount: result.extractedCount,
           normalizedCount: result.normalizedCount,
           enrichedCount: result.enrichedCount,

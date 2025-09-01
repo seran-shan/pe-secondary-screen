@@ -1,13 +1,24 @@
 import { z } from "zod";
-import { type GraphState, PortfolioCompanySchema } from "../state";
+import {
+  type GraphState,
+  PortfolioCompanySchema,
+  type PortfolioCompany,
+} from "../state";
 import { runRegistry } from "@/server/agents/run-registry";
 
-const ArraySchema = z.array(PortfolioCompanySchema).min(1).optional();
-
 export async function normalizerNode(state: typeof GraphState.State) {
-  const extracted = state.extracted ?? [];
-  const parsed = ArraySchema.safeParse(extracted);
-  const items = parsed.success ? (parsed.data ?? []) : [];
+  const extracted = (state.extracted as PortfolioCompany[]) ?? [];
+  const items: PortfolioCompany[] = [];
+  for (const item of extracted) {
+    const parsed = PortfolioCompanySchema.safeParse(item);
+    if (parsed.success) {
+      items.push(parsed.data);
+    } else {
+      console.error(`[Normalizer] Validation failed:`, parsed.error.format());
+      console.error(`[Normalizer] Item:`, item);
+    }
+  }
+
   const runId = state.runId;
   if (runId) runRegistry.stepStart(runId, "normalizer");
 

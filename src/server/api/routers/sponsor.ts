@@ -221,13 +221,7 @@ export const sponsorRouter = createTRPCRouter({
       // Check if sponsor exists
       const sponsor = await ctx.db.sponsor.findUnique({
         where: { id: input.id },
-        include: {
-          _count: {
-            select: {
-              portfolio: true,
-            },
-          },
-        },
+        select: { id: true }, // Select only ID, no need for counts anymore
       });
 
       if (!sponsor) {
@@ -237,17 +231,17 @@ export const sponsorRouter = createTRPCRouter({
         });
       }
 
-      // Check if sponsor has portfolio companies
-      if (sponsor._count.portfolio > 0) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: `Cannot delete sponsor with ${sponsor._count.portfolio} portfolio companies. Please remove or transfer all portfolio companies first.`,
+      // Perform a transaction to delete portfolio companies and then the sponsor
+      await ctx.db.$transaction(async (prisma) => {
+        // 1. Delete all portfolio companies associated with the sponsor
+        await prisma.portfolioCompany.deleteMany({
+          where: { sponsorId: input.id },
         });
-      }
 
-      // Delete the sponsor
-      await ctx.db.sponsor.delete({
-        where: { id: input.id },
+        // 2. Delete the sponsor itself
+        await prisma.sponsor.delete({
+          where: { id: input.id },
+        });
       });
 
       return { success: true, deletedId: input.id };

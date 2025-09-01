@@ -2,7 +2,6 @@ import { randomUUID } from "crypto";
 
 export type StepId =
   | "finder"
-  | "crawler"
   | "extractor"
   | "normalizer"
   | "enricher"
@@ -54,7 +53,6 @@ export interface RunState {
 
 const initialSteps = (): Record<StepId, StepState> => ({
   finder: { id: "finder", status: "pending" },
-  crawler: { id: "crawler", status: "pending" },
   extractor: { id: "extractor", status: "pending" },
   normalizer: { id: "normalizer", status: "pending" },
   enricher: { id: "enricher", status: "pending" },

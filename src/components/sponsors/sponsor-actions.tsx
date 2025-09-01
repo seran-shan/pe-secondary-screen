@@ -175,13 +175,6 @@ export function SponsorActions({
         status: "pending" as const,
       },
       {
-        id: "crawler",
-        name: "Crawling Content",
-        icon: () => null,
-        description: "Extracting content from web pages",
-        status: "pending" as const,
-      },
-      {
         id: "extractor",
         name: "AI Extraction",
         icon: () => null,

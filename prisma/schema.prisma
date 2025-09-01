@@ -126,7 +126,7 @@ model Run {
   durationMs         Int
   inputSponsor       String
   portfolioUrlsCount Int
-  crawledCount       Int
+  crawledCount       Int?
   extractedCount     Int
   normalizedCount    Int
   enrichedCount      Int
