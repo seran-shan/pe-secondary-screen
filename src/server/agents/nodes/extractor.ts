@@ -34,7 +34,7 @@ const firecrawlSchema = {
   description: "A list of portfolio companies.",
 };
 
-interface FirecrawlExtractResult {
+interface FirecrawlResponse {
   success: boolean;
   data?: {
     companies?: PortfolioCompany[];
@@ -52,8 +52,10 @@ export async function extractorNode(state: typeof GraphState.State) {
 
   let extracted: PortfolioCompany[] = [];
 
-  const extractWithFirecrawl = async (enableWebSearch: boolean) => {
-    const result = (await client.extract({
+  const extractWithFirecrawl = async (
+    enableWebSearch: boolean,
+  ): Promise<PortfolioCompany[]> => {
+    const result = await client.extract({
       urls,
       schema: {
         type: "object",
@@ -68,20 +70,33 @@ export async function extractorNode(state: typeof GraphState.State) {
       prompt:
         "From the provided webpage, extract the list of companies that are part of the current investment portfolio.",
       enableWebSearch,
-    })) as FirecrawlExtractResult;
+    });
 
     console.log(`Firecrawl result (webSearch: ${enableWebSearch}):`, result);
 
-    if (result.error) {
-      throw new Error(result.error);
+    // Handle the response safely - Firecrawl can return either a single result or array
+    if (Array.isArray(result)) {
+      // Multiple URL results
+      const allCompanies: PortfolioCompany[] = [];
+      for (const res of result) {
+        const response = res as FirecrawlResponse;
+        if (response.error) {
+          console.warn(`Firecrawl error for URL: ${response.error}`);
+          continue;
+        }
+        if (response.data?.companies) {
+          allCompanies.push(...response.data.companies);
+        }
+      }
+      return allCompanies;
+    } else {
+      // Single result
+      const response = result as FirecrawlResponse;
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data?.companies ?? [];
     }
-
-    // Firecrawl returns data per-URL, so we need to aggregate
-    const allCompanies = Array.isArray(result)
-      ? result.flatMap((r) => r.data?.companies ?? [])
-      : (result.data?.companies ?? []);
-
-    return allCompanies;
   };
 
   try {

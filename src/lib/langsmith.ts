@@ -10,7 +10,6 @@ export const langsmithClient = new Client({
 // Configure LangSmith tracing
 // Add global type declaration for our flag
 declare global {
-  // eslint-disable-next-line no-var
   var __langsmithConfigured: boolean | undefined;
 }
 

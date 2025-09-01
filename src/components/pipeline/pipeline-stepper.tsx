@@ -18,11 +18,6 @@ export function PipelineStepper(props: { data: RunResult }) {
       complete: (data.portfolioUrls?.length ?? 0) > 0,
     },
     {
-      key: "Crawler",
-      label: "Crawler",
-      complete: (data.crawledCount ?? 0) > 0,
-    },
-    {
       key: "Extractor",
       label: "Extractor",
       complete: (data.extractedCount ?? 0) > 0,
@@ -98,7 +93,6 @@ export function PipelineStepper(props: { data: RunResult }) {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           <Badge variant="secondary">URLs: {data.portfolioUrls.length}</Badge>
-          <Badge variant="secondary">Crawled: {data.crawledCount}</Badge>
           <Badge variant="secondary">Extracted: {data.extractedCount}</Badge>
           <Badge variant="secondary">Normalized: {data.normalizedCount}</Badge>
           <Badge variant="secondary">Enriched: {data.enrichedCount}</Badge>
