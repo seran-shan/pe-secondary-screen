@@ -34,6 +34,7 @@ import {
 } from "@tabler/icons-react";
 import { api } from "@/trpc/react";
 import { useSponsors } from "./sponsors-provider";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 
 const addSponsorSchema = z.object({
   name: z
@@ -86,14 +87,30 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
 
   const sponsorName = form.watch("name");
 
-  // Query for similar sponsors with debouncing
-  const { data: similarSponsors } = api.sponsor.findSimilar.useQuery(
+  // T3-stack way: Manual control with proper debouncing
+  const similarSponsorsQuery = api.sponsor.findSimilar.useQuery(
     { name: sponsorName },
     {
-      enabled: sponsorName.length > 2 && !showSimilarSponsors,
-      staleTime: 30000, // Cache for 30 seconds
+      enabled: false, // Don't auto-fetch
+      staleTime: 5 * 60 * 1000, // 5 min cache - longer is better
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     },
   );
+
+  // Use our existing debounce hook like Theo intended
+  const debouncedSearch = useDebouncedCallback((name: string) => {
+    if (name.length > 2 && !showSimilarSponsors) {
+      void similarSponsorsQuery.refetch();
+    }
+  }, 500);
+
+  // Trigger search on input change
+  React.useEffect(() => {
+    debouncedSearch(sponsorName);
+  }, [sponsorName, debouncedSearch, showSimilarSponsors]);
+
+  const similarSponsors = similarSponsorsQuery.data;
 
   const createSponsorMutation = api.sponsor.create.useMutation({
     onMutate: async (variables) => {
@@ -129,7 +146,7 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
       refreshSponsors();
 
       // Navigate to new sponsor page
-      router.push(`/workspace/sponsors/${newSponsor.id}`);
+      router.push(`/sponsors/${newSponsor.id}`);
     },
     onError: (error, variables, context) => {
       // Remove optimistic sponsor on error
@@ -168,7 +185,7 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
     setShowSimilarSponsors(false);
     setPendingFormData(null);
     onOpenChange(false);
-    router.push(`/workspace/sponsors/${sponsorId}`);
+    router.push(`/sponsors/${sponsorId}`);
   };
 
   const handleCloseModal = () => {

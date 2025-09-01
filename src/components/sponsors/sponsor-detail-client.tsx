@@ -118,7 +118,7 @@ export function SponsorDetailClient({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild>
-              <Link href="/workspace/sponsors">
+              <Link href="/sponsors">
                 <IconArrowLeft className="size-4" />
                 <span className="sr-only">Back to Sponsors</span>
               </Link>

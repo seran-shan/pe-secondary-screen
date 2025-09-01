@@ -67,7 +67,7 @@ export function RecentActivity() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push("/workspace/history")}
+            onClick={() => router.push("/history")}
           >
             View all
             <IconChevronRight className="ml-1 size-4" />
@@ -139,7 +139,7 @@ export function RecentActivity() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push("/workspace/watchlist")}
+              onClick={() => router.push("/watchlist")}
             >
               View all
               <IconChevronRight className="ml-1 size-4" />
@@ -202,7 +202,7 @@ export function RecentActivity() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push("/workspace/alerts")}
+              onClick={() => router.push("/alerts")}
             >
               View all
               <IconChevronRight className="ml-1 size-4" />

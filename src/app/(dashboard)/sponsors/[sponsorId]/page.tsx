@@ -51,7 +51,6 @@ export default async function SponsorDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Convert to the format expected by SponsorsProvider
   const sponsorForProvider: Sponsor = {
     id: sponsor.id,
     name: sponsor.name,

@@ -35,21 +35,21 @@ export function SponsorHeader({ sponsor }: SponsorHeaderProps) {
     ...new Set(
       sponsor.portfolio
         .map((company) => company.fsnSector)
-        .filter(Boolean) as string[]
+        .filter(Boolean) as string[],
     ),
   ];
   const recentInvestments = sponsor.portfolio.filter(
     (company) =>
       company.dateInvested &&
       new Date().getTime() - company.dateInvested.getTime() <
-        365 * 24 * 60 * 60 * 1000 // Last year
+        365 * 24 * 60 * 60 * 1000, // Last year
   ).length;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/workspace/sponsors">
+          <Link href="/sponsors">
             <IconArrowLeft className="mr-2 h-4 w-4" />
             Back to Sponsors
           </Link>
@@ -72,7 +72,7 @@ export function SponsorHeader({ sponsor }: SponsorHeaderProps) {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="flex items-center gap-2">
-              <IconBuilding className="h-4 w-4 text-muted-foreground" />
+              <IconBuilding className="text-muted-foreground h-4 w-4" />
               <div>
                 <p className="text-sm font-medium">Portfolio Size</p>
                 <p className="text-lg font-bold">{portfolioCount}</p>
@@ -80,7 +80,7 @@ export function SponsorHeader({ sponsor }: SponsorHeaderProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <IconChartBar className="h-4 w-4 text-muted-foreground" />
+              <IconChartBar className="text-muted-foreground h-4 w-4" />
               <div>
                 <p className="text-sm font-medium">Sectors</p>
                 <p className="text-lg font-bold">{sectors.length}</p>
@@ -88,7 +88,7 @@ export function SponsorHeader({ sponsor }: SponsorHeaderProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <IconCalendar className="h-4 w-4 text-muted-foreground" />
+              <IconCalendar className="text-muted-foreground h-4 w-4" />
               <div>
                 <p className="text-sm font-medium">Recent Investments</p>
                 <p className="text-lg font-bold">{recentInvestments}</p>
@@ -97,10 +97,10 @@ export function SponsorHeader({ sponsor }: SponsorHeaderProps) {
 
             {sponsor.contact && (
               <div className="flex items-center gap-2">
-                <IconMail className="h-4 w-4 text-muted-foreground" />
+                <IconMail className="text-muted-foreground h-4 w-4" />
                 <div>
                   <p className="text-sm font-medium">Contact</p>
-                  <p className="text-sm text-muted-foreground">Available</p>
+                  <p className="text-muted-foreground text-sm">Available</p>
                 </div>
               </div>
             )}

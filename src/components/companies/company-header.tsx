@@ -44,7 +44,7 @@ export function CompanyHeader({
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/workspace/companies">
+          <Link href="/companies">
             <IconArrowLeft className="mr-2 h-4 w-4" />
             Back to Companies
           </Link>
@@ -60,7 +60,7 @@ export function CompanyHeader({
             <div className="mt-2 flex items-center gap-2">
               <span className="text-muted-foreground">Sponsored by</span>
               <Link
-                href={`/workspace/sponsors/${company.sponsor.id}`}
+                href={`/sponsors/${company.sponsor.id}`}
                 className="hover:underline"
               >
                 <Badge variant="outline" className="text-sm">

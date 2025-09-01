@@ -8,17 +8,27 @@ export const langsmithClient = new Client({
 });
 
 // Configure LangSmith tracing
+// Add global type declaration for our flag
+declare global {
+  // eslint-disable-next-line no-var
+  var __langsmithConfigured: boolean | undefined;
+}
+
 export const configureLangSmith = () => {
+  // Idempotent: only configure once per runtime
+  if (globalThis.__langsmithConfigured) return;
   if (env.LANGSMITH_API_KEY) {
     process.env.LANGCHAIN_TRACING_V2 = "true";
     process.env.LANGCHAIN_API_KEY = env.LANGSMITH_API_KEY;
     process.env.LANGCHAIN_PROJECT =
       env.LANGSMITH_PROJECT ?? "pe-secondary-screen";
+    process.env.LANGCHAIN_CALLBACKS_BACKGROUND = "true"; // avoid latency/log spam
 
     if (env.LANGSMITH_ENDPOINT) {
       process.env.LANGCHAIN_ENDPOINT = env.LANGSMITH_ENDPOINT;
     }
 
+    globalThis.__langsmithConfigured = true;
     console.log("✅ LangSmith tracing enabled");
   } else {
     console.log("⚠️  LangSmith API key not found - tracing disabled");

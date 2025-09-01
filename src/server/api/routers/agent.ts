@@ -6,6 +6,7 @@ import {
   langsmithClient,
   createRunName,
   createRunMetadata,
+  configureLangSmith,
 } from "@/lib/langsmith";
 
 export const agentRouter = createTRPCRouter({
@@ -70,6 +71,9 @@ export const agentRouter = createTRPCRouter({
           console.error("Failed to create LangSmith run:", error);
         }
       }
+
+      // Configure LangSmith only when actually running the agent
+      configureLangSmith();
 
       const state = await agentGraph.invoke({
         input: input.sponsorName,

@@ -82,7 +82,7 @@ export function SponsorsList() {
           return isOptimistic ? (
             <div key={s.id}>{cardContent}</div>
           ) : (
-            <Link key={s.id} href={`/workspace/sponsors/${s.id}`}>
+            <Link key={s.id} href={`/sponsors/${s.id}`}>
               {cardContent}
             </Link>
           );
