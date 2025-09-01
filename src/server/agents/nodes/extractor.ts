@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { type GraphState, PortfolioCompanySchema } from "../state";
+import { runRegistry } from "@/server/agents/run-registry";
 import { env } from "@/env";
 
 const OutputSchema = z.object({
@@ -11,6 +12,8 @@ export async function extractorNode(state: typeof GraphState.State) {
   const crawled = state.crawled ?? {};
   const pages = Object.entries(crawled);
   if (pages.length === 0) return state;
+  const runId = state.runId;
+  if (runId) runRegistry.stepStart(runId, "extractor");
 
   const model = new ChatAnthropic({
     apiKey: env.ANTHROPIC_API_KEY,
@@ -51,5 +54,11 @@ ${aggregatedMarkdown}`;
     extracted = [];
   }
   state.extracted = extracted;
+  if (runId) {
+    runRegistry.stepProgress(runId, "extractor", extracted.length, {
+      extracted: extracted.length,
+    });
+    runRegistry.stepComplete(runId, "extractor", extracted.length);
+  }
   return state;
 }

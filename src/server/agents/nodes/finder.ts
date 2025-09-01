@@ -1,5 +1,6 @@
 import { TavilySearch } from "@langchain/tavily";
 import { type GraphState } from "../state";
+import { runRegistry } from "@/server/agents/run-registry";
 import { env } from "@/env";
 
 interface TavilyResponse {
@@ -9,6 +10,8 @@ interface TavilyResponse {
 export async function finderNode(state: typeof GraphState.State) {
   const query = state.input?.trim();
   if (!query) return state;
+  const runId = state.runId;
+  if (runId) runRegistry.stepStart(runId, "finder");
 
   const tavily = new TavilySearch({
     tavilyApiKey: env.TAVILY_API_KEY,
@@ -30,5 +33,11 @@ export async function finderNode(state: typeof GraphState.State) {
       : [];
 
   state.portfolioUrls = urls;
+  if (runId) {
+    runRegistry.stepProgress(runId, "finder", urls.length, {
+      portfolioUrls: urls.length,
+    });
+    runRegistry.stepComplete(runId, "finder", urls.length);
+  }
   return state;
 }

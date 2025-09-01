@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { agentGraph } from "@/server/agents/graph";
 import { type GraphState } from "@/server/agents/state";
+import { runRegistry } from "@/server/agents/run-registry";
 import {
   langsmithClient,
   createRunName,
@@ -10,6 +11,57 @@ import {
 } from "@/lib/langsmith";
 
 export const agentRouter = createTRPCRouter({
+  start: publicProcedure
+    .input(
+      z.object({
+        sponsorName: z.string().min(1),
+        mode: z.enum(["append", "update", "replace"]).default("append"),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const run = runRegistry.createRun(input.sponsorName, input.mode);
+      // Fire and forget async execution
+      void (async () => {
+        try {
+          runRegistry.startRun(run.runId);
+          const state = await agentGraph.invoke({
+            input: input.sponsorName,
+            mode: input.mode,
+            runId: run.runId,
+          } as typeof GraphState.State);
+
+          // finalize totals based on state
+          runRegistry.stepComplete(
+            run.runId,
+            "writer",
+            state.enriched?.length ?? 0,
+            {
+              portfolioUrls: state.portfolioUrls?.length ?? 0,
+              crawled: Object.keys(state.crawled ?? {}).length,
+              extracted: state.extracted?.length ?? 0,
+              normalized: state.normalized?.length ?? 0,
+              enriched: state.enriched?.length ?? 0,
+            },
+          );
+          runRegistry.completeRun(run.runId);
+        } catch (err) {
+          console.error(`[Agent:${run.runId}] Fatal error`, err);
+          runRegistry.failRun(
+            run.runId,
+            err instanceof Error ? err.message : String(err),
+          );
+        }
+      })();
+
+      return { runId: run.runId };
+    }),
+
+  cancel: publicProcedure
+    .input(z.object({ runId: z.string().uuid() }))
+    .mutation(async ({ input }) => {
+      runRegistry.cancelRun(input.runId);
+      return { ok: true } as const;
+    }),
   checkPortfolioStatus: publicProcedure
     .input(z.object({ sponsorName: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
@@ -73,7 +125,11 @@ export const agentRouter = createTRPCRouter({
       }
 
       // Configure LangSmith only when actually running the agent
-      configureLangSmith();
+      if (process.env.LANGCHAIN_API_KEY) {
+        process.env.LANGCHAIN_CALLBACKS_BACKGROUND = "true";
+        process.env.LANGCHAIN_VERBOSE = "false";
+        configureLangSmith();
+      }
 
       const state = await agentGraph.invoke({
         input: input.sponsorName,

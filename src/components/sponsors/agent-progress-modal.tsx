@@ -111,7 +111,7 @@ export function AgentProgressModal({
   }, [startTime, open]);
 
   const completedSteps = steps.filter((step) => step.status === "completed");
-  //   const currentStep = steps.find((step) => step.status === "running");
+  const runningStep = steps.find((step) => step.status === "running");
   const errorStep = steps.find((step) => step.status === "error");
   const isComplete = completedSteps.length === steps.length && !errorStep;
   const hasError = !!errorStep;
@@ -182,7 +182,8 @@ export function AgentProgressModal({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">
-                Progress: {completedSteps.length} of {steps.length} steps
+                {runningStep ? `${runningStep.name}` : "Progress"}:{" "}
+                {completedSteps.length} / {steps.length}
               </span>
               <span className="text-muted-foreground">
                 {isComplete ? "Completed" : `${progressPercentage}%`}

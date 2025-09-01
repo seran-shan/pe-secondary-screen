@@ -4,6 +4,7 @@ import { z } from "zod";
 export const GraphState = Annotation.Root({
   input: Annotation<string | undefined>(),
   mode: Annotation<"append" | "update" | "replace" | undefined>(),
+  runId: Annotation<string | undefined>(),
   portfolioUrls: Annotation<string[] | undefined>(),
   crawled: Annotation<Record<string, string> | undefined>(),
   extracted: Annotation<unknown[] | undefined>(),

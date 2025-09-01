@@ -33,6 +33,7 @@ import {
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { useSponsors } from "./sponsors-provider";
+import type { RunState } from "@/server/agents/run-registry";
 
 interface SponsorActionsProps {
   sponsor: {
@@ -46,11 +47,8 @@ export function SponsorActions({
   sponsor,
   onPortfolioUpdate,
 }: SponsorActionsProps) {
-  const {
-    addOptimisticPortfolioCompanies,
-    updateSponsorDiscoveryStatus,
-    updateSponsorWithRealData,
-  } = useSponsors();
+  const { updateSponsorDiscoveryStatus, updateSponsorWithRealData } =
+    useSponsors();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [confirmationDialogOpen, setConfirmationDialogOpen] =
     React.useState(false);
@@ -66,92 +64,109 @@ export function SponsorActions({
 
   const utils = api.useUtils();
 
-  const agentMutation = api.agent.run.useMutation({
-    onMutate: async (_variables) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await utils.agent.checkPortfolioStatus.cancel({
-        sponsorName: sponsor.name,
-      });
+  // Live run endpoints
+  const startMutation = api.agent.start.useMutation();
+  const cancelMutation = api.agent.cancel.useMutation();
+  const [currentRunId, setCurrentRunId] = React.useState<string | null>(null);
+  const [pollInterval, setPollInterval] = React.useState(500);
 
-      // Snapshot the previous value
-      const previousPortfolioStatus = utils.agent.checkPortfolioStatus.getData({
-        sponsorName: sponsor.name,
-      });
+  // Use direct HTTP fetch instead of tRPC to avoid auth overhead
+  const [runData, setRunData] = React.useState<RunState | null>(null);
 
-      // Return a context object with the snapshotted value
-      return { previousPortfolioStatus };
-    },
-    onSuccess: async (result) => {
-      // Update final step with completion
-      setAgentSteps((prev) =>
-        prev.map((step) =>
-          step.id === "writer"
-            ? { ...step, status: "completed", count: result.enrichedCount }
-            : step,
-        ),
-      );
+  React.useEffect(() => {
+    if (!currentRunId) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const fetchRunData = async () => {
+      try {
+        const res = await fetch(`/api/agent/run/${currentRunId}`);
+        if (res.ok) {
+          const data = (await res.json()) as RunState;
+          setRunData(data);
+
+          // Smart polling: exponential backoff
+          if (["completed", "error", "cancelled"].includes(data.status)) {
+            // Stop polling when done
+            return;
+          } else {
+            // Exponential backoff: 500ms → 1s → 2s → 3s max
+            const nextInterval = Math.min(pollInterval * 1.5, 3000);
+            setPollInterval(nextInterval);
+            timeoutId = setTimeout(() => void fetchRunData(), nextInterval);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch run data:", err);
+        // Retry with longer interval on error
+        timeoutId = setTimeout(() => void fetchRunData(), 5000);
+      }
+    };
+
+    // Start fetching immediately
+    void fetchRunData();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [currentRunId, pollInterval]);
+
+  // Sync server run state to UI
+  React.useEffect(() => {
+    if (!runData) return;
+
+    const steps = initializeAgentSteps();
+    const stepMap = new Map(steps.map((s) => [s.id, s]));
+
+    // Update each step from server state
+    Object.entries(runData.steps).forEach(([id, serverStep]) => {
+      const step = stepMap.get(id);
+      if (step && serverStep) {
+        step.status = serverStep.status as AgentStep["status"];
+        step.count = serverStep.count;
+        step.error = serverStep.error;
+      }
+    });
+
+    setAgentSteps(Array.from(stepMap.values()));
+
+    // Handle run completion
+    const isFinished = ["completed", "error", "cancelled"].includes(
+      runData.status,
+    );
+    if (isFinished) {
       setIsAgentRunning(false);
       updateSponsorDiscoveryStatus(sponsor.id, false);
+      setCurrentRunId(null);
 
-      const modeMessages = {
-        append: `Added ${result.enrichedCount} new portfolio companies to ${sponsor.name}`,
-        update: `Updated portfolio for ${sponsor.name} with ${result.enrichedCount} companies`,
-        replace: `Replaced portfolio for ${sponsor.name} with ${result.enrichedCount} fresh companies`,
+      const messages = {
+        completed: `Added ${runData.totals.enriched ?? 0} new portfolio companies to ${sponsor.name}`,
+        cancelled: "Portfolio discovery cancelled",
+        error: runData.error ?? "Portfolio discovery failed",
       };
 
-      toast.success(modeMessages[currentMode] ?? modeMessages.append);
+      if (runData.status === "completed") toast.success(messages.completed);
+      else if (runData.status === "cancelled") toast.info(messages.cancelled);
+      else toast.error(messages.error);
 
-      // Fetch updated sponsor data and update context
-      try {
-        const updatedSponsor = await utils.sponsor.getByIdWithPortfolio.fetch({
-          id: sponsor.id,
-        });
-
-        if (updatedSponsor) {
-          updateSponsorWithRealData(sponsor.id, updatedSponsor);
-        }
-      } catch (error) {
-        console.error("Failed to fetch updated sponsor data:", error);
-        // Fallback to refresh if fetch fails
-        if (onPortfolioUpdate) {
-          onPortfolioUpdate();
-        }
-      }
-
-      // Invalidate portfolio status query
-      void utils.agent.checkPortfolioStatus.invalidate({
-        sponsorName: sponsor.name,
-      });
-    },
-    onError: (error, variables, context) => {
-      // Mark current running step as error
-      setAgentSteps((prev) =>
-        prev.map((step) =>
-          step.status === "running"
-            ? { ...step, status: "error", error: error.message }
-            : step,
-        ),
-      );
-      setIsAgentRunning(false);
-      updateSponsorDiscoveryStatus(sponsor.id, false);
-
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousPortfolioStatus) {
-        utils.agent.checkPortfolioStatus.setData(
-          { sponsorName: sponsor.name },
-          context.previousPortfolioStatus,
-        );
-      }
-
-      toast.error(`Failed to discover portfolio companies: ${error.message}`);
-    },
-    onSettled: () => {
-      // Always refetch after error or success to sync with server state
-      void utils.agent.checkPortfolioStatus.invalidate({
-        sponsorName: sponsor.name,
-      });
-    },
-  });
+      // Refresh sponsor data
+      utils.sponsor.getByIdWithPortfolio
+        .fetch({ id: sponsor.id })
+        .then(
+          (updated) =>
+            updated && updateSponsorWithRealData(sponsor.id, updated),
+        )
+        .catch(() => onPortfolioUpdate?.());
+    }
+  }, [
+    runData,
+    sponsor.id,
+    sponsor.name,
+    updateSponsorDiscoveryStatus,
+    updateSponsorWithRealData,
+    utils.sponsor,
+    onPortfolioUpdate,
+  ]);
 
   const initializeAgentSteps = (): AgentStep[] => {
     return AGENT_STEPS.map((stepTemplate) => ({
@@ -160,101 +175,31 @@ export function SponsorActions({
     }));
   };
 
-  const simulateAgentProgress = async () => {
+  const startLiveDiscovery = async (mode: DiscoveryMode) => {
     const steps = initializeAgentSteps();
     setAgentSteps(steps);
     setAgentStartTime(new Date());
     setIsAgentRunning(true);
     setAgentModalOpen(true);
-
-    // Mark sponsor as having discovery in progress
     updateSponsorDiscoveryStatus(sponsor.id, true);
 
-    // Simulate step-by-step progress
-    for (let i = 0; i < steps.length - 1; i++) {
-      // -1 because writer step is handled by mutation
-      const currentStep = steps[i];
-      if (!currentStep) continue;
+    try {
+      const res = await startMutation.mutateAsync({
+        sponsorName: sponsor.name,
+        mode,
+      });
 
-      // Mark current step as running (and ensure no other step is running)
-      setAgentSteps((prev) =>
-        prev.map((step) => ({
-          ...step,
-          status:
-            step.id === currentStep.id
-              ? "running"
-              : step.status === "running"
-                ? "pending"
-                : step.status,
-        })),
-      );
-
-      // Simulate processing time
-      await new Promise(
-        (resolve) => setTimeout(resolve, 1500 + Math.random() * 1500), // Slightly longer for better UX
-      );
-
-      // Mark as completed with simulated count
-      const count = Math.floor(Math.random() * 8) + 3; // 3-10 items
-      setAgentSteps((prev) =>
-        prev.map((step) =>
-          step.id === currentStep.id
-            ? { ...step, status: "completed", count }
-            : step,
-        ),
-      );
-
-      // Add optimistic portfolio companies progressively during extraction step
-      if (currentStep.id === "extractor") {
-        // Generate mock companies that are being "discovered"
-        const mockCompanies = Array.from({ length: count }, (_, index) => ({
-          asset: `Discovering Company ${index + 1}`,
-          fsnSector: [
-            "Technology",
-            "Healthcare",
-            "Finance",
-            "Energy",
-            "Consumer",
-          ][Math.floor(Math.random() * 5)],
-          webpage: `https://example${index + 1}.com`,
-          dateInvested: new Date(
-            Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000,
-          )
-            .toISOString()
-            .split("T")[0], // Random date in last year
-        }));
-
-        // Add optimistic companies
-        addOptimisticPortfolioCompanies(sponsor.id, mockCompanies, currentMode);
-      }
+      setCurrentRunId(res.runId);
+      setPollInterval(500); // Reset poll interval for new run
+    } catch (err) {
+      console.error(`[UI] Failed to start run`, err);
+      setIsAgentRunning(false);
+      updateSponsorDiscoveryStatus(sponsor.id, false);
+      toast.error("Failed to start portfolio discovery");
     }
-
-    // Mark writer step as running before actual API call (ensure only writer is running)
-    setAgentSteps((prev) =>
-      prev.map((step) => ({
-        ...step,
-        status:
-          step.id === "writer"
-            ? "running"
-            : step.status === "running"
-              ? "completed"
-              : step.status,
-      })),
-    );
-
-    // Start the actual agent with mode
-    agentMutation.mutate({
-      sponsorName: sponsor.name,
-      mode: currentMode,
-    });
   };
 
   const [currentMode, setCurrentMode] = React.useState<DiscoveryMode>("append");
-
-  const simulateAgentProgressWithMode = async (mode: DiscoveryMode) => {
-    setCurrentMode(mode);
-    await simulateAgentProgress();
-  };
 
   const handleDiscoverPortfolio = () => {
     // If no existing data, skip confirmation and go directly to discovery
@@ -262,7 +207,8 @@ export function SponsorActions({
       !portfolioStatus?.hasExistingData ||
       portfolioStatus?.companiesCount === 0
     ) {
-      void simulateAgentProgressWithMode("append");
+      setCurrentMode("append");
+      void startLiveDiscovery("append");
     } else {
       setConfirmationDialogOpen(true);
     }
@@ -270,16 +216,19 @@ export function SponsorActions({
 
   const handleConfirmDiscovery = (mode: DiscoveryMode) => {
     setConfirmationDialogOpen(false);
-    void simulateAgentProgressWithMode(mode);
+    setCurrentMode(mode);
+    void startLiveDiscovery(mode);
   };
 
-  const handleCancelAgent = () => {
-    setIsAgentRunning(false);
-    setAgentModalOpen(false);
-    setAgentSteps([]);
-    setAgentStartTime(null);
-    updateSponsorDiscoveryStatus(sponsor.id, false);
-    toast.info("Portfolio discovery cancelled");
+  const handleCancelAgent = async () => {
+    if (currentRunId) {
+      try {
+        await cancelMutation.mutateAsync({ runId: currentRunId });
+      } catch (e) {
+        console.error("Failed to cancel run", e);
+      }
+    }
+    // Keep modal open; it will flip to error/cancelled from polling and allow close
   };
 
   const handleAgentComplete = () => {
