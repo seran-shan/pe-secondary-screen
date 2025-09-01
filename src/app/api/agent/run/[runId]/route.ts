@@ -4,7 +4,7 @@ import { z } from "zod";
 import { runRegistry } from "@/server/agents/run-registry";
 
 const RunIdSchema = z.object({
-  runId: z.string().uuid("Invalid runId format"),
+  runId: z.string().min(1, "Invalid runId format"),
 });
 
 export async function GET(

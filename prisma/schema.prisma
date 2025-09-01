@@ -9,12 +9,13 @@ datasource db {
 }
 
 model Sponsor {
-  id        String             @id @default(cuid())
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  name      String             @unique
-  contact   String?
-  portfolio PortfolioCompany[]
+  id           String             @id @default(cuid())
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  name         String             @unique
+  contact      String?
+  portfolioUrl String?            @db.VarChar(512)
+  portfolio    PortfolioCompany[]
 }
 
 model PortfolioCompany {

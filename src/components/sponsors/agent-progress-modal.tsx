@@ -21,6 +21,7 @@ import {
   IconClock,
   IconX,
   IconAlertTriangle,
+  IconLink,
 } from "@tabler/icons-react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,12 +36,14 @@ export type AgentStep = {
   error?: string;
 };
 
-export const AGENT_STEPS: Omit<AgentStep, "status" | "count" | "error">[] = [
+const getAgentSteps = (portfolioUrl?: string | null) => [
   {
     id: "finder",
-    name: "Finding URLs",
-    icon: IconSearch,
-    description: "Searching for portfolio company pages",
+    name: portfolioUrl ? "Using Portfolio URL" : "Finding URLs",
+    icon: portfolioUrl ? IconLink : IconSearch,
+    description: portfolioUrl
+      ? "Using provided portfolio page directly"
+      : "Searching for portfolio company pages",
   },
   {
     id: "crawler",
@@ -84,6 +87,7 @@ interface AgentProgressModalProps {
   estimatedTimeMs?: number;
   startTime?: Date;
   discoveryMode?: "append" | "update" | "replace";
+  portfolioUrl?: string | null;
 }
 
 export function AgentProgressModal({
@@ -96,6 +100,7 @@ export function AgentProgressModal({
   estimatedTimeMs,
   startTime,
   discoveryMode = "append",
+  portfolioUrl,
 }: AgentProgressModalProps) {
   const [elapsedTime, setElapsedTime] = React.useState(0);
 
@@ -110,6 +115,7 @@ export function AgentProgressModal({
     return () => clearInterval(interval);
   }, [startTime, open]);
 
+  const agentSteps = getAgentSteps(portfolioUrl);
   const completedSteps = steps.filter((step) => step.status === "completed");
   const runningStep = steps.find((step) => step.status === "running");
   const errorStep = steps.find((step) => step.status === "error");
@@ -144,12 +150,17 @@ export function AgentProgressModal({
   const estimatedRemaining = getEstimatedTimeRemaining();
 
   const handleClose = () => {
-    if (isComplete || hasError) {
-      onOpenChange(false);
-      if (isComplete && onComplete) {
-        onComplete();
-      }
+    onOpenChange(false);
+    if (isComplete && onComplete) {
+      onComplete();
     }
+  };
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    }
+    onOpenChange(false);
   };
 
   return (
@@ -202,11 +213,12 @@ export function AgentProgressModal({
 
           {/* Steps List */}
           <div className="space-y-3">
-            {steps.map((step, _) => {
-              const Icon = step.icon;
+            {agentSteps.map((stepConfig, index) => {
+              const step = steps[index] ?? { status: "pending" as const };
+              const Icon = stepConfig.icon;
               return (
                 <div
-                  key={step.id}
+                  key={stepConfig.id}
                   className={cn(
                     "flex items-center gap-3 rounded-lg border p-3 transition-colors",
                     step.status === "completed" &&
@@ -233,15 +245,18 @@ export function AgentProgressModal({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Icon className="text-muted-foreground size-4" />
-                      <span className="font-medium">{step.name}</span>
-                      {step.count !== undefined && (
+                      <span className="font-medium">{stepConfig.name}</span>
+                      {"count" in step && step.count !== undefined && (
                         <Badge variant="outline" className="text-xs">
-                          {step.count} {step.id === "finder" ? "URLs" : "items"}
+                          {step.count}{" "}
+                          {stepConfig.id === "finder" ? "URLs" : "items"}
                         </Badge>
                       )}
                     </div>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {step.error ?? step.description}
+                      {"error" in step && step.error
+                        ? step.error
+                        : stepConfig.description}
                     </p>
                   </div>
 
@@ -275,7 +290,7 @@ export function AgentProgressModal({
           {/* Actions */}
           <div className="flex justify-end gap-2 border-t pt-4">
             {!isComplete && !hasError && onCancel && (
-              <Button variant="outline" onClick={onCancel}>
+              <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
             )}

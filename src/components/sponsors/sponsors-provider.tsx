@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { api } from "@/trpc/react";
 
 export type PortfolioCompany = {
   asset?: string;
@@ -51,24 +52,54 @@ const SponsorsContext = React.createContext<SponsorsContextType | null>(null);
 
 interface SponsorsProviderProps {
   children: React.ReactNode;
-  initialSponsors: Sponsor[];
+  initialSponsors?: Sponsor[];
 }
 
 export function SponsorsProvider({
   children,
-  initialSponsors,
+  initialSponsors = [],
 }: SponsorsProviderProps) {
   const router = useRouter();
   const [sponsors, setSponsors] = React.useState<Sponsor[]>(initialSponsors);
 
+  // Fetch sponsors if no initial data provided
+  const { data: sponsorsData } = api.sponsor.getAll.useQuery(
+    { limit: 100 },
+    {
+      enabled: initialSponsors.length === 0,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  );
+
+  // Update sponsors when data changes
+  React.useEffect(() => {
+    if (sponsorsData?.sponsors) {
+      const fetchedSponsors: Sponsor[] = sponsorsData.sponsors.map((s) => ({
+        id: s.id,
+        name: s.name,
+        contact: s.contact,
+        portfolio: [], // We'll load portfolio separately if needed
+      }));
+
+      setSponsors((current) => {
+        // Keep optimistic sponsors but update real ones
+        const optimisticSponsors = current.filter((s) => s._optimistic);
+        const realSponsors = fetchedSponsors.filter((s) => !s._optimistic);
+        return [...optimisticSponsors, ...realSponsors];
+      });
+    }
+  }, [sponsorsData]);
+
   // Update sponsors when initial data changes (from server refetch)
   React.useEffect(() => {
-    setSponsors((current) => {
-      // Keep optimistic sponsors but update real ones
-      const optimisticSponsors = current.filter((s) => s._optimistic);
-      const realSponsors = initialSponsors.filter((s) => !s._optimistic);
-      return [...optimisticSponsors, ...realSponsors];
-    });
+    if (initialSponsors.length > 0) {
+      setSponsors((current) => {
+        // Keep optimistic sponsors but update real ones
+        const optimisticSponsors = current.filter((s) => s._optimistic);
+        const realSponsors = initialSponsors.filter((s) => !s._optimistic);
+        return [...optimisticSponsors, ...realSponsors];
+      });
+    }
   }, [initialSponsors]);
 
   const addOptimisticSponsor = React.useCallback(

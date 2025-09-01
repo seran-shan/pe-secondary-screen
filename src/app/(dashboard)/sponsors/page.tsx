@@ -1,36 +1,17 @@
 import PageContainer from "@/components/layout/page-container";
 import { Separator } from "@/components/ui/separator";
 import { SponsorsList } from "@/components/companies/sponsors-list";
-import {
-  SponsorsHeader,
-  SponsorsProvider,
-  type Sponsor,
-} from "@/components/sponsors";
-import { db } from "@/server/db";
+import { SponsorsHeader, SponsorsProvider } from "@/components/sponsors";
 
 export const metadata = { title: "Sponsors" };
 
-export default async function SponsorsPage() {
-  const sponsorsFromDb = await db.sponsor.findMany({
-    include: { portfolio: true },
-    orderBy: { name: "asc" },
-  });
+// Force dynamic rendering to avoid build-time DB queries
+export const dynamic = "force-dynamic";
 
-  const sponsors: Sponsor[] = sponsorsFromDb.map((s) => ({
-    id: s.id,
-    name: s.name,
-    contact: s.contact,
-    portfolio: s.portfolio.map((p) => ({
-      asset: p.asset,
-      webpage: p.webpage ?? undefined,
-      fsnSector: p.fsnSector ?? undefined,
-      dateInvested: p.dateInvested ? p.dateInvested.toISOString() : undefined,
-    })),
-  }));
-
+export default function SponsorsPage() {
   return (
     <PageContainer scrollable={true}>
-      <SponsorsProvider initialSponsors={sponsors}>
+      <SponsorsProvider>
         <div className="flex flex-1 flex-col space-y-6">
           <SponsorsHeader
             title="Sponsors"

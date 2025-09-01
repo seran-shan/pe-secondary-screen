@@ -3,7 +3,7 @@ import { db } from "@/server/db";
 import { runRegistry } from "@/server/agents/run-registry";
 
 export async function writerNode(state: typeof GraphState.State) {
-  const items = (state.normalized as PortfolioCompany[] | undefined) ?? [];
+  const items = (state.enriched as PortfolioCompany[] | undefined) ?? [];
   const sponsorNameInput = state.input?.trim();
   const mode = state.mode ?? "append"; // Default to append if not specified
   const runId = state.runId;
@@ -27,6 +27,14 @@ export async function writerNode(state: typeof GraphState.State) {
     update: {},
     create: { name: sponsorName },
   });
+
+  // Save discovered portfolio URL if sponsor doesn't have one
+  if (state.portfolioUrls?.[0] && !sponsor.portfolioUrl) {
+    await db.sponsor.update({
+      where: { id: sponsor.id },
+      data: { portfolioUrl: state.portfolioUrls[0] },
+    });
+  }
 
   // Handle different modes
   switch (mode) {

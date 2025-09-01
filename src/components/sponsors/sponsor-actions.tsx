@@ -21,11 +21,7 @@ import {
 } from "@tabler/icons-react";
 import { Loader2 } from "lucide-react";
 import { DeleteSponsorDialog } from "./delete-sponsor-dialog";
-import {
-  AgentProgressModal,
-  AGENT_STEPS,
-  type AgentStep,
-} from "./agent-progress-modal";
+import { AgentProgressModal, type AgentStep } from "./agent-progress-modal";
 import {
   DiscoveryConfirmationDialog,
   type DiscoveryMode,
@@ -39,6 +35,7 @@ interface SponsorActionsProps {
   sponsor: {
     id: string;
     name: string;
+    portfolioUrl?: string | null;
   };
   onPortfolioUpdate?: () => void;
 }
@@ -59,7 +56,7 @@ export function SponsorActions({
 
   // Query to check existing portfolio status - always enabled for button state
   const { data: portfolioStatus } = api.agent.checkPortfolioStatus.useQuery({
-    sponsorName: sponsor.name,
+    sponsorId: sponsor.id,
   });
 
   const utils = api.useUtils();
@@ -169,10 +166,50 @@ export function SponsorActions({
   ]);
 
   const initializeAgentSteps = (): AgentStep[] => {
-    return AGENT_STEPS.map((stepTemplate) => ({
-      ...stepTemplate,
-      status: "pending" as const,
-    }));
+    return [
+      {
+        id: "finder",
+        name: "Finding URLs",
+        icon: () => null, // Will be overridden by modal
+        description: "Searching for portfolio company pages",
+        status: "pending" as const,
+      },
+      {
+        id: "crawler",
+        name: "Crawling Content",
+        icon: () => null,
+        description: "Extracting content from web pages",
+        status: "pending" as const,
+      },
+      {
+        id: "extractor",
+        name: "AI Extraction",
+        icon: () => null,
+        description: "Using AI to identify portfolio companies",
+        status: "pending" as const,
+      },
+      {
+        id: "normalizer",
+        name: "Normalizing Data",
+        icon: () => null,
+        description: "Cleaning and standardizing company data",
+        status: "pending" as const,
+      },
+      {
+        id: "enricher",
+        name: "Enriching Details",
+        icon: () => null,
+        description: "Adding additional company information",
+        status: "pending" as const,
+      },
+      {
+        id: "writer",
+        name: "Saving Results",
+        icon: () => null,
+        description: "Updating portfolio database",
+        status: "pending" as const,
+      },
+    ];
   };
 
   const startLiveDiscovery = async (mode: DiscoveryMode) => {
@@ -185,7 +222,7 @@ export function SponsorActions({
 
     try {
       const res = await startMutation.mutateAsync({
-        sponsorName: sponsor.name,
+        sponsorId: sponsor.id,
         mode,
       });
 
@@ -228,7 +265,16 @@ export function SponsorActions({
         console.error("Failed to cancel run", e);
       }
     }
-    // Keep modal open; it will flip to error/cancelled from polling and allow close
+
+    // Reset all state immediately
+    setIsAgentRunning(false);
+    setAgentModalOpen(false);
+    setAgentSteps([]);
+    setAgentStartTime(null);
+    setCurrentRunId(null);
+    setRunData(null);
+    setPollInterval(500);
+    updateSponsorDiscoveryStatus(sponsor.id, false);
   };
 
   const handleAgentComplete = () => {
@@ -314,6 +360,7 @@ export function SponsorActions({
         onComplete={handleAgentComplete}
         startTime={agentStartTime ?? undefined}
         discoveryMode={currentMode}
+        portfolioUrl={sponsor.portfolioUrl}
       />
 
       <DiscoveryConfirmationDialog
@@ -322,6 +369,7 @@ export function SponsorActions({
         sponsorName={sponsor.name}
         existingCompaniesCount={portfolioStatus?.companiesCount ?? 0}
         lastDiscoveryDate={portfolioStatus?.lastDiscoveryDate ?? undefined}
+        portfolioUrl={sponsor.portfolioUrl}
         onConfirm={handleConfirmDiscovery}
       />
     </>

@@ -30,17 +30,34 @@ export async function extractorNode(state: typeof GraphState.State) {
     })
     .join("\n\n---\n\n");
 
-  const system = `You are a private equity analyst.
-Extract portfolio companies held by the specified sponsor (private equity firm).
-Return ONLY JSON that matches the provided schema. Do not include any extra keys.`;
-  const user = `Sponsor (PE firm) name: ${state.input ?? ""}
-Instructions:
-- Identify the current portfolio companies for the sponsor above.
-- For each company, fill: asset (name), dateInvested (ISO date if present), fsnSector (broad sector), webpage (company or portfolio page URL), note/nextSteps/financials/location when present.
-- If unsure, omit the field.
-- Do not include companies clearly marked as exited unless the text indicates they are still in the current portfolio.
+  const system = `You are a private equity analyst extracting portfolio companies from web content.
 
-Content to analyze (markdown excerpts):
+IMPORTANT: You must return a JSON object with a "companies" array, even if no companies are found.
+If no companies are found, return: {"companies": []}
+
+For each company found, extract:
+- asset: Company name (required)
+- dateInvested: Investment date in ISO format (optional)
+- fsnSector: Broad sector like "Technology", "Healthcare", "Financial Services" (optional)
+- webpage: Company website URL (optional)
+- note: Any additional notes (optional)
+- nextSteps: Next steps or status (optional)
+- financials: Financial information (optional)
+- location: Company location (optional)
+
+Return ONLY valid JSON matching this exact schema.`;
+  const user = `Sponsor (PE firm) name: ${state.input ?? ""}
+
+Analyze the following content and extract all portfolio companies. Look for:
+- Company names and descriptions
+- Investment dates
+- Sectors or industries
+- Company websites
+- Any additional details
+
+If you find companies, return them in the companies array. If no companies are found, return {"companies": []}.
+
+Content to analyze:
 ${aggregatedMarkdown}`;
 
   let extracted: z.infer<typeof OutputSchema>["companies"] = [];
@@ -50,8 +67,41 @@ ${aggregatedMarkdown}`;
       { role: "user", content: user },
     ]);
     extracted = response?.companies ?? [];
-  } catch {
-    extracted = [];
+    console.log(
+      `[Extractor] Extracted ${extracted.length} companies from ${pages.length} pages`,
+    );
+  } catch (error) {
+    console.error(`[Extractor] Error extracting companies:`, error);
+
+    // Fallback: try to extract with a simpler approach
+    try {
+      console.log(`[Extractor] Attempting fallback extraction...`);
+      const fallbackResponse = await model.invoke([
+        {
+          role: "system",
+          content:
+            'Extract company names from the text. Return as JSON array: ["Company1", "Company2"]',
+        },
+        {
+          role: "user",
+          content: `Extract company names from: ${aggregatedMarkdown.substring(0, 8000)}`,
+        },
+      ]);
+
+      // Try to parse the response as a simple array
+      const content = fallbackResponse.content as string;
+      const match = /\[.*\]/.exec(content);
+      if (match) {
+        const companies = JSON.parse(match[0]) as string[];
+        extracted = companies.map((name: string) => ({ asset: name }));
+        console.log(
+          `[Extractor] Fallback extracted ${extracted.length} companies`,
+        );
+      }
+    } catch (fallbackError) {
+      console.error(`[Extractor] Fallback also failed:`, fallbackError);
+      extracted = [];
+    }
   }
   state.extracted = extracted;
   if (runId) {

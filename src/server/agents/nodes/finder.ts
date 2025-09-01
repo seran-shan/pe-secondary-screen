@@ -13,6 +13,18 @@ export async function finderNode(state: typeof GraphState.State) {
   const runId = state.runId;
   if (runId) runRegistry.stepStart(runId, "finder");
 
+  // Use provided portfolio URL if available
+  if (state.portfolioUrl) {
+    console.log(`[Finder] Using provided portfolio URL: ${state.portfolioUrl}`);
+    state.portfolioUrls = [state.portfolioUrl];
+    if (runId) {
+      runRegistry.stepProgress(runId, "finder", 1, { portfolioUrls: 1 });
+      runRegistry.stepComplete(runId, "finder", 1);
+    }
+    return state;
+  }
+
+  // Fallback to Tavily search
   const tavily = new TavilySearch({
     tavilyApiKey: env.TAVILY_API_KEY,
     maxResults: 3,

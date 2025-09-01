@@ -34,7 +34,6 @@ import {
 } from "@tabler/icons-react";
 import { api } from "@/trpc/react";
 import { useSponsors } from "./sponsors-provider";
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 
 const addSponsorSchema = z.object({
   name: z
@@ -48,6 +47,12 @@ const addSponsorSchema = z.object({
   contact: z
     .string()
     .email("Invalid email address")
+    .optional()
+    .or(z.literal("")),
+  portfolioUrl: z
+    .string()
+    .url("Invalid URL")
+    .max(512, "URL must be less than 512 characters")
     .optional()
     .or(z.literal("")),
   notes: z
@@ -80,6 +85,7 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
     defaultValues: {
       name: "",
       contact: "",
+      portfolioUrl: "",
       notes: "",
       forceCreate: false,
     },
@@ -87,28 +93,16 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
 
   const sponsorName = form.watch("name");
 
-  // T3-stack way: Manual control with proper debouncing
+  // Only fetch similar sponsors when explicitly requested (after conflict)
   const similarSponsorsQuery = api.sponsor.findSimilar.useQuery(
     { name: sponsorName },
     {
-      enabled: false, // Don't auto-fetch
-      staleTime: 5 * 60 * 1000, // 5 min cache - longer is better
+      enabled: false,
+      staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
     },
   );
-
-  // Use our existing debounce hook like Theo intended
-  const debouncedSearch = useDebouncedCallback((name: string) => {
-    if (name.length > 2 && !showSimilarSponsors) {
-      void similarSponsorsQuery.refetch();
-    }
-  }, 500);
-
-  // Trigger search on input change
-  React.useEffect(() => {
-    debouncedSearch(sponsorName);
-  }, [sponsorName, debouncedSearch, showSimilarSponsors]);
 
   const similarSponsors = similarSponsorsQuery.data;
 
@@ -159,6 +153,8 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
         // Show similar sponsors warning
         setPendingFormData(form.getValues());
         setShowSimilarSponsors(true);
+        // Fetch similar sponsors only now
+        void similarSponsorsQuery.refetch();
       } else {
         // Other errors will be handled by the form
         console.error("Error creating sponsor:", error);
@@ -294,6 +290,29 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
                     </FormControl>
                     <FormDescription>
                       The official name of the investment firm or sponsor.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="portfolioUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Portfolio URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="url"
+                        placeholder="https://acmecapital.com/portfolio"
+                        {...field}
+                        disabled={createSponsorMutation.isPending}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Direct link to portfolio/companies page. We&apos;ll use
+                      this instead of searching.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

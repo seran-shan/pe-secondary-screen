@@ -19,7 +19,9 @@ export async function crawlerNode(state: typeof GraphState.State) {
         onlyMainContent: true,
       });
       const content = (doc as { markdown?: string })?.markdown;
-      if (content) crawled[url] = content;
+      if (content) {
+        crawled[url] = content;
+      }
       if (runId)
         runRegistry.stepProgress(
           runId,
@@ -27,9 +29,9 @@ export async function crawlerNode(state: typeof GraphState.State) {
           Object.keys(crawled).length,
           { crawled: Object.keys(crawled).length },
         );
-    } catch (_) {
+    } catch (error) {
       // swallow per-URL errors; continue best-effort
-      console.error(`Error crawling ${url}:`, _);
+      console.error(`[Crawler] Error crawling ${url}:`, error);
     }
   }
 

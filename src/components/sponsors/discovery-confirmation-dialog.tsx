@@ -20,6 +20,8 @@ import {
   IconDatabase,
   IconClock,
   IconSparkles,
+  IconLink,
+  IconGlobe,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +33,7 @@ interface DiscoveryConfirmationDialogProps {
   sponsorName: string;
   existingCompaniesCount: number;
   lastDiscoveryDate?: Date;
+  portfolioUrl?: string | null;
   onConfirm: (mode: DiscoveryMode) => void;
 }
 
@@ -40,6 +43,7 @@ export function DiscoveryConfirmationDialog({
   sponsorName,
   existingCompaniesCount,
   lastDiscoveryDate,
+  portfolioUrl,
   onConfirm,
 }: DiscoveryConfirmationDialogProps) {
   const [selectedMode, setSelectedMode] =
@@ -99,7 +103,11 @@ export function DiscoveryConfirmationDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <IconSearch className="size-5 text-blue-500" />
+            {portfolioUrl ? (
+              <IconLink className="size-5 text-green-500" />
+            ) : (
+              <IconSearch className="size-5 text-blue-500" />
+            )}
             Portfolio Discovery for {sponsorName}
           </DialogTitle>
           <DialogDescription>
@@ -123,6 +131,66 @@ export function DiscoveryConfirmationDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Dynamic info section based on portfolio URL */}
+          {portfolioUrl ? (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/20">
+              <div className="flex items-start gap-3">
+                <IconLink className="mt-0.5 size-5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-green-900 dark:text-green-100">
+                      Using provided portfolio URL
+                    </h4>
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-xs text-green-700 dark:bg-green-900 dark:text-green-300"
+                    >
+                      Direct Access
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    We&apos;ll use the direct link to {sponsorName}&apos;s
+                    portfolio page instead of searching the web.
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                    <IconGlobe className="size-3" />
+                    <a
+                      href={portfolioUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-green-800 dark:hover:text-green-200"
+                    >
+                      {portfolioUrl}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
+              <div className="flex items-start gap-3">
+                <IconSearch className="mt-0.5 size-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                      Web search discovery
+                    </h4>
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-100 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                    >
+                      AI Search
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    We&apos;ll search the web to find {sponsorName}&apos;s
+                    portfolio companies and investment details.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3">
             <h4 className="text-sm font-medium">
               Choose how to handle the discovery:
@@ -217,7 +285,12 @@ export function DiscoveryConfirmationDialog({
             <div className="text-muted-foreground text-sm">
               {selectedMode === "append" && (
                 <ul className="space-y-1">
-                  <li>• AI will search for new portfolio companies</li>
+                  <li>
+                    •{" "}
+                    {portfolioUrl
+                      ? "AI will extract companies from the provided URL"
+                      : "AI will search for new portfolio companies"}
+                  </li>
                   <li>
                     • New companies will be added to the existing{" "}
                     {existingCompaniesCount}
@@ -230,7 +303,12 @@ export function DiscoveryConfirmationDialog({
               )}
               {selectedMode === "update" && (
                 <ul className="space-y-1">
-                  <li>• AI will search for all portfolio companies</li>
+                  <li>
+                    •{" "}
+                    {portfolioUrl
+                      ? "AI will extract all companies from the provided URL"
+                      : "AI will search for all portfolio companies"}
+                  </li>
                   <li>
                     • Existing companies will have their basic data refreshed
                   </li>
@@ -240,7 +318,12 @@ export function DiscoveryConfirmationDialog({
               )}
               {selectedMode === "replace" && (
                 <ul className="space-y-1">
-                  <li>• AI will search for all portfolio companies</li>
+                  <li>
+                    •{" "}
+                    {portfolioUrl
+                      ? "AI will extract all companies from the provided URL"
+                      : "AI will search for all portfolio companies"}
+                  </li>
                   <li>
                     • All existing {existingCompaniesCount} companies will be
                     deleted

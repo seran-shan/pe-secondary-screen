@@ -55,6 +55,7 @@ export const sponsorRouter = createTRPCRouter({
         id: sponsor.id,
         name: sponsor.name,
         contact: sponsor.contact,
+        portfolioUrl: sponsor.portfolioUrl,
         portfolio: sponsor.portfolio.map((p) => ({
           asset: p.asset,
           webpage: p.webpage ?? undefined,
@@ -78,14 +79,21 @@ export const sponsorRouter = createTRPCRouter({
         return [];
       }
 
-      // Get all sponsors for fuzzy matching
-      const allSponsors = await ctx.db.sponsor.findMany({
+      // Narrow candidate set in DB first to avoid scanning full table
+      const candidates = await ctx.db.sponsor.findMany({
+        where: {
+          name: {
+            contains: input.name.slice(0, 16),
+            mode: "insensitive",
+          },
+        },
         select: { id: true, name: true, contact: true },
         orderBy: { name: "asc" },
+        take: input.limit * 6, // fetch a small superset, then fuzzy filter
       });
 
       // Find similar sponsors using our utility functions
-      const similarSponsors = allSponsors.filter(
+      const similarSponsors = candidates.filter(
         (sponsor) => isPotentialDuplicate(input.name, sponsor.name, 0.6), // Lower threshold for suggestions
       );
 
@@ -102,6 +110,7 @@ export const sponsorRouter = createTRPCRouter({
       z.object({
         name: z.string().min(2).max(100),
         contact: z.string().email().optional().or(z.literal("")),
+        portfolioUrl: z.string().url().max(512).optional().or(z.literal("")),
         notes: z.string().max(500).optional(),
         forceCreate: z.boolean().default(false),
       }),
@@ -143,12 +152,13 @@ export const sponsorRouter = createTRPCRouter({
         data: {
           name: trimmedName,
           contact: input.contact ?? null,
-          // Note: We'll add normalizedName and notes when we update the schema
+          portfolioUrl: input.portfolioUrl ?? null,
         },
         select: {
           id: true,
           name: true,
           contact: true,
+          portfolioUrl: true,
           createdAt: true,
         },
       });

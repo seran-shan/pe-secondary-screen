@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { agentGraph } from "@/server/agents/graph";
 import { type GraphState } from "@/server/agents/state";
@@ -14,20 +15,34 @@ export const agentRouter = createTRPCRouter({
   start: publicProcedure
     .input(
       z.object({
-        sponsorName: z.string().min(1),
+        sponsorId: z.string().min(1),
         mode: z.enum(["append", "update", "replace"]).default("append"),
       }),
     )
-    .mutation(async ({ input }) => {
-      const run = runRegistry.createRun(input.sponsorName, input.mode);
+    .mutation(async ({ input, ctx }) => {
+      // Get sponsor once to pass portfolioUrl to graph
+      const sponsor = await ctx.db.sponsor.findUnique({
+        where: { id: input.sponsorId },
+        select: { id: true, name: true, portfolioUrl: true },
+      });
+
+      if (!sponsor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Sponsor not found",
+        });
+      }
+
+      const run = runRegistry.createRun(sponsor.name, input.mode);
       // Fire and forget async execution
       void (async () => {
         try {
           runRegistry.startRun(run.runId);
           const state = await agentGraph.invoke({
-            input: input.sponsorName,
+            input: sponsor.name,
             mode: input.mode,
             runId: run.runId,
+            portfolioUrl: sponsor.portfolioUrl,
           } as typeof GraphState.State);
 
           // finalize totals based on state
@@ -57,17 +72,17 @@ export const agentRouter = createTRPCRouter({
     }),
 
   cancel: publicProcedure
-    .input(z.object({ runId: z.string().uuid() }))
+    .input(z.object({ runId: z.string().min(1) }))
     .mutation(async ({ input }) => {
       runRegistry.cancelRun(input.runId);
       return { ok: true } as const;
     }),
   checkPortfolioStatus: publicProcedure
-    .input(z.object({ sponsorName: z.string().min(1) }))
+    .input(z.object({ sponsorId: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
-      // Find sponsor by name
-      const sponsor = await ctx.db.sponsor.findFirst({
-        where: { name: input.sponsorName },
+      // Find sponsor by ID
+      const sponsor = await ctx.db.sponsor.findUnique({
+        where: { id: input.sponsorId },
         include: {
           portfolio: {
             select: { id: true, createdAt: true },
