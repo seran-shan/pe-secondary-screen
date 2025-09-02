@@ -146,20 +146,23 @@ async function handleReplaceMode(sponsorId: string, items: PortfolioCompany[]) {
     where: { sponsorId },
   });
 
-  // Now create all new companies from scratch
-  for (const item of items) {
-    const data = {
-      asset: item.asset.trim(),
-      dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
-      sector: item.sector ?? null,
-      webpage: item.webpage ?? null,
-      note: item.note ?? null,
-      nextSteps: item.nextSteps ?? null,
-      financials: item.financials ?? null,
-      location: item.location ?? null,
-      sponsorId,
-    };
+  if (items.length === 0) return;
 
-    await db.portfolioCompany.create({ data });
-  }
+  // Now create all new companies from scratch using a batch operation
+  const dataToInsert = items.map((item) => ({
+    asset: item.asset.trim(),
+    dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
+    sector: item.sector ?? null,
+    webpage: item.webpage ?? null,
+    note: item.note ?? null,
+    nextSteps: item.nextSteps ?? null,
+    financials: item.financials ?? null,
+    location: item.location ?? null,
+    sponsorId,
+  }));
+
+  await db.portfolioCompany.createMany({
+    data: dataToInsert,
+    skipDuplicates: true, // Should not be necessary after deleteMany but good practice
+  });
 }
