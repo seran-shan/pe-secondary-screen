@@ -16,7 +16,7 @@ export const GraphState = Annotation.Root({
 export const PortfolioCompanySchema = z.object({
   asset: z.string(),
   dateInvested: z.string().optional(),
-  fsnSector: z.string().optional(),
+  sector: z.string().optional(),
   webpage: z.string().optional(),
   note: z.string().optional(),
   nextSteps: z.string().optional(),

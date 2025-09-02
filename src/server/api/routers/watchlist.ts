@@ -13,7 +13,7 @@ export const watchlistRouter = createTRPCRouter({
       company: r.company.asset,
       sponsor: r.company.sponsor.name,
       invested: r.company.dateInvested ?? null,
-      sector: r.company.fsnSector ?? null,
+      sector: r.company.sector ?? null,
       source: r.company.webpage ?? null,
     }));
   }),

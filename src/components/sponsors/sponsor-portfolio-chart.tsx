@@ -29,7 +29,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 interface SponsorPortfolioChartProps {
   sponsor: {
     portfolio: Array<{
-      fsnSector?: string | null;
+      sector?: string | null;
       dateInvested?: Date | null;
     }>;
   };
@@ -51,7 +51,7 @@ export function SponsorPortfolioChart({ sponsor }: SponsorPortfolioChartProps) {
   const sectorData = React.useMemo(() => {
     const sectorCounts = sponsor.portfolio.reduce(
       (acc, company) => {
-        const sector = company.fsnSector ?? "Unknown";
+        const sector = company.sector ?? "Unknown";
         acc[sector] = (acc[sector] ?? 0) + 1;
         return acc;
       },

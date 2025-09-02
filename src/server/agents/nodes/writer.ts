@@ -65,7 +65,7 @@ async function handleAppendMode(sponsorId: string, items: PortfolioCompany[]) {
   const dataToInsert = items.map((item) => ({
     asset: item.asset.trim(),
     dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
-    fsnSector: item.fsnSector ?? null,
+    sector: item.sector ?? null,
     webpage: item.webpage ?? null,
     note: item.note ?? null,
     nextSteps: item.nextSteps ?? null,
@@ -105,7 +105,7 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
       // Update only basic fields, preserve manual edits
       const updateData = {
         dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
-        fsnSector: item.fsnSector ?? null,
+        sector: item.sector ?? null,
         webpage: item.webpage ?? null,
         financials: item.financials ?? null,
         location: item.location ?? null,
@@ -121,7 +121,7 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
       const createData = {
         asset,
         dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
-        fsnSector: item.fsnSector ?? null,
+        sector: item.sector ?? null,
         webpage: item.webpage ?? null,
         note: item.note ?? null,
         nextSteps: item.nextSteps ?? null,
@@ -151,7 +151,7 @@ async function handleReplaceMode(sponsorId: string, items: PortfolioCompany[]) {
     const data = {
       asset: item.asset.trim(),
       dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
-      fsnSector: item.fsnSector ?? null,
+      sector: item.sector ?? null,
       webpage: item.webpage ?? null,
       note: item.note ?? null,
       nextSteps: item.nextSteps ?? null,

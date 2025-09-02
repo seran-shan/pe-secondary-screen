@@ -24,7 +24,7 @@ model PortfolioCompany {
   updatedAt     DateTime    @updatedAt
   asset         String
   dateInvested  DateTime?
-  fsnSector     String?
+  sector        String?
   webpage       String?
   note          String?
   nextSteps     String?

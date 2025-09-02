@@ -21,7 +21,7 @@ interface CompanyHeaderProps {
     id: string;
     asset: string;
     dateInvested?: Date | null;
-    fsnSector?: string | null;
+    sector?: string | null;
     webpage?: string | null;
     location?: string | null;
     financials?: string | null;
@@ -85,13 +85,13 @@ export function CompanyHeader({
               </div>
             )}
 
-            {company.fsnSector && (
+            {company.sector && (
               <div className="flex items-center gap-2">
                 <IconBuilding className="text-muted-foreground h-4 w-4" />
                 <div>
                   <p className="text-sm font-medium">Sector</p>
                   <p className="text-muted-foreground text-sm">
-                    {company.fsnSector}
+                    {company.sector}
                   </p>
                 </div>
               </div>

@@ -23,7 +23,7 @@ interface SponsorHeaderProps {
     portfolio: Array<{
       id: string;
       asset: string;
-      fsnSector?: string | null;
+      sector?: string | null;
       dateInvested?: Date | null;
     }>;
   };
@@ -34,7 +34,7 @@ export function SponsorHeader({ sponsor }: SponsorHeaderProps) {
   const sectors = [
     ...new Set(
       sponsor.portfolio
-        .map((company) => company.fsnSector)
+        .map((company) => company.sector)
         .filter(Boolean) as string[],
     ),
   ];

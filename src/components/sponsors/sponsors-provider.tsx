@@ -7,7 +7,7 @@ import { api } from "@/trpc/react";
 export type PortfolioCompany = {
   asset?: string;
   webpage?: string;
-  fsnSector?: string;
+  sector?: string;
   dateInvested?: string;
   _optimistic?: boolean; // Flag for optimistic portfolio companies
   _tempId?: string; // Temporary ID for optimistic companies

@@ -19,7 +19,7 @@ const firecrawlSchema = {
         description:
           "The date of the investment in ISO format (e.g., YYYY-MM-DD).",
       },
-      fsnSector: {
+      sector: {
         type: "string",
         description: "The company's sector (e.g., Technology, Healthcare).",
       },

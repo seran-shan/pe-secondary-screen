@@ -23,7 +23,7 @@ type SponsorData = {
     id: string;
     asset: string;
     dateInvested: Date | null;
-    fsnSector: string | null;
+    sector: string | null;
     webpage: string | null;
     note: string | null;
     nextSteps: string | null;
@@ -66,7 +66,7 @@ export function SponsorDetailClient({
         id: p._tempId ?? `${initialSponsor.id}-${index}`, // Use temp ID for optimistic or generate
         asset: p.asset ?? "Unknown Company",
         dateInvested: p.dateInvested ? new Date(p.dateInvested) : null,
-        fsnSector: p.fsnSector ?? null,
+        sector: p.sector ?? null,
         webpage: p.webpage ?? null,
         note: null,
         nextSteps: null,
@@ -94,7 +94,7 @@ export function SponsorDetailClient({
   // Calculate metrics
   const totalCompanies = sponsor.portfolio.length;
   const totalSectors = new Set(
-    sponsor.portfolio.map((p) => p.fsnSector).filter(Boolean),
+    sponsor.portfolio.map((p) => p.sector).filter(Boolean),
   ).size;
   const averageInvestmentAge =
     sponsor.portfolio

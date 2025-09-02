@@ -39,7 +39,7 @@ export const sponsorRouter = createTRPCRouter({
             select: {
               asset: true,
               webpage: true,
-              fsnSector: true,
+              sector: true,
               dateInvested: true,
             },
             orderBy: { dateInvested: "desc" },
@@ -59,7 +59,7 @@ export const sponsorRouter = createTRPCRouter({
         portfolio: sponsor.portfolio.map((p) => ({
           asset: p.asset,
           webpage: p.webpage ?? undefined,
-          fsnSector: p.fsnSector ?? undefined,
+          sector: p.sector ?? undefined,
           dateInvested: p.dateInvested
             ? p.dateInvested.toISOString()
             : undefined,

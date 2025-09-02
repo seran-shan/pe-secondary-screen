@@ -28,7 +28,7 @@ interface SponsorPortfolioProps {
     id: string;
     asset: string;
     dateInvested?: Date | null;
-    fsnSector?: string | null;
+    sector?: string | null;
     webpage?: string | null;
     location?: string | null;
     note?: string | null;
@@ -45,7 +45,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
 
   const sectors = [
     ...new Set(
-      portfolio.map((company) => company.fsnSector).filter(Boolean) as string[],
+      portfolio.map((company) => company.sector).filter(Boolean) as string[],
     ),
   ].sort();
 
@@ -54,7 +54,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
       const matchesSearch = company.asset
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      const matchesSector = !sectorFilter || company.fsnSector === sectorFilter;
+      const matchesSector = !sectorFilter || company.sector === sectorFilter;
       return matchesSearch && matchesSector;
     })
     .sort((a, b) => {
@@ -67,7 +67,7 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
           if (!b.dateInvested) return -1;
           return b.dateInvested.getTime() - a.dateInvested.getTime();
         case "sector":
-          return (a.fsnSector ?? "").localeCompare(b.fsnSector ?? "");
+          return (a.sector ?? "").localeCompare(b.sector ?? "");
         default:
           return 0;
       }
@@ -146,9 +146,9 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
                         >
                           {company.asset}
                         </Link>
-                        {company.fsnSector && (
+                        {company.sector && (
                           <Badge variant="outline" className="mt-1 text-xs">
-                            {company.fsnSector}
+                            {company.sector}
                           </Badge>
                         )}
                       </div>

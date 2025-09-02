@@ -14,7 +14,7 @@ type LegacySponsors = {
       asset?: string;
       webpage?: string;
       dateInvested?: string;
-      fsnSector?: string;
+      sector?: string;
       note?: string;
     }>;
   }>;
@@ -37,7 +37,7 @@ export function SponsorsImport() {
       const next = (json.sponsors ?? []).map((s) => {
         const sectors = new Set<string>();
         (s.portfolio ?? []).forEach((p) => {
-          if (p.fsnSector) sectors.add(p.fsnSector);
+          if (p.sector) sectors.add(p.sector);
         });
         return {
           name: s.name,

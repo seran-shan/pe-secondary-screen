@@ -65,7 +65,7 @@ type PortfolioCompany = {
   id: string;
   asset: string;
   dateInvested?: Date | null;
-  fsnSector?: string | null;
+  sector?: string | null;
   webpage?: string | null;
   note?: string | null;
   nextSteps?: string | null;
@@ -290,7 +290,7 @@ export function SponsorPortfolioTable({
           dateInvested: company.dateInvested
             ? company.dateInvested.toISOString().slice(0, 10)
             : undefined,
-          sector: company.fsnSector ?? undefined,
+          sector: company.sector ?? undefined,
           webpage: company.webpage ?? undefined,
           note: company.note ?? undefined,
           location: company.location ?? undefined,
@@ -333,7 +333,7 @@ export function SponsorPortfolioTable({
           invested: company.dateInvested
             ? company.dateInvested.toISOString().slice(0, 10)
             : undefined,
-          sector: company.fsnSector ?? undefined,
+          sector: company.sector ?? undefined,
           location: company.location ?? undefined,
           source: company.webpage ?? undefined,
           comments: company.comments?.length ?? 0,

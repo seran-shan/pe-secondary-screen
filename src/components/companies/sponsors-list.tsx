@@ -17,7 +17,7 @@ export function SponsorsList() {
           const sectors = Array.from(
             new Set(
               (s.portfolio ?? [])
-                .map((p) => p.fsnSector)
+                .map((p) => p.sector)
                 .filter(Boolean) as string[],
             ),
           ).sort();

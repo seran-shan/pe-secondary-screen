@@ -95,7 +95,7 @@ export const companyRouter = createTRPCRouter({
       invested: c.dateInvested
         ? c.dateInvested.toISOString().slice(0, 10)
         : undefined,
-      sector: c.fsnSector ?? undefined,
+      sector: c.sector ?? undefined,
       source: c.webpage ?? undefined,
       status: "Active" as const, // TODO: Get from DB
       location: c.location ?? undefined,
