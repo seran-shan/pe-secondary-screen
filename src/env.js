@@ -11,8 +11,9 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    AUTH_GITHUB_ID: z.string(),
-    AUTH_GITHUB_SECRET: z.string(),
+    AUTH_MICROSOFT_ENTRA_ID: z.string(),
+    AUTH_MICROSOFT_ENTRA_SECRET: z.string(),
+    AUTH_MICROSOFT_ENTRA_TENANT_ID: z.string(),
     DATABASE_URL: z.string().url(),
     TAVILY_API_KEY: z.string().min(1),
     FIRECRAWL_API_KEY: z.string().min(1),
@@ -40,8 +41,9 @@ export const env = createEnv({
    */
   runtimeEnv: {
     AUTH_SECRET: process.env.AUTH_SECRET,
-    AUTH_GITHUB_ID: process.env.AUTH_GITHUB_ID,
-    AUTH_GITHUB_SECRET: process.env.AUTH_GITHUB_SECRET,
+    AUTH_MICROSOFT_ENTRA_ID: process.env.AUTH_MICROSOFT_ENTRA_ID,
+    AUTH_MICROSOFT_ENTRA_SECRET: process.env.AUTH_MICROSOFT_ENTRA_SECRET,
+    AUTH_MICROSOFT_ENTRA_TENANT_ID: process.env.AUTH_MICROSOFT_ENTRA_TENANT_ID,
     DATABASE_URL: process.env.DATABASE_URL,
     TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY,

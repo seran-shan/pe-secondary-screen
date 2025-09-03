@@ -1,6 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import GithubProvider from "next-auth/providers/github";
+import MicrosoftEntraIdProvider from "next-auth/providers/microsoft-entra-id";
 
 import { db } from "@/server/db";
 import { env } from "@/env";
@@ -33,14 +33,16 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    GithubProvider({
-      clientId: env.AUTH_GITHUB_ID,
-      clientSecret: env.AUTH_GITHUB_SECRET,
+    MicrosoftEntraIdProvider({
+      clientId: env.AUTH_MICROSOFT_ENTRA_ID,
+      clientSecret: env.AUTH_MICROSOFT_ENTRA_SECRET,
+      issuer: `https://login.microsoftonline.com/${env.AUTH_MICROSOFT_ENTRA_TENANT_ID}/v2.0`,
+      allowDangerousEmailAccountLinking: true,
     }),
     /**
      * ...add more providers here.
      *
-     * @see https://next-auth.js.org/providers/github
+     * @see https://next-auth.js.org/providers
      */
   ],
   adapter: PrismaAdapter(db),
@@ -57,5 +59,8 @@ export const authConfig = {
         id: user.id,
       },
     }),
+    async signIn({ user, account, profile }) {
+      return true;
+    },
   },
 } satisfies NextAuthConfig;

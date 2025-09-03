@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { IconBrandGithub } from "@tabler/icons-react";
+import { IconBrandWindows } from "@tabler/icons-react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -75,10 +75,10 @@ export function SignInForm() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => signIn("github", { callbackUrl: "/" })}
+                onClick={() => signIn("microsoft-entra-id", { callbackUrl: "/" })}
               >
-                <IconBrandGithub className="mr-2 h-4 w-4" />
-                Continue with GitHub
+                <IconBrandWindows className="mr-2 h-4 w-4" />
+                Continue with Microsoft
               </Button>
 
               <div className="relative">
@@ -93,7 +93,7 @@ export function SignInForm() {
               </div>
 
               <p className="text-muted-foreground text-center text-xs">
-                Click continue to sign in with your GitHub account
+                Click continue to sign in with your Microsoft account
               </p>
 
               <div className="text-center">
