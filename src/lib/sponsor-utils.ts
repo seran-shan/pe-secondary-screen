@@ -142,8 +142,7 @@ export function validateSponsorName(name: string): {
     errors.push("Sponsor name must be less than 100 characters");
   }
 
-  // Check for invalid characters
-  const invalidChars = name.match(/[^a-zA-Z0-9\s&\-\.,()]/g);
+  const invalidChars = name.match(/[^\p{L}\p{N}\s&\-\.,()]/gu);
   if (invalidChars) {
     errors.push(`Invalid characters found: ${invalidChars.join(", ")}`);
   }

@@ -41,7 +41,7 @@ const addSponsorSchema = z.object({
     .min(2, "Sponsor name must be at least 2 characters")
     .max(100, "Sponsor name must be less than 100 characters")
     .regex(
-      /^[a-zA-Z0-9\s&\-\.,()]+$/,
+      /^[\p{L}\p{N}\s&\-\.,()]+$/u,
       "Sponsor name contains invalid characters",
     ),
   contact: z

@@ -32,7 +32,7 @@ export async function finderNode(state: typeof GraphState.State) {
   });
 
   const resp = (await tavily.invoke({
-    query: `${query} portfolio companies`,
+    query: `${query}`,
     searchDepth: "advanced",
     topic: "general",
   })) as TavilyResponse;
