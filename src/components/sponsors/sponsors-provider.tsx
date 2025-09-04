@@ -18,6 +18,7 @@ export type Sponsor = {
   name: string;
   contact?: string | null;
   portfolio?: PortfolioCompany[];
+  portfolioCount?: number; // Count from API when portfolio array is not loaded
   _optimistic?: boolean; // Flag for optimistic updates
   _discoveryInProgress?: boolean; // Flag for discovery in progress
 };
@@ -79,6 +80,7 @@ export function SponsorsProvider({
         name: s.name,
         contact: s.contact,
         portfolio: [], // We'll load portfolio separately if needed
+        portfolioCount: s.portfolioCount, // Use count from API
       }));
 
       setSponsors((current) => {

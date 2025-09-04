@@ -13,7 +13,7 @@ export function SponsorsList() {
     <div className="space-y-4">
       <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs sm:grid-cols-2 lg:grid-cols-3">
         {sponsors.map((s) => {
-          const count = s.portfolio?.length ?? 0;
+          const count = s.portfolioCount ?? s.portfolio?.length ?? 0;
           const sectors = Array.from(
             new Set(
               (s.portfolio ?? [])
