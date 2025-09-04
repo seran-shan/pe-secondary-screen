@@ -72,8 +72,6 @@ export const companySchema = z.object({
 
 type FullCompanyData = z.infer<typeof companySchema> & {
   location?: string;
-  financials?: string;
-  nextSteps?: string;
   note?: string;
   comments?: Array<{
     id: string;
@@ -261,10 +259,7 @@ export function CompaniesDataTable({
           webpage: company.source,
           note: company.note,
           location: company.location,
-          financials: company.financials,
-          nextSteps: company.nextSteps,
           status: company.status,
-          signals: [], // Mock data
           comments: company.comments,
           watchersCount: company.watchersCount,
           isWatched: company.isWatched,

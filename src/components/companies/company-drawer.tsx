@@ -51,13 +51,10 @@ export type CompanyDetail = {
   sector?: string;
   size?: string;
   score?: number;
-  signals?: string[];
   status?: string;
   webpage?: string;
   note?: string;
   location?: string;
-  financials?: string;
-  nextSteps?: string;
   comments?: Array<{
     id: string;
     content: string;
@@ -321,53 +318,6 @@ export function CompanyDrawer(props: {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Financial Information */}
-              {data?.financials && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Financial Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap">
-                      {data.financials}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Next Steps */}
-              {data?.nextSteps && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Next Steps</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap">
-                      {data.nextSteps}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Signals */}
-              {data?.signals && data.signals.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Market Signals</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {data.signals.map((signal, index) => (
-                        <Badge key={index} variant="outline" className="gap-1">
-                          <span className="size-2 rounded-full bg-green-500" />
-                          {signal}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Notes */}
               {data?.note && (

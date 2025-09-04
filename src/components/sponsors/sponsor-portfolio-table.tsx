@@ -68,8 +68,6 @@ type PortfolioCompany = {
   sector?: string | null;
   webpage?: string | null;
   note?: string | null;
-  nextSteps?: string | null;
-  financials?: string | null;
   location?: string | null;
   comments: Array<{
     id: string;
@@ -294,10 +292,7 @@ export function SponsorPortfolioTable({
           webpage: company.webpage ?? undefined,
           note: company.note ?? undefined,
           location: company.location ?? undefined,
-          financials: company.financials ?? undefined,
-          nextSteps: company.nextSteps ?? undefined,
           status: "Active", // Default status since not stored in portfolio company
-          signals: [], // Could be derived from comments or other data
           comments:
             company.comments?.map((comment) => ({
               id: comment.id,

@@ -68,8 +68,6 @@ async function handleAppendMode(sponsorId: string, items: PortfolioCompany[]) {
     sector: item.sector ?? null,
     webpage: item.webpage ?? null,
     note: item.note ?? null,
-    nextSteps: item.nextSteps ?? null,
-    financials: item.financials ?? null,
     location: item.location ?? null,
     sponsorId,
   }));
@@ -96,8 +94,6 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
       select: {
         id: true,
         note: true,
-        nextSteps: true,
-        // Preserve manual fields that users might have edited
       },
     });
 
@@ -107,9 +103,8 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
         dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
         sector: item.sector ?? null,
         webpage: item.webpage ?? null,
-        financials: item.financials ?? null,
         location: item.location ?? null,
-        // DO NOT update note and nextSteps - preserve user edits
+        // DO NOT update note - preserve user edits
       };
 
       await db.portfolioCompany.update({
@@ -124,8 +119,6 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
         sector: item.sector ?? null,
         webpage: item.webpage ?? null,
         note: item.note ?? null,
-        nextSteps: item.nextSteps ?? null,
-        financials: item.financials ?? null,
         location: item.location ?? null,
         sponsorId,
       };
@@ -155,8 +148,6 @@ async function handleReplaceMode(sponsorId: string, items: PortfolioCompany[]) {
     sector: item.sector ?? null,
     webpage: item.webpage ?? null,
     note: item.note ?? null,
-    nextSteps: item.nextSteps ?? null,
-    financials: item.financials ?? null,
     location: item.location ?? null,
     sponsorId,
   }));

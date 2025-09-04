@@ -19,8 +19,6 @@ export const PortfolioCompanySchema = z.object({
   sector: z.string().optional(),
   webpage: z.string().optional(),
   note: z.string().optional(),
-  nextSteps: z.string().optional(),
-  financials: z.string().optional(),
   location: z.string().optional(),
   sponsorName: z.string().optional(),
 });

@@ -26,8 +26,6 @@ type SponsorData = {
     sector: string | null;
     webpage: string | null;
     note: string | null;
-    nextSteps: string | null;
-    financials: string | null;
     location: string | null;
     comments: Array<{
       id: string;
@@ -69,8 +67,6 @@ export function SponsorDetailClient({
         sector: p.sector ?? null,
         webpage: p.webpage ?? null,
         note: null,
-        nextSteps: null,
-        financials: null,
         location: null,
         comments: [],
         watchlistedBy: [],

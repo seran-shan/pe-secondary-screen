@@ -29,7 +29,6 @@ const CompanySchema = z.object({
   sector: z.string().optional(),
   size: z.string().optional(),
   score: z.number().optional(),
-  signals: z.array(z.string()).optional(),
   status: z.string().optional(),
 }) satisfies z.ZodType;
 
@@ -103,7 +102,6 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
                 <TableHead>Invested</TableHead>
                 <TableHead>Sector</TableHead>
                 <TableHead>Score</TableHead>
-                <TableHead>Signals</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -128,7 +126,6 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
                         sector: r.sector,
                         size: r.size,
                         score: r.score,
-                        signals: r.signals,
                         status: r.status,
                       });
                     }}
@@ -139,13 +136,6 @@ export function CompaniesTable(props: { data: CompanyRow[] }) {
                     <TableCell>{r.sector ?? "-"}</TableCell>
                     <TableCell>
                       {typeof r.score === "number" ? r.score.toFixed(0) : "-"}
-                    </TableCell>
-                    <TableCell className="space-x-1">
-                      {(r.signals ?? []).map((s) => (
-                        <Badge key={s} variant="outline">
-                          {s}
-                        </Badge>
-                      ))}
                     </TableCell>
                     <TableCell>{r.status ?? "-"}</TableCell>
                   </TableRow>

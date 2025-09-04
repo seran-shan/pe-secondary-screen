@@ -2,18 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  IconFileText,
-  IconListDetails,
-  IconTrendingUp,
-  IconAlertCircle,
-} from "@tabler/icons-react";
+import { IconFileText, IconAlertCircle } from "@tabler/icons-react";
 
 interface CompanyDetailsProps {
   company: {
     note?: string | null;
-    nextSteps?: string | null;
-    financials?: string | null;
     Alert: Array<{
       id: string;
       type: string;
@@ -45,48 +38,6 @@ export function CompanyDetails({ company }: CompanyDetailsProps) {
           ) : (
             <p className="text-muted-foreground text-sm italic">
               No notes available for this company.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Next Steps Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IconListDetails className="h-5 w-5" />
-            Next Steps
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {company.nextSteps ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-              {company.nextSteps}
-            </p>
-          ) : (
-            <p className="text-muted-foreground text-sm italic">
-              No next steps defined for this company.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Financials Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IconTrendingUp className="h-5 w-5" />
-            Financial Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {company.financials ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-              {company.financials}
-            </p>
-          ) : (
-            <p className="text-muted-foreground text-sm italic">
-              No financial information available.
             </p>
           )}
         </CardContent>

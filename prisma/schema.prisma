@@ -27,8 +27,6 @@ model PortfolioCompany {
   sector        String?
   webpage       String?
   note          String?
-  nextSteps     String?
-  financials    String?
   location      String?
   sponsorId     String
   Alert         Alert[]

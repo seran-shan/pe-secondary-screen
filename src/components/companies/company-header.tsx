@@ -11,7 +11,6 @@ import {
   IconMapPin,
   IconCalendar,
   IconBuilding,
-  IconChartLine,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -24,7 +23,6 @@ interface CompanyHeaderProps {
     sector?: string | null;
     webpage?: string | null;
     location?: string | null;
-    financials?: string | null;
     sponsor: {
       id: string;
       name: string;
@@ -105,16 +103,6 @@ export function CompanyHeader({
                   <p className="text-muted-foreground text-sm">
                     {company.location}
                   </p>
-                </div>
-              </div>
-            )}
-
-            {company.financials && (
-              <div className="flex items-center gap-2">
-                <IconChartLine className="text-muted-foreground h-4 w-4" />
-                <div>
-                  <p className="text-sm font-medium">Financials</p>
-                  <p className="text-muted-foreground text-sm">Available</p>
                 </div>
               </div>
             )}

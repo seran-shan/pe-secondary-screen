@@ -10,8 +10,6 @@ interface CompanySearchData {
   source?: string;
   status: "Active" | "Exited";
   location?: string;
-  financials?: string;
-  nextSteps?: string;
   note?: string;
   comments?: Array<{
     id: string;
@@ -142,10 +140,8 @@ const KBarComponent = ({
           webpage: company.source,
           note: company.note,
           location: company.location,
-          financials: company.financials,
-          nextSteps: company.nextSteps,
+
           status: company.status,
-          signals: [], // Mock data
           comments: company.comments ?? [],
           watchersCount: company.watchersCount,
           isWatched: company.isWatched,
