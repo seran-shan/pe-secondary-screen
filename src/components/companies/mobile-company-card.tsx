@@ -13,12 +13,13 @@ import {
   IconDotsVertical,
   IconExternalLink,
 } from "@tabler/icons-react";
-import { type z } from "zod";
 import { api } from "@/trpc/react";
-import { type companySchema } from "./companies-data-table";
+import type { RouterOutputs } from "@/trpc/react";
+
+type Company = RouterOutputs["company"]["getAll"][0];
 
 interface MobileCompanyCardProps {
-  company: z.infer<typeof companySchema>;
+  company: Company;
 }
 
 export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
@@ -31,7 +32,7 @@ export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">
-            {company.company}
+            {company.asset}
           </CardTitle>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -59,13 +60,13 @@ export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
           </DropdownMenu>
         </div>
         <Badge variant="outline" className="text-muted-foreground w-fit px-1.5">
-          {company.sponsor}
+          {company.sponsor.name}
         </Badge>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-muted-foreground text-sm">Invested</p>
-          <p>{company.invested ?? "-"}</p>
+          <p>{company.dateInvested?.toLocaleDateString() ?? "-"}</p>
         </div>
         <div>
           <p className="text-muted-foreground text-sm">Sector</p>
@@ -74,19 +75,19 @@ export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
         <div>
           <p className="text-muted-foreground text-sm">Status</p>
           <Badge variant="outline" className="px-2 py-1">
-            {company.status === "Exited" ? (
+            {company.status === "EXITED" ? (
               <span className="relative mr-2 inline-block size-2 rounded-full bg-rose-500" />
             ) : (
               <IconCircleCheckFilled className="mr-2 size-4 fill-emerald-500" />
             )}
-            {company.status}
+            {company.status === "ACTIVE" ? "Active" : "Exited"}
           </Badge>
         </div>
         <div>
           <p className="text-muted-foreground text-sm">Source</p>
-          {company.source ? (
+          {company.webpage ? (
             <a
-              href={company.source}
+              href={company.webpage}
               target="_blank"
               rel="noreferrer"
               className="text-foreground inline-flex items-center gap-1 hover:text-blue-600"

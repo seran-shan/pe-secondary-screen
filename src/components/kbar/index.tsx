@@ -1,25 +1,5 @@
 "use client";
 
-// Define proper types for kbar data
-interface CompanySearchData {
-  id: number;
-  company: string;
-  sponsor: string;
-  invested?: string;
-  sector?: string;
-  source?: string;
-  status: "Active" | "Exited";
-  location?: string;
-  note?: string;
-  comments?: Array<{
-    id: string;
-    content: string;
-    author: { id: string; name: string | null; image: string | null };
-    createdAt: string;
-  }>;
-  watchersCount: number;
-  isWatched: boolean;
-}
 
 import { navItems } from "@/constants/data";
 import { api } from "@/trpc/react";
@@ -37,7 +17,9 @@ import { useMemo } from "react";
 import RenderResults from "./render-result";
 import useThemeSwitching from "./use-theme-switching";
 import { useCompanyDrawer } from "@/components/companies/company-drawer-context";
-import type { CompanyDetail } from "@/components/companies/company-drawer";
+import type { RouterOutputs } from "@/trpc/react";
+
+type Company = RouterOutputs["company"]["getAll"][0];
 
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -118,36 +100,19 @@ const KBarComponent = ({
 }: {
   children: React.ReactNode;
   dynamicActions: Action[];
-  companies: CompanySearchData[];
+  companies: Company[];
 }) => {
   useThemeSwitching();
   const { openCompanyDrawer } = useCompanyDrawer();
 
   const companyActions = useMemo(() => {
     return companies.map((company) => ({
-      id: `company-${company.company.toLowerCase().replace(/\s+/g, "-")}`,
-      name: company.company,
-      keywords: `company ${company.company} ${company.sponsor}`.toLowerCase(),
+      id: `company-${company.asset.toLowerCase().replace(/\s+/g, "-")}`,
+      name: company.asset,
+      keywords: `${company.asset} ${company.sponsor.name} ${company.sector ?? ""}`.toLowerCase(),
       section: "Companies",
-      subtitle: `${company.sponsor} • ${company.sector ?? "No sector"}`,
-      perform: () => {
-        const companyDetail: CompanyDetail = {
-          id: company.id.toString(),
-          company: company.company,
-          sponsor: company.sponsor,
-          dateInvested: company.invested,
-          sector: company.sector,
-          webpage: company.source,
-          note: company.note,
-          location: company.location,
-
-          status: company.status,
-          comments: company.comments ?? [],
-          watchersCount: company.watchersCount,
-          isWatched: company.isWatched,
-        };
-        openCompanyDrawer(companyDetail);
-      },
+      subtitle: `${company.sponsor.name}${company.sector ? ` • ${company.sector}` : ""}`,
+      perform: () => openCompanyDrawer(company),
     }));
   }, [companies, openCompanyDrawer]);
 

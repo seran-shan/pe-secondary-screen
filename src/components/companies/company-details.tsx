@@ -3,17 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { IconFileText, IconAlertCircle } from "@tabler/icons-react";
+import type { PortfolioCompany, Alert } from "@/lib/schemas";
 
 interface CompanyDetailsProps {
-  company: {
-    description?: string | null;
-    Alert: Array<{
-      id: string;
-      type: string;
-      message: string;
-      createdAt: Date;
-      readAt?: Date | null;
-    }>;
+  company: PortfolioCompany & {
+    Alert: Array<Alert>;
   };
 }
 

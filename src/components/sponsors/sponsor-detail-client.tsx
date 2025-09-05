@@ -11,38 +11,27 @@ import { SponsorMetricsCards } from "@/components/sponsors/sponsor-metrics-cards
 import { SponsorPortfolioChart } from "@/components/sponsors/sponsor-portfolio-chart";
 import { SponsorPortfolioTable } from "@/components/sponsors/sponsor-portfolio-table";
 import { SponsorActions } from "@/components/sponsors/sponsor-actions";
-import { useSponsors } from "@/components/sponsors/sponsors-provider";
 import { IconArrowLeft, IconExternalLink, IconMail } from "@tabler/icons-react";
 import Link from "next/link";
+import type {
+  Sponsor,
+  PortfolioCompany,
+  Comment,
+  User,
+  Watchlist,
+} from "@prisma/client";
 
-type SponsorData = {
-  id: string;
-  name: string;
-  contact: string | null;
-  portfolio: Array<{
-    id: string;
-    asset: string;
-    dateInvested: Date | null;
-    sector: string | null;
-    webpage: string | null;
-    description: string | null;
-    location: string | null;
-    comments: Array<{
-      id: string;
-      content: string;
-      createdAt: Date;
-      author: {
-        id: string;
-        name: string | null;
-        email: string | null;
-        image: string | null;
-      };
-    }>;
-    watchlistedBy: Array<{
-      id: string;
-      userId: string;
-    }>;
-  }>;
+type SponsorData = Sponsor & {
+  portfolio: Array<
+    PortfolioCompany & {
+      comments: Array<
+        Comment & {
+          author: Pick<User, "id" | "name" | "email" | "image">;
+        }
+      >;
+      watchlistedBy: Watchlist[];
+    }
+  >;
 };
 
 interface SponsorDetailClientProps {
@@ -53,34 +42,7 @@ export function SponsorDetailClient({
   initialSponsor,
 }: SponsorDetailClientProps) {
   const router = useRouter();
-  const { sponsors } = useSponsors();
-
-  // Find the sponsor from context (which may have optimistic updates) or fall back to initial data
-  const contextSponsor = sponsors.find((s) => s.id === initialSponsor.id);
-  const sponsor = React.useMemo(() => {
-    if (contextSponsor?.portfolio) {
-      // Convert context sponsor portfolio to detail format
-      const convertedPortfolio = contextSponsor.portfolio.map((p, index) => ({
-        id: p._tempId ?? `${initialSponsor.id}-${index}`, // Use temp ID for optimistic or generate
-        asset: p.asset ?? "Unknown Company",
-        dateInvested: p.dateInvested ? new Date(p.dateInvested) : null,
-        sector: p.sector ?? null,
-        webpage: p.webpage ?? null,
-        description: null,
-        location: null,
-        comments: [],
-        watchlistedBy: [],
-        _optimistic: p._optimistic,
-        _tempId: p._tempId,
-      }));
-
-      return {
-        ...initialSponsor,
-        portfolio: convertedPortfolio,
-      };
-    }
-    return initialSponsor;
-  }, [contextSponsor, initialSponsor]);
+  const sponsor = initialSponsor;
 
   const handlePortfolioUpdate = React.useCallback(() => {
     // Refresh the page to get updated portfolio data

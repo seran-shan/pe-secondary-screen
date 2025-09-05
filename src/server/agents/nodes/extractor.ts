@@ -31,8 +31,14 @@ const firecrawlSchema = {
         type: "string",
         description: "A description of the company.",
       },
+      status: {
+        type: "string",
+        enum: ["ACTIVE", "EXITED"],
+        description:
+          "The investment status of the company. ACTIVE if the company is still in the portfolio, EXITED if the investment has been divested.",
+      },
     },
-    required: ["asset"],
+    required: ["asset", "status"],
   },
   description: "A list of portfolio companies.",
 };

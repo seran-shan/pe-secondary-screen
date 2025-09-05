@@ -52,14 +52,14 @@ export const authConfig = {
     error: "/auth/error",
   },
   callbacks: {
-    session: ({ session, user }) => ({
+    session: ({ session, user: _user }) => ({
       ...session,
       user: {
         ...session.user,
-        id: user.id,
+        id: _user.id,
       },
     }),
-    async signIn({ user, account, profile }) {
+    async signIn({ user: _user, account: _account, profile: _profile }) {
       return true;
     },
   },

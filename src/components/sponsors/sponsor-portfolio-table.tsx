@@ -13,7 +13,6 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { z } from "zod";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,54 +54,19 @@ import {
   IconPlus,
   IconSearch,
 } from "@tabler/icons-react";
-import { Loader2 } from "lucide-react";
-import {
-  CompanyDrawer,
-  type CompanyDetail,
-} from "@/components/companies/company-drawer";
-
-type PortfolioCompany = {
-  id: string;
-  asset: string;
-  dateInvested?: Date | null;
-  sector?: string | null;
-  webpage?: string | null;
-  description?: string | null;
-  location?: string | null;
-  comments: Array<{
-    id: string;
-    content: string;
-    createdAt: Date;
-    author?: {
-      id: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-    } | null;
-  }>;
-  watchlistedBy: Array<{ id: string }>;
-  _optimistic?: boolean; // Flag for optimistic companies
-  _tempId?: string; // Temporary ID for optimistic companies
-};
+import { CompanyDrawer } from "@/components/companies/company-drawer";
+import type { PortfolioCompany, Comment, Watchlist } from "@prisma/client";
+import type { RouterOutputs } from "@/trpc/react";
 
 interface SponsorPortfolioTableProps {
-  companies: PortfolioCompany[];
+  companies: (PortfolioCompany & {
+    comments: Comment[];
+    watchlistedBy: Watchlist[];
+  })[];
   sponsorName: string;
 }
 
-const portfolioCompanySchema = z.object({
-  id: z.string(),
-  company: z.string(),
-  invested: z.string().optional(),
-  sector: z.string().optional(),
-  location: z.string().optional(),
-  source: z.string().optional(),
-  comments: z.number(),
-  watchers: z.number(),
-  _optimistic: z.boolean().optional(),
-}) satisfies z.ZodType;
-
-type PortfolioCompanyRow = z.infer<typeof portfolioCompanySchema>;
+type PortfolioCompanyRow = SponsorPortfolioTableProps["companies"][number];
 
 const columns: ColumnDef<PortfolioCompanyRow>[] = [
   {
@@ -137,19 +101,7 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
     header: "Company",
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
-        <span
-          className={`font-medium ${row.original._optimistic ? "text-muted-foreground" : ""}`}
-        >
-          {row.original.company}
-        </span>
-        {row.original._optimistic && (
-          <>
-            <Loader2 className="size-3 animate-spin text-blue-500" />
-            <Badge variant="outline" className="text-xs text-blue-600">
-              Discovering...
-            </Badge>
-          </>
-        )}
+        <span className="font-medium">{row.original.asset}</span>
       </div>
     ),
     enableHiding: false,
@@ -159,7 +111,11 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
     accessorKey: "invested",
     header: () => <div className="text-right">Date Invested</div>,
     cell: ({ row }) => (
-      <div className="text-right">{row.original.invested ?? "-"}</div>
+      <div className="text-right">
+        {row.original.dateInvested
+          ? new Date(row.original.dateInvested).toLocaleDateString()
+          : "-"}
+      </div>
     ),
     size: 120,
   },
@@ -191,7 +147,7 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
     cell: ({ row }) => (
       <div className="text-center">
         <Badge variant="secondary" className="text-xs">
-          {row.original.comments}
+          {row.original.comments?.length ?? 0}
         </Badge>
       </div>
     ),
@@ -203,7 +159,7 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
     cell: ({ row }) => (
       <div className="text-center">
         <Badge variant="secondary" className="text-xs">
-          {row.original.watchers}
+          {row.original.watchlistedBy.length}
         </Badge>
       </div>
     ),
@@ -213,9 +169,9 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
     accessorKey: "source",
     header: "Source",
     cell: ({ row }) =>
-      row.original.source ? (
+      row.original.webpage ? (
         <a
-          href={row.original.source}
+          href={row.original.webpage}
           target="_blank"
           rel="noreferrer"
           className="text-foreground inline-flex items-center gap-1 hover:text-blue-600"
@@ -259,8 +215,6 @@ export function SponsorPortfolioTable({
   companies,
   sponsorName,
 }: SponsorPortfolioTableProps) {
-  // Count optimistic companies
-  const optimisticCount = companies.filter((c) => c._optimistic).length;
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -273,76 +227,27 @@ export function SponsorPortfolioTable({
     pageSize: 10,
   });
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [selectedCompany, setSelectedCompany] =
-    React.useState<CompanyDetail | null>(null);
+  type Company = RouterOutputs["company"]["getAll"][0];
+  const [selectedCompany, setSelectedCompany] = React.useState<Company | null>(
+    null,
+  );
 
   // Handle row click to open drawer
   const handleRowClick = React.useCallback(
     (companyId: string) => {
       const company = companies.find((c) => c.id === companyId);
       if (company) {
-        const companyDetail: CompanyDetail = {
-          id: company.id,
-          company: company.asset,
-          sponsor: sponsorName,
-          dateInvested: company.dateInvested
-            ? company.dateInvested.toISOString().slice(0, 10)
-            : undefined,
-          sector: company.sector ?? undefined,
-          webpage: company.webpage ?? undefined,
-          description: company.description ?? undefined,
-          location: company.location ?? undefined,
-          status: "Active", // Default status since not stored in portfolio company
-          comments:
-            company.comments?.map((comment) => ({
-              id: comment.id,
-              content: comment.content ?? "No content available",
-              author: {
-                id: comment.author?.id ?? "",
-                name:
-                  comment.author?.name ??
-                  comment.author?.email ??
-                  "Unknown User",
-                image: comment.author?.image ?? null,
-              },
-              createdAt:
-                comment.createdAt?.toISOString() ?? new Date().toISOString(),
-            })) ?? [],
-          watchersCount: company.watchlistedBy?.length ?? 0,
-          isWatched: false, // Could be determined by checking if current user is in watchlistedBy
-        };
-        setSelectedCompany(companyDetail);
+        // We can now pass through directly because page query includes relations
+        setSelectedCompany(company as unknown as Company);
         setDrawerOpen(true);
       }
     },
-    [companies, sponsorName],
+    [companies],
   );
 
-  // Transform data for the table
+  // Keep the original Prisma shape; format dates in cells instead
   const data: PortfolioCompanyRow[] = React.useMemo(
-    () =>
-      companies
-        .map((company) => ({
-          id: company.id,
-          company: company.asset,
-          invested: company.dateInvested
-            ? company.dateInvested.toISOString().slice(0, 10)
-            : undefined,
-          sector: company.sector ?? undefined,
-          location: company.location ?? undefined,
-          source: company.webpage ?? undefined,
-          comments: company.comments?.length ?? 0,
-          watchers: company.watchlistedBy?.length ?? 0,
-          _optimistic: company._optimistic,
-        }))
-        .filter((row) => {
-          const result = portfolioCompanySchema.safeParse(row);
-          if (!result.success) {
-            console.warn("Invalid portfolio company data:", row, result.error);
-            return false;
-          }
-          return true;
-        }),
+    () => companies,
     [companies],
   );
 
@@ -376,11 +281,6 @@ export function SponsorPortfolioTable({
         <div>
           <h3 className="flex items-center gap-2 text-lg font-semibold">
             Portfolio Companies
-            {optimisticCount > 0 && (
-              <Badge variant="outline" className="text-xs text-blue-600">
-                +{optimisticCount} discovering...
-              </Badge>
-            )}
           </h3>
           <p className="text-muted-foreground text-sm">
             All companies in {sponsorName}&apos;s portfolio ({companies.length}{" "}
@@ -502,19 +402,16 @@ export function SponsorPortfolioTable({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className={`cursor-pointer transition-colors ${
-                      row.original._optimistic
-                        ? "bg-blue-50/50 hover:bg-blue-100/50 dark:bg-blue-950/20 dark:hover:bg-blue-900/30"
-                        : "hover:bg-muted/50"
-                    }`}
+                    className={
+                      "hover:bg-muted/50 cursor-pointer transition-colors"
+                    }
                     onClick={(e) => {
                       // Don't trigger row click when clicking on checkboxes or action buttons
                       const target = e.target as HTMLElement;
                       if (
                         target.closest('input[type="checkbox"]') ||
                         target.closest("button") ||
-                        target.closest('[role="button"]') ||
-                        row.original._optimistic // Don't allow clicking optimistic rows
+                        target.closest('[role="button"]')
                       ) {
                         return;
                       }

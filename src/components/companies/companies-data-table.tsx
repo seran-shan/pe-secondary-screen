@@ -13,7 +13,9 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { z } from "zod";
+import type { RouterOutputs } from "@/trpc/react";
+
+type Company = RouterOutputs["company"]["getAll"][0];
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,37 +59,11 @@ import {
 } from "@tabler/icons-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCompanyCard } from "./mobile-company-card";
-import { type CompanyDetail } from "@/components/companies/company-drawer";
 import { useCompanyDrawer } from "./company-drawer-context";
 
-export const companySchema = z.object({
-  id: z.number(),
-  company: z.string(),
-  sponsor: z.string(),
-  invested: z.string().optional(),
-  sector: z.string().optional(),
-  source: z.string().optional(),
-  status: z.enum(["Active", "Exited"]).default("Active"),
-});
+// Use generated type directly - transform data in component logic
 
-type FullCompanyData = z.infer<typeof companySchema> & {
-  location?: string;
-  description?: string;
-  comments?: Array<{
-    id: string;
-    content: string;
-    author: {
-      id: string;
-      name?: string | null;
-      image?: string | null;
-    };
-    createdAt: string;
-  }>;
-  watchersCount?: number;
-  isWatched?: boolean;
-};
-
-const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
+const columns: ColumnDef<Company>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -119,7 +95,7 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
     accessorKey: "company",
     header: "Company",
     cell: ({ row }) => (
-      <span className="font-medium">{row.original.company}</span>
+      <span className="font-medium">{row.original.asset}</span>
     ),
     enableHiding: false,
     size: 384,
@@ -129,7 +105,7 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
     header: "Sponsor",
     cell: ({ row }) => (
       <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.sponsor}
+        {row.original.sponsor.name}
       </Badge>
     ),
     size: 224,
@@ -138,7 +114,7 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
     accessorKey: "invested",
     header: () => <div className="w-full text-right">Invested</div>,
     cell: ({ row }) => (
-      <div className="text-right">{row.original.invested ?? "-"}</div>
+      <div className="text-right">{row.original.dateInvested?.toLocaleDateString() ?? "-"}</div>
     ),
     size: 160,
   },
@@ -155,12 +131,12 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
     header: "Status",
     cell: ({ row }) => (
       <Badge variant="outline" className="px-2 py-1">
-        {row.original.status === "Exited" ? (
+        {row.original.status === "EXITED" ? (
           <span className="relative mr-2 inline-block size-2 rounded-full bg-rose-500" />
         ) : (
           <IconCircleCheckFilled className="mr-2 size-4 fill-emerald-500" />
         )}
-        {row.original.status}
+        {row.original.status === "ACTIVE" ? "Active" : "Exited"}
       </Badge>
     ),
     size: 160,
@@ -169,9 +145,9 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
     accessorKey: "source",
     header: "Source",
     cell: ({ row }) =>
-      row.original.source ? (
+      row.original.webpage ? (
         <a
-          href={row.original.source}
+          href={row.original.webpage}
           target="_blank"
           rel="noreferrer"
           className="text-foreground inline-flex items-center gap-1 hover:text-blue-600"
@@ -220,7 +196,7 @@ const columns: ColumnDef<z.infer<typeof companySchema>>[] = [
 export function CompaniesDataTable({
   data: initialData,
 }: {
-  data: FullCompanyData[];
+  data: Company[];
 }) {
   const [data] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
@@ -247,24 +223,10 @@ export function CompaniesDataTable({
   const { openCompanyDrawer } = useCompanyDrawer();
 
   const handleRowClick = React.useCallback(
-    (companyId: number) => {
+    (companyId: string) => {
       const company = initialData.find((c) => c.id === companyId);
       if (company) {
-        const companyDetail: CompanyDetail = {
-          id: company.id.toString(),
-          company: company.company,
-          sponsor: company.sponsor,
-          dateInvested: company.invested,
-          sector: company.sector,
-          webpage: company.source,
-          description: company.description,
-          location: company.location,
-          status: company.status,
-          comments: company.comments,
-          watchersCount: company.watchersCount,
-          isWatched: company.isWatched,
-        };
-        openCompanyDrawer(companyDetail);
+        openCompanyDrawer(company);
       }
     },
     [initialData, openCompanyDrawer],
@@ -272,9 +234,9 @@ export function CompaniesDataTable({
 
   const displayData = React.useMemo(() => {
     if (statusTab === "active")
-      return data.filter((d) => d.status === "Active");
+      return data.filter((d) => d.status === "ACTIVE");
     if (statusTab === "exited")
-      return data.filter((d) => d.status === "Exited");
+      return data.filter((d) => d.status === "EXITED");
     return data;
   }, [data, statusTab]);
 
@@ -312,8 +274,8 @@ export function CompaniesDataTable({
   const counts = React.useMemo(
     () => ({
       all: data.length,
-      active: data.filter((d) => d.status === "Active").length,
-      exited: data.filter((d) => d.status === "Exited").length,
+      active: data.filter((d) => d.status === "ACTIVE").length,
+      exited: data.filter((d) => d.status === "EXITED").length,
     }),
     [data],
   );
@@ -379,7 +341,7 @@ export function CompaniesDataTable({
                 <SelectValue placeholder="Filter: Sponsor" />
               </SelectTrigger>
               <SelectContent align="start">
-                {[...new Set(initialData.map((r) => r.sponsor))]
+                {[...new Set(initialData.map((r) => r.sponsor.name))]
                   .sort()
                   .map((s) => (
                     <SelectItem key={s} value={s}>
@@ -609,7 +571,7 @@ export function CompaniesDataTable({
   );
 }
 
-function exportCsv(table: ReturnType<typeof useReactTable<FullCompanyData>>) {
+function exportCsv(table: ReturnType<typeof useReactTable<Company>>) {
   const rows = table.getRowModel().rows.map((r) => r.original);
   const headers = [
     "Company",
@@ -623,12 +585,12 @@ function exportCsv(table: ReturnType<typeof useReactTable<FullCompanyData>>) {
     headers.join(","),
     ...rows.map((r) =>
       [
-        safeCsv(r.company ?? ""),
-        safeCsv(r.sponsor ?? ""),
-        safeCsv(r.invested ?? ""),
+        safeCsv(r.asset ?? ""),
+        safeCsv(r.sponsor.name ?? ""),
+        safeCsv(r.dateInvested?.toLocaleDateString() ?? ""),
         safeCsv(r.sector ?? ""),
-        safeCsv(r.source ?? ""),
-        safeCsv(r.status),
+        safeCsv(r.webpage ?? ""),
+        safeCsv(r.status === "ACTIVE" ? "Active" : "Exited"),
       ].join(","),
     ),
   ].join("\n");

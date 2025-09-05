@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { SponsorDetailClient } from "@/components/sponsors/sponsor-detail-client";
-import { SponsorsProvider, type Sponsor } from "@/components/sponsors";
 import { db } from "@/server/db";
 
 type Props = {
@@ -27,6 +26,7 @@ export default async function SponsorDetailPage({ params }: Props) {
     include: {
       portfolio: {
         include: {
+          sponsor: true,
           comments: {
             include: {
               author: {
@@ -41,6 +41,11 @@ export default async function SponsorDetailPage({ params }: Props) {
             orderBy: { createdAt: "desc" },
           },
           watchlistedBy: true,
+          Alert: {
+            include: {
+              user: true,
+            },
+          },
         },
         orderBy: { dateInvested: "desc" },
       },
@@ -51,21 +56,5 @@ export default async function SponsorDetailPage({ params }: Props) {
     notFound();
   }
 
-  const sponsorForProvider: Sponsor = {
-    id: sponsor.id,
-    name: sponsor.name,
-    contact: sponsor.contact,
-    portfolio: sponsor.portfolio.map((p) => ({
-      asset: p.asset,
-      webpage: p.webpage ?? undefined,
-      sector: p.sector ?? undefined,
-      dateInvested: p.dateInvested ? p.dateInvested.toISOString() : undefined,
-    })),
-  };
-
-  return (
-    <SponsorsProvider initialSponsors={[sponsorForProvider]}>
-      <SponsorDetailClient initialSponsor={sponsor} />
-    </SponsorsProvider>
-  );
+  return <SponsorDetailClient initialSponsor={sponsor} />;
 }

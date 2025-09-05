@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
+import { CommentSchema } from "@/lib/schemas";
 
 export const commentRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
-      z.object({
-        companyId: z.string(),
+      CommentSchema.pick({ companyId: true, content: true }).extend({
         content: z.string().min(1),
       }),
     )
@@ -32,8 +32,7 @@ export const commentRouter = createTRPCRouter({
 
   update: protectedProcedure
     .input(
-      z.object({
-        id: z.string(),
+      CommentSchema.pick({ id: true, content: true }).extend({
         content: z.string().min(1),
       }),
     )
@@ -56,7 +55,7 @@ export const commentRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(CommentSchema.pick({ id: true }))
     .mutation(async ({ ctx, input }) => {
       const comment = await ctx.db.comment.findUnique({
         where: { id: input.id },

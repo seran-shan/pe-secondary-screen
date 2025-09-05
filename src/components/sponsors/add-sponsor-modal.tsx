@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import { SponsorSchema } from "@/lib/schemas";
 import {
   Dialog,
   DialogContent,
@@ -33,11 +34,13 @@ import {
   IconBuilding,
 } from "@tabler/icons-react";
 import { api } from "@/trpc/react";
-import { useSponsors } from "./sponsors-provider";
 
-const addSponsorSchema = z.object({
-  name: z
-    .string()
+const addSponsorSchema = SponsorSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  name: SponsorSchema.shape.name
     .min(2, "Sponsor name must be at least 2 characters")
     .max(100, "Sponsor name must be less than 100 characters")
     .regex(
@@ -71,14 +74,10 @@ interface AddSponsorModalProps {
 
 export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
   const router = useRouter();
-  const { addOptimisticSponsor, removeOptimisticSponsor, refreshSponsors } =
-    useSponsors();
+  const utils = api.useUtils();
   const [showSimilarSponsors, setShowSimilarSponsors] = React.useState(false);
   const [pendingFormData, setPendingFormData] =
     React.useState<AddSponsorFormData | null>(null);
-  const [currentOptimisticId, setCurrentOptimisticId] = React.useState<
-    string | null
-  >(null);
 
   const form = useForm<AddSponsorFormData>({
     resolver: zodResolver(addSponsorSchema),
@@ -107,48 +106,22 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
   const similarSponsors = similarSponsorsQuery.data;
 
   const createSponsorMutation = api.sponsor.create.useMutation({
-    onMutate: async (variables) => {
-      // Don't add optimistic update if we're showing similar sponsors
-      if (showSimilarSponsors) return;
-
-      // Add optimistic sponsor to the list
-      const optimisticId = addOptimisticSponsor({
-        name: variables.name,
-        contact: variables.contact ?? null,
-        portfolio: [],
-      });
-
-      setCurrentOptimisticId(optimisticId);
-      return { optimisticId };
-    },
-    onSuccess: (newSponsor, variables, context) => {
-      // Remove optimistic sponsor
-      if (context?.optimisticId) {
-        removeOptimisticSponsor(context.optimisticId);
-      }
-
+    onSuccess: (newSponsor) => {
       // Reset form state
       form.reset();
       setShowSimilarSponsors(false);
       setPendingFormData(null);
-      setCurrentOptimisticId(null);
 
       // Close modal
       onOpenChange(false);
 
-      // Refresh server data to get the real sponsor
-      refreshSponsors();
+      void utils.sponsor.getAll.invalidate();
+      void utils.company.getAll.invalidate();
 
       // Navigate to new sponsor page
       router.push(`/sponsors/${newSponsor.id}`);
     },
-    onError: (error, variables, context) => {
-      // Remove optimistic sponsor on error
-      if (context?.optimisticId) {
-        removeOptimisticSponsor(context.optimisticId);
-      }
-      setCurrentOptimisticId(null);
-
+    onError: (error) => {
       if (error.data?.code === "CONFLICT") {
         // Show similar sponsors warning
         setPendingFormData(form.getValues());
@@ -185,12 +158,6 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
   };
 
   const handleCloseModal = () => {
-    // Clean up optimistic sponsor if modal is closed during creation
-    if (currentOptimisticId) {
-      removeOptimisticSponsor(currentOptimisticId);
-      setCurrentOptimisticId(null);
-    }
-
     form.reset();
     setShowSimilarSponsors(false);
     setPendingFormData(null);

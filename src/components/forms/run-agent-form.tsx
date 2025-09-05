@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { api, type RouterOutputs } from "@/trpc/react";
+import { SponsorSchema } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,8 +20,7 @@ import { Input } from "@/components/ui/input";
 type RunResult = RouterOutputs["agent"]["run"];
 
 const FormSchema = z.object({
-  sponsorName: z
-    .string()
+  sponsorName: SponsorSchema.shape.name
     .min(2, { message: "Sponsor name must be at least 2 characters." })
     .max(100, { message: "Sponsor name is too long." }),
 });

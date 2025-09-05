@@ -10,6 +10,7 @@ import {
   isPotentialDuplicate,
   validateSponsorName,
 } from "@/lib/sponsor-utils";
+import { SponsorSchema } from "@/lib/schemas";
 
 export const sponsorRouter = createTRPCRouter({
   listNames: publicProcedure.query(async ({ ctx }) => {
@@ -21,7 +22,7 @@ export const sponsorRouter = createTRPCRouter({
   }),
 
   getById: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(SponsorSchema.pick({ id: true }))
     .query(async ({ ctx, input }) => {
       return ctx.db.sponsor.findUnique({
         where: { id: input.id },
@@ -30,7 +31,7 @@ export const sponsorRouter = createTRPCRouter({
     }),
 
   getByIdWithPortfolio: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(SponsorSchema.pick({ id: true }))
     .query(async ({ ctx, input }) => {
       const sponsor = await ctx.db.sponsor.findUnique({
         where: { id: input.id },
@@ -69,8 +70,7 @@ export const sponsorRouter = createTRPCRouter({
 
   findSimilar: publicProcedure
     .input(
-      z.object({
-        name: z.string().min(2).max(100),
+      SponsorSchema.pick({ name: true }).extend({
         limit: z.number().min(1).max(10).default(5),
       }),
     )
@@ -107,7 +107,11 @@ export const sponsorRouter = createTRPCRouter({
 
   create: protectedProcedure
     .input(
-      z.object({
+      SponsorSchema.pick({
+        name: true,
+        contact: true,
+        portfolioUrl: true,
+      }).extend({
         name: z.string().min(2).max(100),
         contact: z.string().email().optional().or(z.literal("")),
         portfolioUrl: z.string().url().max(512).optional().or(z.literal("")),
@@ -187,15 +191,28 @@ export const sponsorRouter = createTRPCRouter({
       const [sponsors, total] = await Promise.all([
         ctx.db.sponsor.findMany({
           where: whereClause,
-          select: {
-            id: true,
-            name: true,
-            contact: true,
-            createdAt: true,
-            _count: {
-              select: {
-                portfolio: true,
+          include: {
+            portfolio: {
+              include: {
+                sponsor: true,
+                comments: {
+                  include: {
+                    author: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                      },
+                    },
+                  },
+                },
+                watchlistedBy: true,
+                Alert: {
+                  include: { user: true },
+                },
               },
+              orderBy: { dateInvested: "desc" },
             },
           },
           orderBy: { name: "asc" },
@@ -206,17 +223,14 @@ export const sponsorRouter = createTRPCRouter({
       ]);
 
       return {
-        sponsors: sponsors.map((sponsor) => ({
-          ...sponsor,
-          portfolioCount: sponsor._count.portfolio,
-        })),
+        sponsors,
         total,
         hasMore: input.offset + input.limit < total,
       };
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(SponsorSchema.pick({ id: true }))
     .mutation(async ({ ctx, input }) => {
       // Check if sponsor exists
       const sponsor = await ctx.db.sponsor.findUnique({

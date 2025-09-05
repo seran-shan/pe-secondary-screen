@@ -28,7 +28,6 @@ import {
 } from "./discovery-confirmation-dialog";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
-import { useSponsors } from "./sponsors-provider";
 import type { RunState } from "@/server/agents/run-registry";
 
 interface SponsorActionsProps {
@@ -44,8 +43,6 @@ export function SponsorActions({
   sponsor,
   onPortfolioUpdate,
 }: SponsorActionsProps) {
-  const { updateSponsorDiscoveryStatus, updateSponsorWithRealData } =
-    useSponsors();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [confirmationDialogOpen, setConfirmationDialogOpen] =
     React.useState(false);
@@ -133,7 +130,6 @@ export function SponsorActions({
     );
     if (isFinished) {
       setIsAgentRunning(false);
-      updateSponsorDiscoveryStatus(sponsor.id, false);
       setCurrentRunId(null);
 
       const messages = {
@@ -146,24 +142,12 @@ export function SponsorActions({
       else if (runData.status === "cancelled") toast.info(messages.cancelled);
       else toast.error(messages.error);
 
-      // Refresh sponsor data
-      utils.sponsor.getByIdWithPortfolio
-        .fetch({ id: sponsor.id })
-        .then(
-          (updated) =>
-            updated && updateSponsorWithRealData(sponsor.id, updated),
-        )
-        .catch(() => onPortfolioUpdate?.());
+      // Real-time refresh of sponsor data and companies list
+      void utils.sponsor.getByIdWithPortfolio.invalidate({ id: sponsor.id });
+      void utils.company.getAll.invalidate();
+      onPortfolioUpdate?.();
     }
-  }, [
-    runData,
-    sponsor.id,
-    sponsor.name,
-    updateSponsorDiscoveryStatus,
-    updateSponsorWithRealData,
-    utils.sponsor,
-    onPortfolioUpdate,
-  ]);
+  }, [runData, sponsor.id, sponsor.name, utils.sponsor, onPortfolioUpdate]);
 
   const initializeAgentSteps = (): AgentStep[] => {
     return [
@@ -211,7 +195,6 @@ export function SponsorActions({
     setAgentStartTime(new Date());
     setIsAgentRunning(true);
     setAgentModalOpen(true);
-    updateSponsorDiscoveryStatus(sponsor.id, true);
 
     try {
       const res = await startMutation.mutateAsync({
@@ -224,7 +207,6 @@ export function SponsorActions({
     } catch (err) {
       console.error(`[UI] Failed to start run`, err);
       setIsAgentRunning(false);
-      updateSponsorDiscoveryStatus(sponsor.id, false);
       toast.error("Failed to start portfolio discovery");
     }
   };
@@ -267,7 +249,6 @@ export function SponsorActions({
     setCurrentRunId(null);
     setRunData(null);
     setPollInterval(500);
-    updateSponsorDiscoveryStatus(sponsor.id, false);
   };
 
   const handleAgentComplete = () => {

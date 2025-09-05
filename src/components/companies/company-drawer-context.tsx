@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import { CompanyDrawer } from "./company-drawer";
-import type { CompanyDetail } from "./company-drawer";
+import type { RouterOutputs } from "@/trpc/react";
+
+type Company = RouterOutputs["company"]["getAll"][0];
 
 interface CompanyDrawerContextValue {
-  openCompanyDrawer: (company: CompanyDetail) => void;
+  openCompanyDrawer: (company: Company) => void;
   closeCompanyDrawer: () => void;
   isOpen: boolean;
 }
@@ -21,9 +23,9 @@ export function CompanyDrawerProvider({
 }) {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [selectedCompany, setSelectedCompany] =
-    React.useState<CompanyDetail | null>(null);
+    React.useState<Company | null>(null);
 
-  const openCompanyDrawer = React.useCallback((company: CompanyDetail) => {
+  const openCompanyDrawer = React.useCallback((company: Company) => {
     setSelectedCompany(company);
     setDrawerOpen(true);
   }, []);

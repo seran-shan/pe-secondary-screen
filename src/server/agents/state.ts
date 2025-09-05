@@ -20,6 +20,7 @@ export const PortfolioCompanySchema = z.object({
   webpage: z.string().optional(),
   description: z.string().optional(),
   location: z.string().optional(),
+  status: z.enum(["ACTIVE", "EXITED"]),
   sponsorName: z.string().optional(),
 });
 

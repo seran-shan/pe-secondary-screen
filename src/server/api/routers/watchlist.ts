@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { WatchlistSchema } from "@/lib/schemas";
 
 export const watchlistRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -19,7 +19,7 @@ export const watchlistRouter = createTRPCRouter({
   }),
 
   toggle: protectedProcedure
-    .input(z.object({ companyId: z.string() }))
+    .input(WatchlistSchema.pick({ companyId: true }))
     .mutation(async ({ ctx, input }) => {
       const existing = await ctx.db.watchlist.findUnique({
         where: {

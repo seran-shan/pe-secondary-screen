@@ -69,6 +69,7 @@ async function handleAppendMode(sponsorId: string, items: PortfolioCompany[]) {
     webpage: item.webpage ?? null,
     description: item.description ?? null,
     location: item.location ?? null,
+    status: item.status,
     sponsorId,
   }));
 
@@ -118,6 +119,7 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
         webpage: item.webpage ?? null,
         description: item.description ?? null,
         location: item.location ?? null,
+        status: item.status,
         sponsorId,
       };
 
@@ -146,6 +148,7 @@ async function handleReplaceMode(sponsorId: string, items: PortfolioCompany[]) {
     webpage: item.webpage ?? null,
     description: item.description ?? null,
     location: item.location ?? null,
+    status: item.status,
     sponsorId,
   }));
 
