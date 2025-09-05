@@ -15,7 +15,7 @@ type LegacySponsors = {
       webpage?: string;
       dateInvested?: string;
       sector?: string;
-      note?: string;
+      description?: string;
     }>;
   }>;
 };

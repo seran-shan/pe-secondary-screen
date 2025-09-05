@@ -27,7 +27,10 @@ const firecrawlSchema = {
         type: "string",
         description: "The company's official website URL.",
       },
-      note: { type: "string", description: "Any additional notes or details." },
+      description: {
+        type: "string",
+        description: "A description of the company.",
+      },
     },
     required: ["asset"],
   },

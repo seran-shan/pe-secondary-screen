@@ -67,7 +67,7 @@ async function handleAppendMode(sponsorId: string, items: PortfolioCompany[]) {
     dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
     sector: item.sector ?? null,
     webpage: item.webpage ?? null,
-    note: item.note ?? null,
+    description: item.description ?? null,
     location: item.location ?? null,
     sponsorId,
   }));
@@ -93,7 +93,6 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
       where: { sponsorId, asset },
       select: {
         id: true,
-        note: true,
       },
     });
 
@@ -104,7 +103,6 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
         sector: item.sector ?? null,
         webpage: item.webpage ?? null,
         location: item.location ?? null,
-        // DO NOT update note - preserve user edits
       };
 
       await db.portfolioCompany.update({
@@ -118,7 +116,7 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
         dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
         sector: item.sector ?? null,
         webpage: item.webpage ?? null,
-        note: item.note ?? null,
+        description: item.description ?? null,
         location: item.location ?? null,
         sponsorId,
       };
@@ -130,7 +128,6 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
 
 /**
  * REPLACE MODE: Delete all existing companies and create fresh ones
- * ⚠️ DESTRUCTIVE - Deletes all existing data including comments and watchlists
  */
 async function handleReplaceMode(sponsorId: string, items: PortfolioCompany[]) {
   // First, delete ALL existing portfolio companies for this sponsor
@@ -147,7 +144,7 @@ async function handleReplaceMode(sponsorId: string, items: PortfolioCompany[]) {
     dateInvested: item.dateInvested ? new Date(item.dateInvested) : null,
     sector: item.sector ?? null,
     webpage: item.webpage ?? null,
-    note: item.note ?? null,
+    description: item.description ?? null,
     location: item.location ?? null,
     sponsorId,
   }));

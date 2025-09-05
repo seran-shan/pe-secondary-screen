@@ -55,9 +55,9 @@ const addSponsorSchema = z.object({
     .max(512, "URL must be less than 512 characters")
     .optional()
     .or(z.literal("")),
-  notes: z
+  description: z
     .string()
-    .max(500, "Notes must be less than 500 characters")
+    .max(500, "Description must be less than 500 characters")
     .optional(),
   forceCreate: z.boolean(),
 });
@@ -86,7 +86,7 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
       name: "",
       contact: "",
       portfolioUrl: "",
-      notes: "",
+      description: "",
       forceCreate: false,
     },
   });
@@ -343,13 +343,13 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
 
               <FormField
                 control={form.control}
-                name="notes"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Initial Notes</FormLabel>
+                    <FormLabel>Initial Description</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Any initial notes about this sponsor..."
+                        placeholder="Any initial description about this sponsor..."
                         className="resize-none"
                         rows={3}
                         {...field}
@@ -357,7 +357,8 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
                       />
                     </FormControl>
                     <FormDescription>
-                      Optional notes about the sponsor, investment focus, etc.
+                      Optional description about the sponsor, investment focus,
+                      etc.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

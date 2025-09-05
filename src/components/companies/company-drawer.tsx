@@ -53,7 +53,7 @@ export type CompanyDetail = {
   score?: number;
   status?: string;
   webpage?: string;
-  note?: string;
+  description?: string;
   location?: string;
   comments?: Array<{
     id: string;
@@ -319,15 +319,15 @@ export function CompanyDrawer(props: {
                 </CardContent>
               </Card>
 
-              {/* Notes */}
-              {data?.note && (
+              {/* Description */}
+              {data?.description && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Notes</CardTitle>
+                    <CardTitle>Description</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground whitespace-pre-wrap">
-                      {data.note}
+                      {data.description}
                     </p>
                   </CardContent>
                 </Card>

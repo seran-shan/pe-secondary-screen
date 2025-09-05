@@ -31,7 +31,7 @@ interface SponsorPortfolioProps {
     sector?: string | null;
     webpage?: string | null;
     location?: string | null;
-    note?: string | null;
+    description?: string | null;
     watchlistedBy: Array<{ user: { name?: string | null } }>;
   }>;
 }
@@ -179,9 +179,9 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
                         </div>
                       )}
 
-                      {company.note && (
+                      {company.description && (
                         <p className="text-muted-foreground line-clamp-2">
-                          {company.note}
+                          {company.description}
                         </p>
                       )}
                     </div>

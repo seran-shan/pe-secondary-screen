@@ -111,7 +111,7 @@ export const sponsorRouter = createTRPCRouter({
         name: z.string().min(2).max(100),
         contact: z.string().email().optional().or(z.literal("")),
         portfolioUrl: z.string().url().max(512).optional().or(z.literal("")),
-        notes: z.string().max(500).optional(),
+        description: z.string().max(500).optional(),
         forceCreate: z.boolean().default(false),
       }),
     )

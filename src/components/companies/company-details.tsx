@@ -6,7 +6,7 @@ import { IconFileText, IconAlertCircle } from "@tabler/icons-react";
 
 interface CompanyDetailsProps {
   company: {
-    note?: string | null;
+    description?: string | null;
     Alert: Array<{
       id: string;
       type: string;
@@ -22,22 +22,22 @@ export function CompanyDetails({ company }: CompanyDetailsProps) {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      {/* Notes Section */}
+      {/* Description Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <IconFileText className="h-5 w-5" />
-            Notes
+            Description
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {company.note ? (
+          {company.description ? (
             <p className="text-sm leading-relaxed whitespace-pre-wrap">
-              {company.note}
+              {company.description}
             </p>
           ) : (
             <p className="text-muted-foreground text-sm italic">
-              No notes available for this company.
+              No description available for this company.
             </p>
           )}
         </CardContent>

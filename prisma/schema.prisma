@@ -26,13 +26,15 @@ model PortfolioCompany {
   dateInvested  DateTime?
   sector        String?
   webpage       String?
-  note          String?
+  description   String?
   location      String?
   sponsorId     String
   Alert         Alert[]
   comments      Comment[]
   sponsor       Sponsor     @relation(fields: [sponsorId], references: [id])
   watchlistedBy Watchlist[]
+
+  @@unique([sponsorId, asset])
 }
 
 model Account {

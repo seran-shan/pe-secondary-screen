@@ -67,7 +67,7 @@ type PortfolioCompany = {
   dateInvested?: Date | null;
   sector?: string | null;
   webpage?: string | null;
-  note?: string | null;
+  description?: string | null;
   location?: string | null;
   comments: Array<{
     id: string;
@@ -290,7 +290,7 @@ export function SponsorPortfolioTable({
             : undefined,
           sector: company.sector ?? undefined,
           webpage: company.webpage ?? undefined,
-          note: company.note ?? undefined,
+          description: company.description ?? undefined,
           location: company.location ?? undefined,
           status: "Active", // Default status since not stored in portfolio company
           comments:

@@ -25,7 +25,7 @@ type SponsorData = {
     dateInvested: Date | null;
     sector: string | null;
     webpage: string | null;
-    note: string | null;
+    description: string | null;
     location: string | null;
     comments: Array<{
       id: string;
@@ -66,7 +66,7 @@ export function SponsorDetailClient({
         dateInvested: p.dateInvested ? new Date(p.dateInvested) : null,
         sector: p.sector ?? null,
         webpage: p.webpage ?? null,
-        note: null,
+        description: null,
         location: null,
         comments: [],
         watchlistedBy: [],

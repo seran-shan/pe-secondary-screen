@@ -79,7 +79,7 @@ export function DiscoveryConfirmationDialog({
       icon: IconRefresh,
       risk: "medium",
       details:
-        "Updates company details but preserves manual edits like notes and comments.",
+        "Updates company details but preserves manual edits like description and comments.",
       badge: "Careful",
     },
     {
@@ -89,7 +89,7 @@ export function DiscoveryConfirmationDialog({
       icon: IconDatabase,
       risk: "high",
       details:
-        "⚠️ This will permanently delete existing companies, comments, and notes.",
+        "⚠️ This will permanently delete existing companies, comments, and description.",
       badge: "Destructive",
     },
   ];
@@ -296,7 +296,7 @@ export function DiscoveryConfirmationDialog({
                     {existingCompaniesCount}
                   </li>
                   <li>
-                    • All existing data, comments, and notes are preserved
+                    • All existing data, comments, and description are preserved
                   </li>
                   <li>• Duplicate detection will prevent redundancy</li>
                 </ul>
@@ -312,7 +312,7 @@ export function DiscoveryConfirmationDialog({
                   <li>
                     • Existing companies will have their basic data refreshed
                   </li>
-                  <li>• Manual notes and comments are preserved</li>
+                  <li>• Manual description and comments are preserved</li>
                   <li>• New companies will be added if discovered</li>
                 </ul>
               )}
@@ -329,7 +329,8 @@ export function DiscoveryConfirmationDialog({
                     deleted
                   </li>
                   <li>
-                    • All comments, notes, and watchlist entries will be lost
+                    • All comments, description, and watchlist entries will be
+                    lost
                   </li>
                   <li>• Fresh portfolio data will be created from scratch</li>
                 </ul>

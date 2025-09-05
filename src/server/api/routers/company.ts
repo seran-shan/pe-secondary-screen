@@ -99,7 +99,7 @@ export const companyRouter = createTRPCRouter({
       source: c.webpage ?? undefined,
       status: "Active" as const, // TODO: Get from DB
       location: c.location ?? undefined,
-      note: c.note ?? undefined,
+      description: c.description ?? undefined,
       comments: c.comments.map((comment) => ({
         id: comment.id,
         content: comment.content,

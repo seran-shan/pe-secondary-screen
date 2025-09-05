@@ -133,7 +133,6 @@ export const agentRouter = createTRPCRouter({
             inputs: { sponsorName: input.sponsorName, mode: input.mode },
             extra: metadata,
           });
-          // Note: LangSmith will automatically track the run through environment variables
         } catch (error) {
           console.error("Failed to create LangSmith run:", error);
         }
