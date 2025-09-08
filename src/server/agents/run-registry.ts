@@ -101,9 +101,12 @@ class RunRegistry {
         const result = await fn();
         return result;
       } finally {
-        await kv.del(key).catch(() => {});
+        try {
+          await kv.del(key);
+        } catch {}
       }
-    } catch {
+    } catch (e) {
+      console.error("[Agent] Failed to acquire start lock for", sponsorId, e);
       return await fn();
     }
   }
@@ -113,7 +116,7 @@ class RunRegistry {
       try {
         await kv.set(this.key(run.runId), run, { ex: this.ttlSeconds });
         return;
-      } catch (e) {
+      } catch {
         // fall through to memory
       }
     }
@@ -124,8 +127,8 @@ class RunRegistry {
     if (this.kvAvailable) {
       try {
         const data = (await kv.get<RunState>(this.key(runId))) ?? undefined;
-        if (data) return data as RunState;
-      } catch (e) {
+        if (data) return data;
+      } catch {
         // fall through to memory
       }
     }
@@ -166,7 +169,7 @@ class RunRegistry {
           });
       }
     } catch {}
-    console.log(`[Agent] Starting ${sponsorName} portfolio discovery`);
+    console.log("[Agent] Starting portfolio discovery for", sponsorName);
     return state;
   }
 
@@ -180,7 +183,7 @@ class RunRegistry {
     run.status = "running";
     run.updatedAt = Date.now();
     await this.write(run);
-    console.log(`[Agent:${runId}] Run started`);
+    console.log("[Agent] Run started", runId);
   }
 
   async completeRun(runId: string) {
@@ -191,7 +194,7 @@ class RunRegistry {
     run.updatedAt = run.endedAt;
     await this.write(run);
     await this.clearActiveMappings(run);
-    console.log(`[Agent] Portfolio discovery complete`);
+    console.log("[Agent] Portfolio discovery complete");
   }
 
   async failRun(runId: string, error: string) {
@@ -203,7 +206,7 @@ class RunRegistry {
     run.updatedAt = run.endedAt;
     await this.write(run);
     await this.clearActiveMappings(run);
-    console.error(`[Agent:${runId}] Run failed: ${error}`);
+    console.error("[Agent] Run failed", runId, error);
   }
 
   async cancelRun(runId: string) {
@@ -215,7 +218,7 @@ class RunRegistry {
     run.updatedAt = run.endedAt;
     await this.write(run);
     await this.clearActiveMappings(run);
-    console.warn(`[Agent:${runId}] Run cancelled`);
+    console.warn("[Agent] Run cancelled", runId);
   }
 
   async isCancelled(runId: string): Promise<boolean> {
@@ -232,7 +235,7 @@ class RunRegistry {
     step.startedAt = Date.now();
     run.updatedAt = Date.now();
     await this.write(run);
-    console.log(`[Agent] ${stepId}`);
+    console.log("[Agent] Step start", stepId);
   }
 
   async stepProgress(
@@ -265,7 +268,7 @@ class RunRegistry {
     if (totals) run.totals = { ...run.totals, ...totals };
     run.updatedAt = Date.now();
     await this.write(run);
-    console.log(`[Agent] ${stepId} complete (${step.count ?? 0})`);
+    console.log("[Agent] Step complete", stepId, step.count ?? 0);
   }
 
   async stepError(runId: string, stepId: StepId, error: string) {
@@ -280,13 +283,13 @@ class RunRegistry {
     run.updatedAt = Date.now();
     await this.write(run);
     await this.clearActiveMappings(run);
-    console.error(`[Agent:${runId}] Step error: ${stepId}: ${error}`);
+    console.error("[Agent] Step error", runId, stepId, error);
   }
 
   private async clearActiveMappings(run: RunState) {
     if (!this.kvAvailable) return;
     try {
-      const ops: Array<Promise<unknown>> = [];
+      const ops: Array<Promise<string | number | boolean | null>> = [];
       if (run.sponsorId) ops.push(kv.del(this.activeSponsorKey(run.sponsorId)));
       if (run.userId) ops.push(kv.del(this.activeUserKey(run.userId)));
       await Promise.all(ops);
@@ -339,7 +342,7 @@ const globalForRunRegistry = globalThis as unknown as {
 
 // If the instance exists but lacks newly added methods (e.g., after HMR), recreate it
 const existingRegistry = globalForRunRegistry.__RUN_REGISTRY__ as
-  | (RunRegistry & { [k: string]: unknown })
+  | (RunRegistry & Record<string, unknown>)
   | undefined;
 
 export const runRegistry: RunRegistry =

@@ -51,9 +51,13 @@ export function SponsorRunStepper({ runId }: { runId: string }) {
           }
         }
       } catch {}
-      timer = setTimeout(fetchRun, 1200);
+      timer = setTimeout(() => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        fetchRun();
+      }, 1200);
     };
-    void fetchRun();
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    fetchRun();
     return () => timer && clearTimeout(timer);
   }, [runId]);
 

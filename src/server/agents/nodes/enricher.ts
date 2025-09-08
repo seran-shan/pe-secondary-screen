@@ -93,21 +93,27 @@ export async function enricherNode(state: typeof GraphState.State) {
       });
 
       // Normalize to array, merge first non-empty values
-      const results = Array.isArray(result) ? result : [result];
+      type FirecrawlItem = { data?: Record<string, unknown>; error?: string };
+      const results: FirecrawlItem[] = Array.isArray(result)
+        ? (result as FirecrawlItem[])
+        : [result as FirecrawlItem];
       const combined: Record<string, unknown> = {};
       for (const r of results) {
-        if (!r || (r as any).error) continue;
-        const d = (r as any).data as Record<string, unknown> | undefined;
+        if (!r || r.error) continue;
+        const d = r.data;
         if (!d) continue;
-        for (const k of Object.keys(d))
+        for (const k of Object.keys(d)) {
           if (combined[k] == null && d[k] != null) combined[k] = d[k];
+        }
       }
       data = combined as EnrichmentData;
     }
 
     const next: PortfolioCompany = {
       ...item,
-      sponsorName: item.sponsorName ?? (state.input as string | undefined),
+      sponsorName:
+        item.sponsorName ??
+        (typeof state.input === "string" ? state.input : undefined),
       sector: prefer(item.sector, data?.sector),
       webpage: prefer(item.webpage, data?.webpage),
       description: prefer(item.description, data?.description),
@@ -116,7 +122,7 @@ export async function enricherNode(state: typeof GraphState.State) {
       status:
         data?.status === "ACTIVE" || data?.status === "EXITED"
           ? data.status
-          : (item.status as "ACTIVE" | "EXITED"),
+          : (item.status ?? "ACTIVE"),
     };
 
     enriched.push(next);

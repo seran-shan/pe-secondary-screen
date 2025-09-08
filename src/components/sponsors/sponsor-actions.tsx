@@ -166,7 +166,14 @@ export function SponsorActions({
         localStorage.removeItem("agent_current_run_id");
       }
     }
-  }, [runData, sponsor.id, sponsor.name, utils.sponsor, onPortfolioUpdate]);
+  }, [
+    runData,
+    sponsor.id,
+    sponsor.name,
+    utils.sponsor,
+    utils.company,
+    onPortfolioUpdate,
+  ]);
 
   const initializeAgentSteps = (): AgentStep[] => {
     return [

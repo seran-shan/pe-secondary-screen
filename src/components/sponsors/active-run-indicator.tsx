@@ -52,23 +52,28 @@ export function ActiveRunIndicator() {
   React.useEffect(() => {
     if (!runId) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const fetchRun = async () => {
+    function schedule(nextMs: number) {
+      timer = setTimeout(() => {
+        void fetchRun();
+      }, nextMs);
+    }
+    async function fetchRun() {
       try {
         const res = await fetch(`/api/agent/run/${runId}`);
         if (res.ok) {
           const data = (await res.json()) as RunState;
           setRun(data);
           if (["completed", "error", "cancelled"].includes(data.status)) {
-            // clear stored id when finished
             localStorage.removeItem(LS_KEY);
             setRunId(null);
             return;
           }
         }
       } catch {}
-      timer = setTimeout(fetchRun, Math.min(pollMs * 1.5, 4000));
-      setPollMs((m) => Math.min(m * 1.5, 4000));
-    };
+      const next = Math.min(pollMs * 1.5, 4000);
+      setPollMs(next);
+      schedule(next);
+    }
     void fetchRun();
     return () => {
       if (timer) clearTimeout(timer);

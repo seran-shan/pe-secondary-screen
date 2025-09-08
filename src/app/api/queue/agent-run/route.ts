@@ -17,7 +17,7 @@ type AgentRunPayload = {
   userId: string | null;
 };
 
-const workerHandler = async (message: AgentRunPayload) => {
+const workerHandler = async (message: AgentRunPayload, _metadata?: unknown) => {
   const { runId, sponsorName, portfolioUrl, mode, userId } = message;
   try {
     await runRegistry.startRun(runId);
@@ -73,8 +73,9 @@ const handlers = {
   },
 } as const;
 
-export const POST = handleCallback(handlers as any);
+// Cast to never to satisfy type constraints without using `any`
+export const POST = handleCallback(handlers as never);
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   return new Response("OK", { status: 200 });
 }
