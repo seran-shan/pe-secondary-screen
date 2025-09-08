@@ -58,7 +58,7 @@ export async function enricherNode(state: typeof GraphState.State) {
   if (items.length === 0) return state;
 
   const runId = state.runId;
-  if (runId) runRegistry.stepStart(runId, "enricher");
+  if (runId) await runRegistry.stepStart(runId, "enricher");
 
   const firecrawl = new Firecrawl({ apiKey: env.FIRECRAWL_API_KEY });
   const enriched: PortfolioCompany[] = [];
@@ -121,14 +121,14 @@ export async function enricherNode(state: typeof GraphState.State) {
 
     enriched.push(next);
     if (runId)
-      runRegistry.stepProgress(runId, "enricher", enriched.length, {
+      await runRegistry.stepProgress(runId, "enricher", enriched.length, {
         enriched: enriched.length,
       });
   }
 
   state.enriched = enriched;
   if (runId)
-    runRegistry.stepComplete(runId, "enricher", enriched.length, {
+    await runRegistry.stepComplete(runId, "enricher", enriched.length, {
       enriched: enriched.length,
     });
   return state;

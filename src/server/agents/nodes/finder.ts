@@ -11,15 +11,15 @@ export async function finderNode(state: typeof GraphState.State) {
   const query = state.input?.trim();
   if (!query) return state;
   const runId = state.runId;
-  if (runId) runRegistry.stepStart(runId, "finder");
+  if (runId) await runRegistry.stepStart(runId, "finder");
 
   // Use provided portfolio URL if available
   if (state.portfolioUrl) {
     console.log(`[Finder] Using provided portfolio URL: ${state.portfolioUrl}`);
     state.portfolioUrls = [state.portfolioUrl];
     if (runId) {
-      runRegistry.stepProgress(runId, "finder", 1, { portfolioUrls: 1 });
-      runRegistry.stepComplete(runId, "finder", 1);
+      await runRegistry.stepProgress(runId, "finder", 1, { portfolioUrls: 1 });
+      await runRegistry.stepComplete(runId, "finder", 1);
     }
     return state;
   }
@@ -46,10 +46,10 @@ export async function finderNode(state: typeof GraphState.State) {
 
   state.portfolioUrls = urls;
   if (runId) {
-    runRegistry.stepProgress(runId, "finder", urls.length, {
+    await runRegistry.stepProgress(runId, "finder", urls.length, {
       portfolioUrls: urls.length,
     });
-    runRegistry.stepComplete(runId, "finder", urls.length);
+    await runRegistry.stepComplete(runId, "finder", urls.length);
   }
   return state;
 }

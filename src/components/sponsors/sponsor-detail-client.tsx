@@ -11,6 +11,8 @@ import { SponsorMetricsCards } from "@/components/sponsors/sponsor-metrics-cards
 import { SponsorPortfolioChart } from "@/components/sponsors/sponsor-portfolio-chart";
 import { SponsorPortfolioTable } from "@/components/sponsors/sponsor-portfolio-table";
 import { SponsorActions } from "@/components/sponsors/sponsor-actions";
+import { SponsorRunStepper } from "@/components/sponsors/sponsor-run-stepper";
+import { api } from "@/trpc/react";
 import { IconArrowLeft, IconExternalLink, IconMail } from "@tabler/icons-react";
 import Link from "next/link";
 import type {
@@ -43,6 +45,11 @@ export function SponsorDetailClient({
 }: SponsorDetailClientProps) {
   const router = useRouter();
   const sponsor = initialSponsor;
+  const { data: activeRun } = api.agent.activeRunForSponsor.useQuery(
+    { sponsorId: sponsor.id },
+    { refetchInterval: 2000 },
+  );
+  // Inline stepper replaces modal during active runs
 
   const handlePortfolioUpdate = React.useCallback(() => {
     // Refresh the page to get updated portfolio data
@@ -105,6 +112,8 @@ export function SponsorDetailClient({
             onPortfolioUpdate={handlePortfolioUpdate}
           />
         </div>
+
+        {activeRun && <SponsorRunStepper runId={activeRun.runId} />}
 
         <Separator />
 

@@ -11,7 +11,29 @@ import {
   configureLangSmith,
 } from "@/lib/langsmith";
 
+import { send } from "@vercel/queue";
+
 export const agentRouter = createTRPCRouter({
+  activeRun: publicProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session?.user?.id;
+    if (!userId) return null;
+    const run = await runRegistry.getActiveRunForUser(userId);
+    if (!run) return null;
+    return {
+      runId: run.runId,
+      sponsorName: run.sponsorName,
+      status: run.status,
+    } as const;
+  }),
+
+  activeRunForSponsor: publicProcedure
+    .input(z.object({ sponsorId: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const run = await runRegistry.getActiveRunForSponsor(input.sponsorId);
+      if (!run) return null;
+      return { runId: run.runId, status: run.status } as const;
+    }),
+
   start: publicProcedure
     .input(
       z.object({
@@ -32,41 +54,70 @@ export const agentRouter = createTRPCRouter({
           message: "Sponsor not found",
         });
       }
+      // Strong idempotency: use a short NX lock around the existence check + create
+      const run = await runRegistry.withStartLock(sponsor.id, async () => {
+        const existing = await runRegistry.getActiveRunForSponsor(sponsor.id);
+        if (existing) return existing;
+        return await runRegistry.createRun(
+          sponsor.name,
+          input.mode,
+          sponsor.id,
+          ctx.session?.user?.id ?? null,
+        );
+      });
 
-      const run = runRegistry.createRun(sponsor.name, input.mode);
-      // Fire and forget async execution
-      void (async () => {
-        try {
-          runRegistry.startRun(run.runId);
+      // Try to enqueue background job (works on Vercel). Fallback to inline run in dev/local.
+      let enqueued = false;
+      try {
+        await send("agent-run", {
+          runId: run.runId,
+          sponsorName: sponsor.name,
+          sponsorId: sponsor.id,
+          portfolioUrl: sponsor.portfolioUrl ?? null,
+          mode: input.mode,
+          userId: ctx.session?.user?.id ?? null,
+        });
+        enqueued = true;
+      } catch (err) {
+        console.error(
+          "[Queue] Failed to send message, falling back to inline worker:",
+          err,
+        );
+      }
 
-          const state = await agentGraph.invoke({
-            input: sponsor.name,
-            mode: input.mode,
-            runId: run.runId,
-            portfolioUrl: sponsor.portfolioUrl,
-          } as typeof GraphState.State);
+      if (!enqueued) {
+        // Run asynchronously without blocking the request (best effort for local dev)
+        void (async () => {
+          try {
+            await runRegistry.startRun(run.runId);
+            const state = await agentGraph.invoke({
+              input: sponsor.name,
+              mode: input.mode,
+              runId: run.runId,
+              portfolioUrl: sponsor.portfolioUrl ?? undefined,
+            } as typeof GraphState.State);
 
-          // finalize totals based on state
-          runRegistry.stepComplete(
-            run.runId,
-            "writer",
-            state.enriched?.length ?? 0,
-            {
-              portfolioUrls: state.portfolioUrls?.length ?? 0,
-              extracted: state.extracted?.length ?? 0,
-              normalized: state.normalized?.length ?? 0,
-              enriched: state.enriched?.length ?? 0,
-            },
-          );
-          runRegistry.completeRun(run.runId);
-        } catch (err) {
-          console.error(`[Agent:${run.runId}] Fatal error`, err);
-          runRegistry.failRun(
-            run.runId,
-            err instanceof Error ? err.message : String(err),
-          );
-        }
-      })();
+            await runRegistry.stepComplete(
+              run.runId,
+              "writer",
+              state.enriched?.length ?? 0,
+              {
+                portfolioUrls: state.portfolioUrls?.length ?? 0,
+                extracted: state.extracted?.length ?? 0,
+                normalized: state.normalized?.length ?? 0,
+                enriched: state.enriched?.length ?? 0,
+              },
+            );
+            await runRegistry.completeRun(run.runId);
+          } catch (err2) {
+            console.error(`[Agent:${run.runId}] Fatal error (inline)`, err2);
+            await runRegistry.failRun(
+              run.runId,
+              err2 instanceof Error ? err2.message : String(err2),
+            );
+          }
+        })();
+      }
 
       return { runId: run.runId };
     }),
@@ -74,7 +125,7 @@ export const agentRouter = createTRPCRouter({
   cancel: publicProcedure
     .input(z.object({ runId: z.string().min(1) }))
     .mutation(async ({ input }) => {
-      runRegistry.cancelRun(input.runId);
+      await runRegistry.cancelRun(input.runId);
       return { ok: true } as const;
     }),
   checkPortfolioStatus: publicProcedure

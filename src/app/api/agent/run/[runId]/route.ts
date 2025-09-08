@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runRegistry } from "@/server/agents/run-registry";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const RunIdSchema = z.object({
   runId: z.string().min(1, "Invalid runId format"),
 });
@@ -23,7 +26,7 @@ export async function GET(
     }
 
     const { runId } = result.data;
-    const run = runRegistry.getRun(runId, true); // Use cache
+    const run = await runRegistry.getRun(runId);
 
     if (!run) {
       return NextResponse.json({ error: "Run not found" }, { status: 404 });

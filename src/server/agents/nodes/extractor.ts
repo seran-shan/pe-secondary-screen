@@ -55,7 +55,7 @@ export async function extractorNode(state: typeof GraphState.State) {
   const urls = state.portfolioUrls ?? [];
   if (urls.length === 0) return state;
   const runId = state.runId;
-  if (runId) runRegistry.stepStart(runId, "extractor");
+  if (runId) await runRegistry.stepStart(runId, "extractor");
 
   const client = new Firecrawl({ apiKey: env.FIRECRAWL_API_KEY });
 
@@ -135,7 +135,7 @@ export async function extractorNode(state: typeof GraphState.State) {
       error,
     );
     if (runId) {
-      runRegistry.stepError(runId, "extractor", errorMessage);
+      await runRegistry.stepError(runId, "extractor", errorMessage);
     }
     // Re-throw or handle as per desired agent behavior on failure
     throw new Error(errorMessage);
@@ -143,10 +143,10 @@ export async function extractorNode(state: typeof GraphState.State) {
 
   state.extracted = extracted;
   if (runId) {
-    runRegistry.stepProgress(runId, "extractor", extracted.length, {
+    await runRegistry.stepProgress(runId, "extractor", extracted.length, {
       extracted: extracted.length,
     });
-    runRegistry.stepComplete(runId, "extractor", extracted.length);
+    await runRegistry.stepComplete(runId, "extractor", extracted.length);
   }
   return state;
 }

@@ -7,7 +7,7 @@ export async function writerNode(state: typeof GraphState.State) {
   const sponsorNameInput = state.input?.trim();
   const mode = state.mode ?? "append"; // Default to append if not specified
   const runId = state.runId;
-  if (runId) runRegistry.stepStart(runId, "writer");
+  if (runId) await runRegistry.stepStart(runId, "writer");
 
   // prefer explicit sponsorName from items if provided, else from input
   const sponsorName = (
@@ -17,7 +17,7 @@ export async function writerNode(state: typeof GraphState.State) {
   ).trim();
 
   if (!sponsorName || items.length === 0) {
-    if (runId) runRegistry.stepComplete(runId, "writer", 0);
+    if (runId) await runRegistry.stepComplete(runId, "writer", 0);
     return state;
   }
 
@@ -50,7 +50,7 @@ export async function writerNode(state: typeof GraphState.State) {
       break;
   }
 
-  if (runId) runRegistry.stepComplete(runId, "writer", items.length);
+  if (runId) await runRegistry.stepComplete(runId, "writer", items.length);
   return state;
 }
 

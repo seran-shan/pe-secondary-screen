@@ -245,17 +245,34 @@ export const sponsorRouter = createTRPCRouter({
         });
       }
 
-      // Perform a transaction to delete portfolio companies and then the sponsor
+      // Perform a transaction to delete dependents in FK-safe order, then sponsor
       await ctx.db.$transaction(async (prisma) => {
-        // 1. Delete all portfolio companies associated with the sponsor
-        await prisma.portfolioCompany.deleteMany({
+        // Collect all portfolio company IDs for this sponsor
+        const companies = await prisma.portfolioCompany.findMany({
           where: { sponsorId: input.id },
+          select: { id: true },
         });
+        const companyIds = companies.map((c) => c.id);
 
-        // 2. Delete the sponsor itself
-        await prisma.sponsor.delete({
-          where: { id: input.id },
-        });
+        if (companyIds.length > 0) {
+          // Delete dependents first to satisfy FK constraints
+          await prisma.alert.deleteMany({
+            where: { companyId: { in: companyIds } },
+          });
+          await prisma.comment.deleteMany({
+            where: { companyId: { in: companyIds } },
+          });
+          await prisma.watchlist.deleteMany({
+            where: { companyId: { in: companyIds } },
+          });
+          // Now delete portfolio companies
+          await prisma.portfolioCompany.deleteMany({
+            where: { id: { in: companyIds } },
+          });
+        }
+
+        // Finally delete sponsor
+        await prisma.sponsor.delete({ where: { id: input.id } });
       });
 
       return { success: true, deletedId: input.id };

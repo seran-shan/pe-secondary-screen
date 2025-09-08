@@ -19,7 +19,7 @@ export async function normalizerNode(state: typeof GraphState.State) {
   }
 
   const runId = state.runId;
-  if (runId) runRegistry.stepStart(runId, "normalizer");
+  if (runId) await runRegistry.stepStart(runId, "normalizer");
 
   const seen = new Set<string>();
   const unique = items.filter((item) => {
@@ -31,10 +31,10 @@ export async function normalizerNode(state: typeof GraphState.State) {
 
   state.normalized = unique;
   if (runId) {
-    runRegistry.stepProgress(runId, "normalizer", unique.length, {
+    await runRegistry.stepProgress(runId, "normalizer", unique.length, {
       normalized: unique.length,
     });
-    runRegistry.stepComplete(runId, "normalizer", unique.length);
+    await runRegistry.stepComplete(runId, "normalizer", unique.length);
   }
   return state;
 }

@@ -56,6 +56,14 @@ export function SponsorActions({
     sponsorId: sponsor.id,
   });
 
+  // Disable discover if an active run exists for this sponsor
+  const { data: activeRunForSponsor } = api.agent.activeRunForSponsor.useQuery(
+    { sponsorId: sponsor.id },
+    {
+      refetchInterval: 3000,
+    },
+  );
+
   const utils = api.useUtils();
 
   // Live run endpoints
@@ -66,6 +74,14 @@ export function SponsorActions({
 
   // Use direct HTTP fetch instead of tRPC to avoid auth overhead
   const [runData, setRunData] = React.useState<RunState | null>(null);
+
+  React.useEffect(() => {
+    // Reattach if a run is active from elsewhere
+    if (typeof window !== "undefined") {
+      const active = localStorage.getItem("agent_current_run_id");
+      if (active) setCurrentRunId(active);
+    }
+  }, []);
 
   React.useEffect(() => {
     if (!currentRunId) return;
@@ -146,6 +162,9 @@ export function SponsorActions({
       void utils.sponsor.getByIdWithPortfolio.invalidate({ id: sponsor.id });
       void utils.company.getAll.invalidate();
       onPortfolioUpdate?.();
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("agent_current_run_id");
+      }
     }
   }, [runData, sponsor.id, sponsor.name, utils.sponsor, onPortfolioUpdate]);
 
@@ -203,6 +222,9 @@ export function SponsorActions({
       });
 
       setCurrentRunId(res.runId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("agent_current_run_id", res.runId);
+      }
       setPollInterval(500); // Reset poll interval for new run
     } catch (err) {
       console.error(`[UI] Failed to start run`, err);
@@ -249,6 +271,9 @@ export function SponsorActions({
     setCurrentRunId(null);
     setRunData(null);
     setPollInterval(500);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("agent_current_run_id");
+    }
   };
 
   const handleAgentComplete = () => {
@@ -262,14 +287,14 @@ export function SponsorActions({
         {/* Primary Action - Discover Portfolio */}
         <Button
           onClick={handleDiscoverPortfolio}
-          disabled={isAgentRunning}
+          disabled={isAgentRunning || !!activeRunForSponsor}
           size="lg"
           className="relative"
         >
-          {isAgentRunning ? (
+          {isAgentRunning || activeRunForSponsor ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              <span className="hidden sm:inline">Discovering...</span>
+              <span className="hidden sm:inline">Discovery in progress…</span>
             </>
           ) : portfolioStatus?.hasExistingData ? (
             <>

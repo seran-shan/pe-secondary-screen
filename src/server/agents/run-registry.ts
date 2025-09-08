@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { kv } from "@vercel/kv";
 
 export type StepId =
   | "finder"
@@ -33,6 +34,8 @@ export interface StepState {
 export interface RunState {
   runId: string;
   sponsorName: string;
+  sponsorId?: string;
+  userId?: string | null;
   mode: "append" | "update" | "replace";
   status: RunStatus;
   currentStepId?: StepId;
@@ -60,47 +63,88 @@ const initialSteps = (): Record<StepId, StepState> => ({
 });
 
 class RunRegistry {
-  private runs = new Map<string, RunState>();
-  private cache = new Map<string, { data: RunState; expires: number }>();
-  private cleanupInterval: NodeJS.Timeout;
+  private ttlSeconds = 60 * 60; // 1 hour retention
+  private memRuns = new Map<string, RunState>();
+  private kvAvailable =
+    typeof process !== "undefined" &&
+    !!process.env.KV_REST_API_URL &&
+    !!process.env.KV_REST_API_TOKEN;
 
-  constructor() {
-    // Cleanup old runs every 5 minutes
-    this.cleanupInterval = setInterval(
-      () => {
-        this.cleanup();
-      },
-      5 * 60 * 1000,
-    );
+  private key(runId: string) {
+    return `agent:run:${runId}`;
   }
 
-  private cleanup() {
-    const now = Date.now();
-    const cutoff = 10 * 60 * 1000; // 10 minutes
+  private activeSponsorKey(sponsorId: string) {
+    return `agent:active:sponsor:${sponsorId}`;
+  }
 
-    // Clean up completed runs older than 10 minutes
-    for (const [runId, run] of this.runs.entries()) {
-      if (run.endedAt && now - run.endedAt > cutoff) {
-        this.runs.delete(runId);
-        this.cache.delete(runId);
-        // Silently clean up old runs
-      }
-    }
+  private activeUserKey(userId: string) {
+    return `agent:active:user:${userId}`;
+  }
 
-    // Clean up expired cache entries
-    for (const [runId, cached] of this.cache.entries()) {
-      if (cached.expires < now) {
-        this.cache.delete(runId);
+  private startLockKey(sponsorId: string) {
+    return `agent:lock:start:${sponsorId}`;
+  }
+
+  async withStartLock<T>(sponsorId: string, fn: () => Promise<T>): Promise<T> {
+    if (!this.kvAvailable) return await fn();
+    const key = this.startLockKey(sponsorId);
+    // best-effort NX lock with short TTL
+    try {
+      const acquired = await kv.set(key, "1", { nx: true, ex: 10 });
+      if (!acquired) {
+        // small wait and attempt to read active run instead of proceeding
+        await new Promise((r) => setTimeout(r, 250));
+        return await fn();
       }
+      try {
+        const result = await fn();
+        return result;
+      } finally {
+        await kv.del(key).catch(() => {});
+      }
+    } catch {
+      return await fn();
     }
   }
 
-  createRun(sponsorName: string, mode: RunState["mode"]): RunState {
+  private async write(run: RunState) {
+    if (this.kvAvailable) {
+      try {
+        await kv.set(this.key(run.runId), run, { ex: this.ttlSeconds });
+        return;
+      } catch (e) {
+        // fall through to memory
+      }
+    }
+    this.memRuns.set(run.runId, run);
+  }
+
+  private async read(runId: string): Promise<RunState | undefined> {
+    if (this.kvAvailable) {
+      try {
+        const data = (await kv.get<RunState>(this.key(runId))) ?? undefined;
+        if (data) return data as RunState;
+      } catch (e) {
+        // fall through to memory
+      }
+    }
+    return this.memRuns.get(runId);
+  }
+
+  async createRun(
+    sponsorName: string,
+    mode: RunState["mode"],
+    sponsorId?: string,
+    userId?: string | null,
+  ): Promise<RunState> {
     const runId = randomUUID();
     const now = Date.now();
     const state: RunState = {
       runId,
       sponsorName,
+      sponsorId,
+      userId: userId ?? null,
       mode,
       status: "pending",
       steps: initialSteps(),
@@ -108,106 +152,111 @@ class RunRegistry {
       createdAt: now,
       updatedAt: now,
     };
-    this.runs.set(runId, state);
+    await this.write(state);
+    // Store active mapping for idempotency
+    try {
+      if (this.kvAvailable) {
+        if (sponsorId)
+          await kv.set(this.activeSponsorKey(sponsorId), runId, {
+            ex: this.ttlSeconds,
+          });
+        if (userId)
+          await kv.set(this.activeUserKey(userId), runId, {
+            ex: this.ttlSeconds,
+          });
+      }
+    } catch {}
     console.log(`[Agent] Starting ${sponsorName} portfolio discovery`);
     return state;
   }
 
-  getRun(runId: string, useCache = false): RunState | undefined {
-    // Check cache first if enabled
-    if (useCache) {
-      const cached = this.cache.get(runId);
-      if (cached && cached.expires > Date.now()) {
-        return cached.data;
-      }
-    }
-
-    const run = this.runs.get(runId);
-
-    // Cache the result if caching is enabled
-    if (run && useCache) {
-      this.cache.set(runId, {
-        data: run,
-        expires: Date.now() + 1000, // Cache for 1 second
-      });
-    }
-
-    return run;
+  async getRun(runId: string): Promise<RunState | undefined> {
+    return await this.read(runId);
   }
 
-  startRun(runId: string) {
-    const run = this.runs.get(runId);
+  async startRun(runId: string) {
+    const run = await this.read(runId);
     if (!run) return;
     run.status = "running";
     run.updatedAt = Date.now();
+    await this.write(run);
     console.log(`[Agent:${runId}] Run started`);
   }
 
-  completeRun(runId: string) {
-    const run = this.runs.get(runId);
+  async completeRun(runId: string) {
+    const run = await this.read(runId);
     if (!run) return;
     run.status = "completed";
     run.endedAt = Date.now();
     run.updatedAt = run.endedAt;
+    await this.write(run);
+    await this.clearActiveMappings(run);
     console.log(`[Agent] Portfolio discovery complete`);
   }
 
-  failRun(runId: string, error: string) {
-    const run = this.runs.get(runId);
+  async failRun(runId: string, error: string) {
+    const run = await this.read(runId);
     if (!run) return;
     run.status = "error";
     run.error = error;
     run.endedAt = Date.now();
     run.updatedAt = run.endedAt;
+    await this.write(run);
+    await this.clearActiveMappings(run);
     console.error(`[Agent:${runId}] Run failed: ${error}`);
   }
 
-  cancelRun(runId: string) {
-    const run = this.runs.get(runId);
+  async cancelRun(runId: string) {
+    const run = await this.read(runId);
     if (!run) return;
     run.cancelled = true;
     run.status = "cancelled";
     run.endedAt = Date.now();
     run.updatedAt = run.endedAt;
+    await this.write(run);
+    await this.clearActiveMappings(run);
     console.warn(`[Agent:${runId}] Run cancelled`);
   }
 
-  isCancelled(runId: string): boolean {
-    return this.runs.get(runId)?.cancelled === true;
+  async isCancelled(runId: string): Promise<boolean> {
+    const run = await this.read(runId);
+    return run?.cancelled === true;
   }
 
-  stepStart(runId: string, stepId: StepId) {
-    const run = this.runs.get(runId);
+  async stepStart(runId: string, stepId: StepId) {
+    const run = await this.read(runId);
     if (!run) return;
     run.currentStepId = stepId;
     const step = run.steps[stepId];
     step.status = "running";
     step.startedAt = Date.now();
     run.updatedAt = Date.now();
+    await this.write(run);
     console.log(`[Agent] ${stepId}`);
   }
 
-  stepProgress(
+  async stepProgress(
     runId: string,
     stepId: StepId,
     count: number,
     totals?: Partial<RunState["totals"]>,
   ) {
-    const run = this.runs.get(runId);
+    const run = await this.read(runId);
     if (!run) return;
     const step = run.steps[stepId];
     step.count = count;
     if (totals) run.totals = { ...run.totals, ...totals };
     run.updatedAt = Date.now();
+    await this.write(run);
   }
 
-  stepComplete(
+  async stepComplete(
     runId: string,
     stepId: StepId,
     count?: number,
     totals?: Partial<RunState["totals"]>,
   ) {
-    const run = this.runs.get(runId);
+    const run = await this.read(runId);
     if (!run) return;
     const step = run.steps[stepId];
     step.status = "completed";
@@ -215,11 +264,12 @@ class RunRegistry {
     step.endedAt = Date.now();
     if (totals) run.totals = { ...run.totals, ...totals };
     run.updatedAt = Date.now();
+    await this.write(run);
     console.log(`[Agent] ${stepId} complete (${step.count ?? 0})`);
   }
 
-  stepError(runId: string, stepId: StepId, error: string) {
-    const run = this.runs.get(runId);
+  async stepError(runId: string, stepId: StepId, error: string) {
+    const run = await this.read(runId);
     if (!run) return;
     const step = run.steps[stepId];
     step.status = "error";
@@ -228,7 +278,57 @@ class RunRegistry {
     run.status = "error";
     run.error = error;
     run.updatedAt = Date.now();
+    await this.write(run);
+    await this.clearActiveMappings(run);
     console.error(`[Agent:${runId}] Step error: ${stepId}: ${error}`);
+  }
+
+  private async clearActiveMappings(run: RunState) {
+    if (!this.kvAvailable) return;
+    try {
+      const ops: Array<Promise<unknown>> = [];
+      if (run.sponsorId) ops.push(kv.del(this.activeSponsorKey(run.sponsorId)));
+      if (run.userId) ops.push(kv.del(this.activeUserKey(run.userId)));
+      await Promise.all(ops);
+    } catch {}
+  }
+
+  async getActiveRunForSponsor(
+    sponsorId: string,
+  ): Promise<RunState | undefined> {
+    if (!this.kvAvailable) return undefined;
+    try {
+      const runId =
+        (await kv.get<string>(this.activeSponsorKey(sponsorId))) ?? undefined;
+      if (!runId) return undefined;
+      const run = await this.read(runId);
+      if (!run) return undefined;
+      if (["completed", "error", "cancelled"].includes(run.status)) {
+        await kv.del(this.activeSponsorKey(sponsorId));
+        return undefined;
+      }
+      return run;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async getActiveRunForUser(userId: string): Promise<RunState | undefined> {
+    if (!this.kvAvailable) return undefined;
+    try {
+      const runId =
+        (await kv.get<string>(this.activeUserKey(userId))) ?? undefined;
+      if (!runId) return undefined;
+      const run = await this.read(runId);
+      if (!run) return undefined;
+      if (["completed", "error", "cancelled"].includes(run.status)) {
+        await kv.del(this.activeUserKey(userId));
+        return undefined;
+      }
+      return run;
+    } catch {
+      return undefined;
+    }
   }
 }
 
@@ -237,6 +337,12 @@ const globalForRunRegistry = globalThis as unknown as {
   __RUN_REGISTRY__?: RunRegistry;
 };
 
-export const runRegistry =
-  globalForRunRegistry.__RUN_REGISTRY__ ??
-  (globalForRunRegistry.__RUN_REGISTRY__ = new RunRegistry());
+// If the instance exists but lacks newly added methods (e.g., after HMR), recreate it
+const existingRegistry = globalForRunRegistry.__RUN_REGISTRY__ as
+  | (RunRegistry & { [k: string]: unknown })
+  | undefined;
+
+export const runRegistry: RunRegistry =
+  existingRegistry && typeof existingRegistry.withStartLock === "function"
+    ? (existingRegistry as RunRegistry)
+    : (globalForRunRegistry.__RUN_REGISTRY__ = new RunRegistry());
