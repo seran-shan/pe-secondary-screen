@@ -55,13 +55,12 @@ import {
   IconSearch,
 } from "@tabler/icons-react";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
-import type { PortfolioCompany, Comment, Watchlist } from "@prisma/client";
+import type { PortfolioCompany, Comment } from "@prisma/client";
 import type { RouterOutputs } from "@/trpc/react";
 
 interface SponsorPortfolioTableProps {
   companies: (PortfolioCompany & {
     comments: Comment[];
-    watchlistedBy: Watchlist[];
   })[];
   sponsorName: string;
   sponsorId: string;
@@ -157,11 +156,9 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
   {
     accessorKey: "watchers",
     header: () => <div className="text-center">Watchers</div>,
-    cell: ({ row }) => (
+    cell: () => (
       <div className="text-center">
-        <Badge variant="secondary" className="text-xs">
-          {row.original.watchlistedBy.length}
-        </Badge>
+        <span className="text-muted-foreground text-xs">-</span>
       </div>
     ),
     size: 80,
@@ -201,7 +198,6 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem>View Details</DropdownMenuItem>
-          <DropdownMenuItem>Add to Watchlist</DropdownMenuItem>
           <DropdownMenuItem>Add Comment</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive">Remove</DropdownMenuItem>

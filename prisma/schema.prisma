@@ -48,10 +48,8 @@ model PortfolioCompany {
   location      String?
   status        CompanyStatus
   sponsorId     String
-  Alert         Alert[]
   comments      Comment[]
   sponsor       Sponsor     @relation(fields: [sponsorId], references: [id])
-  watchlistedBy Watchlist[]
 
   @@unique([sponsorId, asset])
 }
@@ -90,11 +88,9 @@ model User {
   emailVerified DateTime?
   image         String?
   accounts      Account[]
-  alerts        Alert[]
   comments      Comment[]
   runs          Run[]
   sessions      Session[]
-  watchlist     Watchlist[]
 }
 
 model VerificationToken {
@@ -116,28 +112,6 @@ model Comment {
   company   PortfolioCompany @relation(fields: [companyId], references: [id])
 }
 
-model Watchlist {
-  id        String           @id @default(cuid())
-  createdAt DateTime         @default(now())
-  userId    String
-  companyId String
-  company   PortfolioCompany @relation(fields: [companyId], references: [id])
-  user      User             @relation(fields: [userId], references: [id])
-
-  @@unique([userId, companyId])
-}
-
-model Alert {
-  id        String            @id @default(cuid())
-  createdAt DateTime          @default(now())
-  readAt    DateTime?
-  type      String
-  message   String
-  userId    String
-  companyId String?
-  company   PortfolioCompany? @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  user      User              @relation(fields: [userId], references: [id])
-}
 
 model Run {
   id                 String   @id @default(cuid())

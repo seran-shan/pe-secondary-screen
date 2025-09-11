@@ -28,22 +28,6 @@ export const navItems: NavItem[] = [
     items: [],
   },
   {
-    title: "Watchlist",
-    url: "/watchlist",
-    icon: "watchlist",
-    shortcut: ["w", "w"],
-    isActive: false,
-    items: [],
-  },
-  {
-    title: "Alerts",
-    url: "/alerts",
-    icon: "warning",
-    shortcut: ["a", "a"],
-    isActive: false,
-    items: [],
-  },
-  {
     title: "History",
     url: "/history",
     icon: "history",

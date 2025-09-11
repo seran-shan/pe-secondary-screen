@@ -6,8 +6,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   IconArrowLeft,
   IconExternalLink,
-  IconEye,
-  IconEyeOff,
   IconMapPin,
   IconCalendar,
   IconBuilding,
@@ -27,17 +25,10 @@ interface CompanyHeaderProps {
       id: string;
       name: string;
     };
-    watchlistedBy: Array<{ user: { name?: string | null } }>;
   };
-  isWatchlisted?: boolean;
-  onToggleWatchlist?: () => void;
 }
 
-export function CompanyHeader({
-  company,
-  isWatchlisted = false,
-  onToggleWatchlist,
-}: CompanyHeaderProps) {
+export function CompanyHeader({ company }: CompanyHeaderProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -110,44 +101,17 @@ export function CompanyHeader({
         </div>
 
         <div className="flex flex-col gap-3 md:items-end">
-          <div className="flex gap-2">
-            {company.webpage && (
-              <Button variant="outline" size="sm" asChild>
-                <a
-                  href={company.webpage}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <IconExternalLink className="mr-2 h-4 w-4" />
-                  Visit Website
-                </a>
-              </Button>
-            )}
-
-            <Button
-              variant={isWatchlisted ? "default" : "outline"}
-              size="sm"
-              onClick={onToggleWatchlist}
-            >
-              {isWatchlisted ? (
-                <>
-                  <IconEye className="mr-2 h-4 w-4" />
-                  Watching
-                </>
-              ) : (
-                <>
-                  <IconEyeOff className="mr-2 h-4 w-4" />
-                  Add to Watchlist
-                </>
-              )}
+          {company.webpage && (
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={company.webpage}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <IconExternalLink className="mr-2 h-4 w-4" />
+                Visit Website
+              </a>
             </Button>
-          </div>
-
-          {company.watchlistedBy.length > 0 && (
-            <p className="text-muted-foreground text-sm">
-              {company.watchlistedBy.length} user
-              {company.watchlistedBy.length !== 1 ? "s" : ""} watching
-            </p>
           )}
         </div>
       </div>

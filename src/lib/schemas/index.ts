@@ -26,10 +26,6 @@ export const VerificationTokenScalarFieldEnumSchema = z.enum(['identifier','toke
 
 export const CommentScalarFieldEnumSchema = z.enum(['id','createdAt','updatedAt','content','authorId','companyId']);
 
-export const WatchlistScalarFieldEnumSchema = z.enum(['id','createdAt','userId','companyId']);
-
-export const AlertScalarFieldEnumSchema = z.enum(['id','createdAt','readAt','type','message','userId','companyId']);
-
 export const RunScalarFieldEnumSchema = z.enum(['id','createdAt','durationMs','inputSponsor','portfolioUrlsCount','crawledCount','extractedCount','normalizedCount','enrichedCount','userId']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
@@ -98,19 +94,15 @@ export type PortfolioCompany = z.infer<typeof PortfolioCompanySchema>
 //------------------------------------------------------
 
 export type PortfolioCompanyRelations = {
-  Alert: AlertWithRelations[];
   comments: CommentWithRelations[];
   sponsor: SponsorWithRelations;
-  watchlistedBy: WatchlistWithRelations[];
 };
 
 export type PortfolioCompanyWithRelations = z.infer<typeof PortfolioCompanySchema> & PortfolioCompanyRelations
 
 export const PortfolioCompanyWithRelationsSchema: z.ZodType<PortfolioCompanyWithRelations> = PortfolioCompanySchema.merge(z.object({
-  Alert: z.lazy(() => AlertWithRelationsSchema).array(),
   comments: z.lazy(() => CommentWithRelationsSchema).array(),
   sponsor: z.lazy(() => SponsorWithRelationsSchema),
-  watchlistedBy: z.lazy(() => WatchlistWithRelationsSchema).array(),
 }))
 
 /////////////////////////////////////////
@@ -193,22 +185,18 @@ export type User = z.infer<typeof UserSchema>
 
 export type UserRelations = {
   accounts: AccountWithRelations[];
-  alerts: AlertWithRelations[];
   comments: CommentWithRelations[];
   runs: RunWithRelations[];
   sessions: SessionWithRelations[];
-  watchlist: WatchlistWithRelations[];
 };
 
 export type UserWithRelations = z.infer<typeof UserSchema> & UserRelations
 
 export const UserWithRelationsSchema: z.ZodType<UserWithRelations> = UserSchema.merge(z.object({
   accounts: z.lazy(() => AccountWithRelationsSchema).array(),
-  alerts: z.lazy(() => AlertWithRelationsSchema).array(),
   comments: z.lazy(() => CommentWithRelationsSchema).array(),
   runs: z.lazy(() => RunWithRelationsSchema).array(),
   sessions: z.lazy(() => SessionWithRelationsSchema).array(),
-  watchlist: z.lazy(() => WatchlistWithRelationsSchema).array(),
 }))
 
 /////////////////////////////////////////
@@ -251,65 +239,6 @@ export type CommentWithRelations = z.infer<typeof CommentSchema> & CommentRelati
 export const CommentWithRelationsSchema: z.ZodType<CommentWithRelations> = CommentSchema.merge(z.object({
   author: z.lazy(() => UserWithRelationsSchema),
   company: z.lazy(() => PortfolioCompanyWithRelationsSchema),
-}))
-
-/////////////////////////////////////////
-// WATCHLIST SCHEMA
-/////////////////////////////////////////
-
-export const WatchlistSchema = z.object({
-  id: z.string().cuid(),
-  createdAt: z.coerce.date(),
-  userId: z.string(),
-  companyId: z.string(),
-})
-
-export type Watchlist = z.infer<typeof WatchlistSchema>
-
-// WATCHLIST RELATION SCHEMA
-//------------------------------------------------------
-
-export type WatchlistRelations = {
-  company: PortfolioCompanyWithRelations;
-  user: UserWithRelations;
-};
-
-export type WatchlistWithRelations = z.infer<typeof WatchlistSchema> & WatchlistRelations
-
-export const WatchlistWithRelationsSchema: z.ZodType<WatchlistWithRelations> = WatchlistSchema.merge(z.object({
-  company: z.lazy(() => PortfolioCompanyWithRelationsSchema),
-  user: z.lazy(() => UserWithRelationsSchema),
-}))
-
-/////////////////////////////////////////
-// ALERT SCHEMA
-/////////////////////////////////////////
-
-export const AlertSchema = z.object({
-  id: z.string().cuid(),
-  createdAt: z.coerce.date(),
-  readAt: z.coerce.date().nullable(),
-  type: z.string(),
-  message: z.string(),
-  userId: z.string(),
-  companyId: z.string().nullable(),
-})
-
-export type Alert = z.infer<typeof AlertSchema>
-
-// ALERT RELATION SCHEMA
-//------------------------------------------------------
-
-export type AlertRelations = {
-  company?: PortfolioCompanyWithRelations | null;
-  user: UserWithRelations;
-};
-
-export type AlertWithRelations = z.infer<typeof AlertSchema> & AlertRelations
-
-export const AlertWithRelationsSchema: z.ZodType<AlertWithRelations> = AlertSchema.merge(z.object({
-  company: z.lazy(() => PortfolioCompanyWithRelationsSchema).nullable(),
-  user: z.lazy(() => UserWithRelationsSchema),
 }))
 
 /////////////////////////////////////////

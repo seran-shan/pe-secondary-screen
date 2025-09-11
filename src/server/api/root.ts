@@ -1,8 +1,6 @@
 import { agentRouter } from "@/server/api/routers/agent";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { sponsorRouter } from "@/server/api/routers/sponsor";
-import { watchlistRouter } from "@/server/api/routers/watchlist";
-import { alertRouter } from "@/server/api/routers/alert";
 import { runRouter } from "@/server/api/routers/run";
 import { commentRouter } from "@/server/api/routers/comment";
 import { companyRouter } from "@/server/api/routers/company";
@@ -15,8 +13,6 @@ import { companyRouter } from "@/server/api/routers/company";
 export const appRouter = createTRPCRouter({
   agent: agentRouter,
   sponsor: sponsorRouter,
-  watchlist: watchlistRouter,
-  alert: alertRouter,
   run: runRouter,
   comment: commentRouter,
   company: companyRouter,

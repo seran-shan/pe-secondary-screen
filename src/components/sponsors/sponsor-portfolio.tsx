@@ -15,7 +15,6 @@ import {
 import {
   IconBuilding,
   IconExternalLink,
-  IconEye,
   IconCalendar,
   IconSearch,
   IconMapPin,
@@ -32,7 +31,6 @@ interface SponsorPortfolioProps {
     webpage?: string | null;
     location?: string | null;
     description?: string | null;
-    watchlistedBy: Array<{ user: { name?: string | null } }>;
   }>;
 }
 
@@ -152,12 +150,6 @@ export function SponsorPortfolio({ portfolio }: SponsorPortfolioProps) {
                           </Badge>
                         )}
                       </div>
-                      {company.watchlistedBy.length > 0 && (
-                        <div className="text-muted-foreground flex items-center gap-1 text-xs">
-                          <IconEye className="h-3 w-3" />
-                          {company.watchlistedBy.length}
-                        </div>
-                      )}
                     </div>
 
                     <div className="space-y-2 text-sm">

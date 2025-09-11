@@ -14,13 +14,7 @@ import { SponsorRunStepper } from "@/components/sponsors/sponsor-run-stepper";
 import { api } from "@/trpc/react";
 import { IconArrowLeft, IconExternalLink, IconMail } from "@tabler/icons-react";
 import Link from "next/link";
-import type {
-  Sponsor,
-  PortfolioCompany,
-  Comment,
-  User,
-  Watchlist,
-} from "@prisma/client";
+import type { Sponsor, PortfolioCompany, Comment, User } from "@prisma/client";
 
 type SponsorData = Sponsor & {
   portfolio: Array<
@@ -30,7 +24,6 @@ type SponsorData = Sponsor & {
           author: Pick<User, "id" | "name" | "email" | "image">;
         }
       >;
-      watchlistedBy: Watchlist[];
     }
   >;
 };
@@ -88,7 +81,7 @@ export function SponsorDetailClient({
     })),
   };
 
-  // Create a hybrid portfolio that combines live data with initial data for comments/watchlist
+  // Create a hybrid portfolio that combines live data with initial data for comments
   const hybridPortfolio = React.useMemo(() => {
     if (!sponsorData) return initialSponsor.portfolio;
 
@@ -97,7 +90,7 @@ export function SponsorDetailClient({
       initialSponsor.portfolio.map((p) => [p.asset, p]),
     );
 
-    // Merge live data with initial data for comments and watchlist
+    // Merge live data with initial data for comments
     return sponsorData.portfolio.map((liveCompany) => {
       const initialCompany = initialMap.get(liveCompany.asset);
       return {
@@ -117,9 +110,8 @@ export function SponsorDetailClient({
         // Convert undefined to null for sector and webpage to match expected types
         sector: liveCompany.sector ?? null,
         webpage: liveCompany.webpage ?? null,
-        // Keep comments and watchlist from initial data
+        // Keep comments from initial data
         comments: initialCompany?.comments ?? [],
-        watchlistedBy: initialCompany?.watchlistedBy ?? [],
       };
     });
   }, [sponsorData, initialSponsor.portfolio, initialSponsor.id]);

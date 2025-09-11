@@ -33,7 +33,6 @@ import {
   IconChartAreaLine,
   IconBuilding,
   IconBriefcase,
-  IconEye,
   IconBookmark,
   IconClock,
   IconHome,
@@ -77,7 +76,6 @@ export const Icons = {
   home: IconHome,
   company: IconBuilding,
   sponsors: IconBriefcase,
-  watchlist: IconEye,
   bookmark: IconBookmark,
   history: IconClock,
 };

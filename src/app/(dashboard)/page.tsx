@@ -56,7 +56,7 @@ export default async function Home() {
               Recent Activity
             </h2>
             <p className="text-muted-foreground">
-              Stay updated with your latest scans, watchlist, and alerts
+              Stay updated with your latest scans and activities
             </p>
           </div>
           <RecentActivity />

@@ -13,7 +13,6 @@ import {
   IconDotsVertical,
   IconExternalLink,
 } from "@tabler/icons-react";
-import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
 
 type Company = RouterOutputs["company"]["getAll"][0];
@@ -23,10 +22,6 @@ interface MobileCompanyCardProps {
 }
 
 export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
-  const utils = api.useUtils();
-  const toggleWatchlist = api.watchlist.toggle.useMutation({
-    onSuccess: () => utils.watchlist.list.invalidate(),
-  });
   return (
     <Card>
       <CardHeader>
@@ -47,13 +42,6 @@ export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
               <DropdownMenuItem>View</DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  toggleWatchlist.mutate({ companyId: String(company.id) })
-                }
-              >
-                Watchlist
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive">Remove</DropdownMenuItem>
             </DropdownMenuContent>

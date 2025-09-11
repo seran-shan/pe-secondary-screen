@@ -328,10 +328,7 @@ export function DiscoveryConfirmationDialog({
                     • All existing {existingCompaniesCount} companies will be
                     deleted
                   </li>
-                  <li>
-                    • All comments, description, and watchlist entries will be
-                    lost
-                  </li>
+                  <li>• All comments and description will be lost</li>
                   <li>• Fresh portfolio data will be created from scratch</li>
                 </ul>
               )}

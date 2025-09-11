@@ -207,10 +207,6 @@ export const sponsorRouter = createTRPCRouter({
                     },
                   },
                 },
-                watchlistedBy: true,
-                Alert: {
-                  include: { user: true },
-                },
               },
               orderBy: { dateInvested: "desc" },
             },
@@ -256,13 +252,7 @@ export const sponsorRouter = createTRPCRouter({
 
         if (companyIds.length > 0) {
           // Delete dependents first to satisfy FK constraints
-          await prisma.alert.deleteMany({
-            where: { companyId: { in: companyIds } },
-          });
           await prisma.comment.deleteMany({
-            where: { companyId: { in: companyIds } },
-          });
-          await prisma.watchlist.deleteMany({
             where: { companyId: { in: companyIds } },
           });
           // Now delete portfolio companies

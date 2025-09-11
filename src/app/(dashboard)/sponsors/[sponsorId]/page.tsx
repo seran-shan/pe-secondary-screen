@@ -40,12 +40,6 @@ export default async function SponsorDetailPage({ params }: Props) {
             },
             orderBy: { createdAt: "desc" },
           },
-          watchlistedBy: true,
-          Alert: {
-            include: {
-              user: true,
-            },
-          },
         },
         orderBy: { dateInvested: "desc" },
       },

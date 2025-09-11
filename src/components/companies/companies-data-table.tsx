@@ -114,7 +114,9 @@ const columns: ColumnDef<Company>[] = [
     accessorKey: "invested",
     header: () => <div className="w-full text-right">Invested</div>,
     cell: ({ row }) => (
-      <div className="text-right">{row.original.dateInvested?.toLocaleDateString() ?? "-"}</div>
+      <div className="text-right">
+        {row.original.dateInvested?.toLocaleDateString() ?? "-"}
+      </div>
     ),
     size: 160,
   },
@@ -162,7 +164,7 @@ const columns: ColumnDef<Company>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => (
+    cell: () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -176,14 +178,6 @@ const columns: ColumnDef<Company>[] = [
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem>View</DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              // TODO: Implement watchlist toggle functionality
-              console.log("Toggle watchlist for:", row.original);
-            }}
-          >
-            Watchlist
-          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive">Remove</DropdownMenuItem>
         </DropdownMenuContent>
@@ -193,11 +187,7 @@ const columns: ColumnDef<Company>[] = [
   },
 ];
 
-export function CompaniesDataTable({
-  data: initialData,
-}: {
-  data: Company[];
-}) {
+export function CompaniesDataTable({ data: initialData }: { data: Company[] }) {
   const [data] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =

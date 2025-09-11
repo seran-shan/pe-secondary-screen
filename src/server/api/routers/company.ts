@@ -83,12 +83,6 @@ export const companyRouter = createTRPCRouter({
             author: true,
           },
         },
-        watchlistedBy: true,
-        Alert: {
-          include: {
-            user: true,
-          },
-        },
       },
       orderBy: { createdAt: "desc" },
     });

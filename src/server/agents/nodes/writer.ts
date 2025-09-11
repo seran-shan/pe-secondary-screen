@@ -133,7 +133,7 @@ async function handleUpdateMode(sponsorId: string, items: PortfolioCompany[]) {
  */
 async function handleReplaceMode(sponsorId: string, items: PortfolioCompany[]) {
   // First, delete ALL existing portfolio companies for this sponsor
-  // This will cascade delete comments and watchlist entries due to foreign key constraints
+  // This will cascade delete comments due to foreign key constraints
   await db.portfolioCompany.deleteMany({
     where: { sponsorId },
   });
