@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import PageContainer from "@/components/layout/page-container";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
@@ -43,38 +42,43 @@ interface SponsorDetailClientProps {
 export function SponsorDetailClient({
   initialSponsor,
 }: SponsorDetailClientProps) {
-  const router = useRouter();
-
-  // Use tRPC query to get live sponsor data that updates automatically
-  const { data: sponsorData, isLoading: isSponsorLoading } =
-    api.sponsor.getByIdWithPortfolio.useQuery(
-      { id: initialSponsor.id },
-      {
-        initialData: {
-          id: initialSponsor.id,
-          name: initialSponsor.name,
-          contact: initialSponsor.contact,
-          portfolioUrl: initialSponsor.portfolioUrl,
-          portfolio: initialSponsor.portfolio.map((p) => ({
-            asset: p.asset,
-            webpage: p.webpage ?? undefined,
-            sector: p.sector ?? undefined,
-            dateInvested: p.dateInvested
-              ? p.dateInvested.toISOString()
-              : undefined,
-          })),
-        },
-        refetchInterval: 3000, // Refetch every 3 seconds during active runs
-      },
-    );
-
+  // First get the active run status
   const { data: activeRun } = api.agent.activeRunForSponsor.useQuery(
     { sponsorId: initialSponsor.id },
-    { refetchInterval: 2000 },
+    {
+      refetchInterval: 5000, // Reduced from 2s to 5s
+      staleTime: 10_000, // Consider data stale after 10 seconds
+    },
+  );
+
+  // Use tRPC query to get live sponsor data that updates automatically
+  const { data: sponsorData } = api.sponsor.getByIdWithPortfolio.useQuery(
+    { id: initialSponsor.id },
+    {
+      initialData: {
+        id: initialSponsor.id,
+        name: initialSponsor.name,
+        contact: initialSponsor.contact,
+        portfolioUrl: initialSponsor.portfolioUrl,
+        portfolio: initialSponsor.portfolio.map((p) => ({
+          asset: p.asset,
+          webpage: p.webpage ?? undefined,
+          sector: p.sector ?? undefined,
+          dateInvested: p.dateInvested
+            ? p.dateInvested.toISOString()
+            : undefined,
+        })),
+      },
+      refetchInterval: (_data) => {
+        // Only refetch if there's an active run, otherwise use longer interval
+        return activeRun ? 10000 : false; // 10 seconds during active runs, no polling otherwise
+      },
+      staleTime: 30_000, // Consider data stale after 30 seconds
+    },
   );
 
   // Use live data if available, fallback to initial data
-  const sponsor = sponsorData || {
+  const sponsor = sponsorData ?? {
     ...initialSponsor,
     portfolio: initialSponsor.portfolio.map((p) => ({
       asset: p.asset,
@@ -103,19 +107,19 @@ export function SponsorDetailClient({
           ? new Date(liveCompany.dateInvested)
           : null,
         // Ensure all required PortfolioCompany fields are present
-        id: initialCompany?.id || liveCompany.asset, // Use asset as fallback ID
+        id: initialCompany?.id ?? liveCompany.asset, // Use asset as fallback ID
         sponsorId: initialSponsor.id,
-        createdAt: initialCompany?.createdAt || new Date(),
-        updatedAt: initialCompany?.updatedAt || new Date(),
-        description: initialCompany?.description || null,
-        location: initialCompany?.location || null,
-        status: initialCompany?.status || "ACTIVE",
+        createdAt: initialCompany?.createdAt ?? new Date(),
+        updatedAt: initialCompany?.updatedAt ?? new Date(),
+        description: initialCompany?.description ?? null,
+        location: initialCompany?.location ?? null,
+        status: initialCompany?.status ?? "ACTIVE",
         // Convert undefined to null for sector and webpage to match expected types
         sector: liveCompany.sector ?? null,
         webpage: liveCompany.webpage ?? null,
         // Keep comments and watchlist from initial data
-        comments: initialCompany?.comments || [],
-        watchlistedBy: initialCompany?.watchlistedBy || [],
+        comments: initialCompany?.comments ?? [],
+        watchlistedBy: initialCompany?.watchlistedBy ?? [],
       };
     });
   }, [sponsorData, initialSponsor.portfolio, initialSponsor.id]);
@@ -206,6 +210,7 @@ export function SponsorDetailClient({
         <SponsorPortfolioTable
           companies={hybridPortfolio}
           sponsorName={sponsor.name}
+          sponsorId={sponsor.id}
         />
 
         {/* Contact Information */}

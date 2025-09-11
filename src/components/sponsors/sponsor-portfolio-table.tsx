@@ -64,6 +64,7 @@ interface SponsorPortfolioTableProps {
     watchlistedBy: Watchlist[];
   })[];
   sponsorName: string;
+  sponsorId: string;
 }
 
 type PortfolioCompanyRow = SponsorPortfolioTableProps["companies"][number];
@@ -214,6 +215,7 @@ const columns: ColumnDef<PortfolioCompanyRow>[] = [
 export function SponsorPortfolioTable({
   companies,
   sponsorName,
+  sponsorId: _sponsorId,
 }: SponsorPortfolioTableProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -237,12 +239,19 @@ export function SponsorPortfolioTable({
     (companyId: string) => {
       const company = companies.find((c) => c.id === companyId);
       if (company) {
-        // We can now pass through directly because page query includes relations
-        setSelectedCompany(company as unknown as Company);
+        // Create a company object with sponsor information for the drawer
+        // We only need to provide the sponsor.name that the drawer actually uses
+        const companyWithSponsor = {
+          ...company,
+          sponsor: {
+            name: sponsorName,
+          },
+        } as Company;
+        setSelectedCompany(companyWithSponsor);
         setDrawerOpen(true);
       }
     },
-    [companies],
+    [companies, sponsorName],
   );
 
   // Keep the original Prisma shape; format dates in cells instead

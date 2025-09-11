@@ -56,7 +56,8 @@ export function SponsorActions({
   const { data: activeRunForSponsor } = api.agent.activeRunForSponsor.useQuery(
     { sponsorId: sponsor.id },
     {
-      refetchInterval: 3000,
+      refetchInterval: 10000, // Reduced from 3s to 10s
+      staleTime: 15_000, // Consider data stale after 15 seconds
     },
   );
 
@@ -64,7 +65,6 @@ export function SponsorActions({
 
   // Live run endpoints
   const startMutation = api.agent.start.useMutation();
-  const cancelMutation = api.agent.cancel.useMutation();
   const [currentRunId, setCurrentRunId] = React.useState<string | null>(null);
   const [pollInterval, setPollInterval] = React.useState(500);
 
@@ -245,7 +245,6 @@ export function SponsorActions({
   };
 
   const startLiveDiscovery = async (mode: DiscoveryMode) => {
-    const steps = initializeAgentSteps();
     setIsAgentRunning(true);
 
     try {
@@ -266,15 +265,12 @@ export function SponsorActions({
     }
   };
 
-  const [currentMode, setCurrentMode] = React.useState<DiscoveryMode>("append");
-
   const handleDiscoverPortfolio = () => {
     // If no existing data, skip confirmation and go directly to discovery
     if (
       !portfolioStatus?.hasExistingData ||
       portfolioStatus?.companiesCount === 0
     ) {
-      setCurrentMode("append");
       void startLiveDiscovery("append");
     } else {
       setConfirmationDialogOpen(true);
@@ -283,27 +279,7 @@ export function SponsorActions({
 
   const handleConfirmDiscovery = (mode: DiscoveryMode) => {
     setConfirmationDialogOpen(false);
-    setCurrentMode(mode);
     void startLiveDiscovery(mode);
-  };
-
-  const handleCancelAgent = async () => {
-    if (currentRunId) {
-      try {
-        await cancelMutation.mutateAsync({ runId: currentRunId });
-      } catch (e) {
-        console.error("Failed to cancel run", e);
-      }
-    }
-
-    // Reset all state immediately
-    setIsAgentRunning(false);
-    setCurrentRunId(null);
-    setRunData(null);
-    setPollInterval(500);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("agent_current_run_id");
-    }
   };
 
   return (

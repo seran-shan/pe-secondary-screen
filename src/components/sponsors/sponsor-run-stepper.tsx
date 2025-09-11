@@ -3,17 +3,7 @@
 import * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  IconCheck,
-  IconX,
-  IconClock,
-  IconLoader2,
-  IconSearch,
-  IconBrain,
-  IconAdjustments,
-  IconRefresh,
-  IconDatabase,
-} from "@tabler/icons-react";
+import { IconCheck, IconX, IconClock, IconLoader2 } from "@tabler/icons-react";
 import { defineStepper } from "@/components/stepper";
 
 type RunState = {
@@ -52,14 +42,6 @@ const DESCRIPTION: Record<string, string> = {
   normalizer: "Standardizing extracted data",
   enricher: "Adding missing details and determining status",
   writer: "Saving results to database",
-};
-
-const ICONS: Record<string, React.ReactNode> = {
-  finder: <IconSearch className="size-4" />,
-  extractor: <IconBrain className="size-4" />,
-  normalizer: <IconAdjustments className="size-4" />,
-  enricher: <IconRefresh className="size-4" />,
-  writer: <IconDatabase className="size-4" />,
 };
 
 // Define the stepper with our pipeline steps
@@ -117,12 +99,12 @@ export function SponsorRunStepper({ runId }: { runId: string }) {
     const lastCompletedStep = completedSteps[completedSteps.length - 1];
     if (!lastCompletedStep) return "finder";
     const lastCompletedIndex = ORDER.indexOf(lastCompletedStep);
-    return ORDER[lastCompletedIndex + 1] || "finder";
+    return ORDER[lastCompletedIndex + 1] ?? "finder";
   };
 
   const getStepStatus = (stepId: string) => {
     if (!run) return "pending";
-    return run.steps?.[stepId]?.status || "pending";
+    return run.steps?.[stepId]?.status ?? "pending";
   };
 
   const getStepIcon = (stepId: string, status: string) => {

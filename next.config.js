@@ -17,7 +17,11 @@ const config = {
     ],
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-icons",
+      "@tabler/icons-react",
+    ],
   },
 };
 
