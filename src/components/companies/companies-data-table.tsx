@@ -14,8 +14,39 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import type { RouterOutputs } from "@/trpc/react";
+import type { PortfolioCompany, Comment } from "@prisma/client";
 
 type Company = RouterOutputs["company"]["getAll"][0];
+
+// Flexible type that can handle both company.getAll data and sponsor portfolio data
+type FlexibleCompany = Omit<
+  PortfolioCompany,
+  "enrichmentStatus" | "lastEnrichedAt" | "enrichmentError"
+> & {
+  comments: Comment[];
+  sponsor: {
+    name: string;
+    id?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    contact?: string | null;
+    portfolioUrl?: string | null;
+  };
+  enrichmentStatus?: string | null;
+  lastEnrichedAt?: Date | null;
+  enrichmentError?: string | null;
+};
+
+interface CompaniesDataTableProps {
+  data: FlexibleCompany[];
+  // Optional props for different display modes
+  sponsorFilter?: string; // Pre-filter by sponsor name
+  hideSponsorColumn?: boolean; // Hide sponsor column when showing single sponsor's companies
+  showStatusTabs?: boolean; // Show/hide status tabs (All/Active/Exited)
+  showAddButton?: boolean; // Show/hide add company button
+  title?: string; // Custom title for the table
+  description?: string; // Custom description
+}
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,9 +92,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCompanyCard } from "./mobile-company-card";
 import { useCompanyDrawer } from "./company-drawer-context";
 
-// Use generated type directly - transform data in component logic
-
-const columns: ColumnDef<Company>[] = [
+// Create flexible columns that can adapt based on props
+const createColumns = (
+  hideSponsorColumn = false,
+): ColumnDef<FlexibleCompany>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -100,16 +132,21 @@ const columns: ColumnDef<Company>[] = [
     enableHiding: false,
     size: 384,
   },
-  {
-    accessorKey: "sponsor",
-    header: "Sponsor",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.sponsor.name}
-      </Badge>
-    ),
-    size: 224,
-  },
+  // Conditionally include sponsor column
+  ...(hideSponsorColumn
+    ? []
+    : [
+        {
+          accessorKey: "sponsor",
+          header: "Sponsor",
+          cell: ({ row }) => (
+            <Badge variant="outline" className="text-muted-foreground px-1.5">
+              {row.original.sponsor.name}
+            </Badge>
+          ),
+          size: 224,
+        } as ColumnDef<FlexibleCompany>,
+      ]),
   {
     accessorKey: "invested",
     header: () => <div className="w-full text-right">Invested</div>,
@@ -131,16 +168,19 @@ const columns: ColumnDef<Company>[] = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="px-2 py-1">
-        {row.original.status === "EXITED" ? (
-          <span className="relative mr-2 inline-block size-2 rounded-full bg-rose-500" />
-        ) : (
-          <IconCircleCheckFilled className="mr-2 size-4 fill-emerald-500" />
-        )}
-        {row.original.status === "ACTIVE" ? "Active" : "Exited"}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      const status = row.original.status || "ACTIVE"; // Default to ACTIVE if status is missing
+      return (
+        <Badge variant="outline" className="px-2 py-1">
+          {status === "EXITED" ? (
+            <span className="relative mr-2 inline-block size-2 rounded-full bg-rose-500" />
+          ) : (
+            <IconCircleCheckFilled className="mr-2 size-4 fill-emerald-500" />
+          )}
+          {status === "ACTIVE" ? "Active" : "Exited"}
+        </Badge>
+      );
+    },
     size: 160,
   },
   {
@@ -187,7 +227,15 @@ const columns: ColumnDef<Company>[] = [
   },
 ];
 
-export function CompaniesDataTable({ data: initialData }: { data: Company[] }) {
+export function CompaniesDataTable({
+  data: initialData,
+  sponsorFilter: initialSponsorFilter,
+  hideSponsorColumn = false,
+  showStatusTabs = true,
+  showAddButton = true,
+  title,
+  description,
+}: CompaniesDataTableProps) {
   const [data] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -201,7 +249,7 @@ export function CompaniesDataTable({ data: initialData }: { data: Company[] }) {
     pageSize: 10,
   });
   const [sponsorFilter, setSponsorFilter] = React.useState<string | undefined>(
-    undefined,
+    initialSponsorFilter,
   );
   const [sectorFilter, setSectorFilter] = React.useState<string | undefined>(
     undefined,
@@ -216,19 +264,49 @@ export function CompaniesDataTable({ data: initialData }: { data: Company[] }) {
     (companyId: string) => {
       const company = initialData.find((c) => c.id === companyId);
       if (company) {
-        openCompanyDrawer(company);
+        // Convert FlexibleCompany to Company type for the drawer
+        const companyForDrawer = {
+          ...company,
+          sponsor: {
+            name: company.sponsor.name,
+            id: "id" in company.sponsor ? company.sponsor.id : "",
+            createdAt:
+              "createdAt" in company.sponsor
+                ? company.sponsor.createdAt
+                : new Date(),
+            updatedAt:
+              "updatedAt" in company.sponsor
+                ? company.sponsor.updatedAt
+                : new Date(),
+            contact:
+              "contact" in company.sponsor ? company.sponsor.contact : null,
+            portfolioUrl:
+              "portfolioUrl" in company.sponsor
+                ? company.sponsor.portfolioUrl
+                : null,
+          },
+          comments: company.comments || [],
+        } as Company;
+        openCompanyDrawer(companyForDrawer);
       }
     },
     [initialData, openCompanyDrawer],
   );
 
   const displayData = React.useMemo(() => {
+    if (!showStatusTabs) return data;
+
     if (statusTab === "active")
-      return data.filter((d) => d.status === "ACTIVE");
+      return data.filter((d) => (d.status || "ACTIVE") === "ACTIVE");
     if (statusTab === "exited")
-      return data.filter((d) => d.status === "EXITED");
+      return data.filter((d) => (d.status || "ACTIVE") === "EXITED");
     return data;
-  }, [data, statusTab]);
+  }, [data, statusTab, showStatusTabs]);
+
+  const columns = React.useMemo(
+    () => createColumns(hideSponsorColumn),
+    [hideSponsorColumn],
+  );
 
   const table = useReactTable({
     data: displayData,
@@ -264,14 +342,39 @@ export function CompaniesDataTable({ data: initialData }: { data: Company[] }) {
   const counts = React.useMemo(
     () => ({
       all: data.length,
-      active: data.filter((d) => d.status === "ACTIVE").length,
-      exited: data.filter((d) => d.status === "EXITED").length,
+      active: data.filter((d) => (d.status || "ACTIVE") === "ACTIVE").length,
+      exited: data.filter((d) => (d.status || "ACTIVE") === "EXITED").length,
     }),
     [data],
   );
 
   if (isMobile) {
-    const mobileData = table.getRowModel().rows.map((row) => row.original);
+    const mobileData = table.getRowModel().rows.map((row) => {
+      const company = row.original;
+      // Convert FlexibleCompany to Company type for mobile cards
+      return {
+        ...company,
+        sponsor: {
+          name: company.sponsor.name,
+          id: "id" in company.sponsor ? company.sponsor.id : "",
+          createdAt:
+            "createdAt" in company.sponsor
+              ? company.sponsor.createdAt
+              : new Date(),
+          updatedAt:
+            "updatedAt" in company.sponsor
+              ? company.sponsor.updatedAt
+              : new Date(),
+          contact:
+            "contact" in company.sponsor ? company.sponsor.contact : null,
+          portfolioUrl:
+            "portfolioUrl" in company.sponsor
+              ? company.sponsor.portfolioUrl
+              : null,
+        },
+        comments: company.comments || [],
+      } as Company;
+    });
     return (
       <div className="flex flex-col gap-4 p-4">
         {mobileData.map((company) => (
@@ -303,43 +406,53 @@ export function CompaniesDataTable({ data: initialData }: { data: Company[] }) {
     );
   }
 
-  return (
-    <Tabs
-      value={statusTab}
-      onValueChange={(v) => setStatusTab(v as typeof statusTab)}
-      className="w-full flex-col justify-start gap-6"
-    >
+  const content = (
+    <div className="flex flex-col gap-4">
+      {/* Header Section */}
+      {(title || description) && (
+        <div className="px-4 lg:px-6">
+          {title && <h3 className="text-lg font-semibold">{title}</h3>}
+          {description && (
+            <p className="text-muted-foreground text-sm">{description}</p>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between px-4 lg:px-6">
-        <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 lg:flex">
-          <TabsTrigger value="all">
-            All <Badge variant="secondary">{counts.all}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="active">
-            Active <Badge variant="secondary">{counts.active}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="exited">
-            Exited <Badge variant="secondary">{counts.exited}</Badge>
-          </TabsTrigger>
-        </TabsList>
+        {showStatusTabs && (
+          <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 lg:flex">
+            <TabsTrigger value="all">
+              All <Badge variant="secondary">{counts.all}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="active">
+              Active <Badge variant="secondary">{counts.active}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="exited">
+              Exited <Badge variant="secondary">{counts.exited}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        )}
         <div className="flex w-full items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Select
-              value={sponsorFilter}
-              onValueChange={(v) => setSponsorFilter(v)}
-            >
-              <SelectTrigger className="hidden w-44 md:inline-flex" size="sm">
-                <SelectValue placeholder="Filter: Sponsor" />
-              </SelectTrigger>
-              <SelectContent align="start">
-                {[...new Set(initialData.map((r) => r.sponsor.name))]
-                  .sort()
-                  .map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            {!hideSponsorColumn && (
+              <Select
+                value={sponsorFilter}
+                onValueChange={(v) => setSponsorFilter(v)}
+              >
+                <SelectTrigger className="hidden w-44 md:inline-flex" size="sm">
+                  <SelectValue placeholder="Filter: Sponsor" />
+                </SelectTrigger>
+                <SelectContent align="start">
+                  {[...new Set(initialData.map((r) => r.sponsor.name))]
+                    .sort()
+                    .map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            )}
             <Select
               value={sectorFilter}
               onValueChange={(v) => setSectorFilter(v)}
@@ -401,17 +514,16 @@ export function CompaniesDataTable({ data: initialData }: { data: Company[] }) {
             <Button size="sm" onClick={() => exportCsv(table)}>
               Export
             </Button>
-            <Button size="sm" variant="secondary">
-              <IconPlus />
-              Add Company
-            </Button>
+            {showAddButton && (
+              <Button size="sm" variant="secondary">
+                <IconPlus />
+                Add Company
+              </Button>
+            )}
           </div>
         </div>
       </div>
-      <TabsContent
-        value={statusTab}
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
-      >
+      <div className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
         <div className="overflow-hidden rounded-lg border">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
             <TableHeader className="bg-muted sticky top-0 z-10">
@@ -556,12 +668,27 @@ export function CompaniesDataTable({ data: initialData }: { data: Company[] }) {
             </div>
           </div>
         </div>
-      </TabsContent>
-    </Tabs>
+      </div>
+    </div>
   );
+
+  // Return with or without tabs wrapper
+  if (showStatusTabs) {
+    return (
+      <Tabs
+        value={statusTab}
+        onValueChange={(v) => setStatusTab(v as typeof statusTab)}
+        className="w-full flex-col justify-start gap-6"
+      >
+        {content}
+      </Tabs>
+    );
+  }
+
+  return content;
 }
 
-function exportCsv(table: ReturnType<typeof useReactTable<Company>>) {
+function exportCsv(table: ReturnType<typeof useReactTable<FlexibleCompany>>) {
   const rows = table.getRowModel().rows.map((r) => r.original);
   const headers = [
     "Company",
@@ -577,10 +704,16 @@ function exportCsv(table: ReturnType<typeof useReactTable<Company>>) {
       [
         safeCsv(r.asset ?? ""),
         safeCsv(r.sponsor.name ?? ""),
-        safeCsv(r.dateInvested?.toLocaleDateString() ?? ""),
+        safeCsv(
+          r.dateInvested
+            ? typeof r.dateInvested === "string"
+              ? new Date(r.dateInvested).toLocaleDateString()
+              : r.dateInvested.toLocaleDateString()
+            : "",
+        ),
         safeCsv(r.sector ?? ""),
         safeCsv(r.webpage ?? ""),
-        safeCsv(r.status === "ACTIVE" ? "Active" : "Exited"),
+        safeCsv((r.status || "ACTIVE") === "ACTIVE" ? "Active" : "Exited"),
       ].join(","),
     ),
   ].join("\n");

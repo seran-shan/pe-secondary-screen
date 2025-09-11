@@ -1,66 +1,36 @@
 import PageContainer from "@/components/layout/page-container";
-import { HomepageHero } from "@/components/homepage/homepage-hero";
-import { HomepageMetrics } from "@/components/homepage/homepage-metrics";
-import { RecentActivity } from "@/components/homepage/recent-activity";
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 import { Separator } from "@/components/ui/separator";
+import { SponsorsList } from "@/components/companies/sponsors-list";
+import { SponsorsProvider } from "@/components/sponsors";
+import { HomepageHero } from "@/components/homepage/homepage-hero";
+import { AddSponsorButton } from "@/components/sponsors";
 
 export const metadata = {
   title: "FSN Exit Radar",
   description: "AI-powered secondary screening for portfolio companies",
 };
 
-export default async function Home() {
+// Force dynamic rendering to avoid build-time DB queries
+export const dynamic = "force-dynamic";
+
+export default function Home() {
   return (
     <PageContainer scrollable={true}>
       <div className="flex flex-1 flex-col space-y-8">
-        {/* Hero Section with Quick Actions */}
+        {/* Hero Section */}
         <HomepageHero />
 
         <Separator />
 
-        {/* Key Metrics */}
-        <div className="space-y-4">
-          <div className="px-4 lg:px-6">
-            <h2 className="text-2xl font-bold tracking-tight">
-              Platform Overview
-            </h2>
-            <p className="text-muted-foreground">
-              Real-time insights into your screening activities and discoveries
-            </p>
+        {/* Sponsors Section */}
+        <SponsorsProvider>
+          <div className="flex flex-1 flex-col space-y-6">
+            <div className="flex justify-end">
+              <AddSponsorButton />
+            </div>
+            <SponsorsList />
           </div>
-          <HomepageMetrics />
-        </div>
-
-        <Separator />
-
-        {/* Portfolio Discovery Chart */}
-        <div className="space-y-4 px-4 lg:px-6">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">
-              Discovery Timeline
-            </h2>
-            <p className="text-muted-foreground">
-              Portfolio companies and sponsors added over time
-            </p>
-          </div>
-          <ChartAreaInteractive />
-        </div>
-
-        <Separator />
-
-        {/* Recent Activity */}
-        <div className="space-y-6 px-4 lg:px-6">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">
-              Recent Activity
-            </h2>
-            <p className="text-muted-foreground">
-              Stay updated with your latest scans and activities
-            </p>
-          </div>
-          <RecentActivity />
-        </div>
+        </SponsorsProvider>
       </div>
     </PageContainer>
   );

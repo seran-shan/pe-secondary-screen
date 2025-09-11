@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SponsorMetricsCards } from "@/components/sponsors/sponsor-metrics-cards";
 import { SponsorPortfolioChart } from "@/components/sponsors/sponsor-portfolio-chart";
-import { SponsorPortfolioTable } from "@/components/sponsors/sponsor-portfolio-table";
+import { CompaniesDataTable } from "@/components/companies/companies-data-table";
 import { SponsorActions } from "@/components/sponsors/sponsor-actions";
 import { SponsorRunStepper } from "@/components/sponsors/sponsor-run-stepper";
 import { api } from "@/trpc/react";
@@ -83,7 +83,20 @@ export function SponsorDetailClient({
 
   // Create a hybrid portfolio that combines live data with initial data for comments
   const hybridPortfolio = React.useMemo(() => {
-    if (!sponsorData) return initialSponsor.portfolio;
+    if (!sponsorData) {
+      // Add sponsor field to initial portfolio data
+      return initialSponsor.portfolio.map((p) => ({
+        ...p,
+        sponsor: {
+          name: sponsor.name,
+          id: sponsor.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          contact: sponsor.contact,
+          portfolioUrl: sponsor.portfolioUrl,
+        },
+      }));
+    }
 
     // Create a map of initial portfolio companies by asset name for quick lookup
     const initialMap = new Map(
@@ -112,9 +125,30 @@ export function SponsorDetailClient({
         webpage: liveCompany.webpage ?? null,
         // Keep comments from initial data
         comments: initialCompany?.comments ?? [],
+        // Add enrichment fields (optional)
+        enrichmentStatus: initialCompany?.enrichmentStatus ?? null,
+        lastEnrichedAt: initialCompany?.lastEnrichedAt ?? null,
+        enrichmentError: initialCompany?.enrichmentError ?? null,
+        // Add sponsor field
+        sponsor: {
+          name: sponsor.name,
+          id: sponsor.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          contact: sponsor.contact,
+          portfolioUrl: sponsor.portfolioUrl,
+        },
       };
     });
-  }, [sponsorData, initialSponsor.portfolio, initialSponsor.id]);
+  }, [
+    sponsorData,
+    initialSponsor.portfolio,
+    initialSponsor.id,
+    sponsor.name,
+    sponsor.id,
+    sponsor.contact,
+    sponsor.portfolioUrl,
+  ]);
 
   const handlePortfolioUpdate = React.useCallback(() => {
     // The tRPC query will automatically refetch due to invalidation
@@ -199,10 +233,13 @@ export function SponsorDetailClient({
         </div>
 
         {/* Portfolio Companies Table */}
-        <SponsorPortfolioTable
-          companies={hybridPortfolio}
-          sponsorName={sponsor.name}
-          sponsorId={sponsor.id}
+        <CompaniesDataTable
+          data={hybridPortfolio}
+          hideSponsorColumn={true}
+          showStatusTabs={false}
+          showAddButton={false}
+          title="Portfolio Companies"
+          description={`All companies in ${sponsor.name}'s portfolio (${hybridPortfolio.length} total)`}
         />
 
         {/* Contact Information */}

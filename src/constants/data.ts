@@ -10,15 +10,6 @@ export const navItems: NavItem[] = [
     isActive: false,
     items: [],
   },
-
-  {
-    title: "Sponsors",
-    url: "/sponsors",
-    icon: "sponsors",
-    shortcut: ["s", "s"],
-    isActive: false,
-    items: [],
-  },
   {
     title: "Companies",
     url: "/companies",
