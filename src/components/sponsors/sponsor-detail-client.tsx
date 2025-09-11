@@ -125,10 +125,7 @@ export function SponsorDetailClient({
         webpage: liveCompany.webpage ?? null,
         // Keep comments from initial data
         comments: initialCompany?.comments ?? [],
-        // Add enrichment fields (optional)
-        enrichmentStatus: initialCompany?.enrichmentStatus ?? null,
-        lastEnrichedAt: initialCompany?.lastEnrichedAt ?? null,
-        enrichmentError: initialCompany?.enrichmentError ?? null,
+        // Note: enrichment fields are not available in the current schema
         // Add sponsor field
         sponsor: {
           name: sponsor.name,

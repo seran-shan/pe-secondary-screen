@@ -68,7 +68,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -409,7 +409,7 @@ export function CompaniesDataTable({
   const content = (
     <div className="flex flex-col gap-4">
       {/* Header Section */}
-      {(title || description) && (
+      {(title ?? description) && (
         <div className="px-4 lg:px-6">
           {title && <h3 className="text-lg font-semibold">{title}</h3>}
           {description && (
