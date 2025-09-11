@@ -44,25 +44,94 @@ export function SponsorDetailClient({
   initialSponsor,
 }: SponsorDetailClientProps) {
   const router = useRouter();
-  const sponsor = initialSponsor;
+
+  // Use tRPC query to get live sponsor data that updates automatically
+  const { data: sponsorData, isLoading: isSponsorLoading } =
+    api.sponsor.getByIdWithPortfolio.useQuery(
+      { id: initialSponsor.id },
+      {
+        initialData: {
+          id: initialSponsor.id,
+          name: initialSponsor.name,
+          contact: initialSponsor.contact,
+          portfolioUrl: initialSponsor.portfolioUrl,
+          portfolio: initialSponsor.portfolio.map((p) => ({
+            asset: p.asset,
+            webpage: p.webpage ?? undefined,
+            sector: p.sector ?? undefined,
+            dateInvested: p.dateInvested
+              ? p.dateInvested.toISOString()
+              : undefined,
+          })),
+        },
+        refetchInterval: 3000, // Refetch every 3 seconds during active runs
+      },
+    );
+
   const { data: activeRun } = api.agent.activeRunForSponsor.useQuery(
-    { sponsorId: sponsor.id },
+    { sponsorId: initialSponsor.id },
     { refetchInterval: 2000 },
   );
-  // Inline stepper replaces modal during active runs
+
+  // Use live data if available, fallback to initial data
+  const sponsor = sponsorData || {
+    ...initialSponsor,
+    portfolio: initialSponsor.portfolio.map((p) => ({
+      asset: p.asset,
+      webpage: p.webpage ?? undefined,
+      sector: p.sector ?? undefined,
+      dateInvested: p.dateInvested ? p.dateInvested.toISOString() : undefined,
+    })),
+  };
+
+  // Create a hybrid portfolio that combines live data with initial data for comments/watchlist
+  const hybridPortfolio = React.useMemo(() => {
+    if (!sponsorData) return initialSponsor.portfolio;
+
+    // Create a map of initial portfolio companies by asset name for quick lookup
+    const initialMap = new Map(
+      initialSponsor.portfolio.map((p) => [p.asset, p]),
+    );
+
+    // Merge live data with initial data for comments and watchlist
+    return sponsorData.portfolio.map((liveCompany) => {
+      const initialCompany = initialMap.get(liveCompany.asset);
+      return {
+        ...liveCompany,
+        // Convert dateInvested back to Date object if it exists
+        dateInvested: liveCompany.dateInvested
+          ? new Date(liveCompany.dateInvested)
+          : null,
+        // Ensure all required PortfolioCompany fields are present
+        id: initialCompany?.id || liveCompany.asset, // Use asset as fallback ID
+        sponsorId: initialSponsor.id,
+        createdAt: initialCompany?.createdAt || new Date(),
+        updatedAt: initialCompany?.updatedAt || new Date(),
+        description: initialCompany?.description || null,
+        location: initialCompany?.location || null,
+        status: initialCompany?.status || "ACTIVE",
+        // Convert undefined to null for sector and webpage to match expected types
+        sector: liveCompany.sector ?? null,
+        webpage: liveCompany.webpage ?? null,
+        // Keep comments and watchlist from initial data
+        comments: initialCompany?.comments || [],
+        watchlistedBy: initialCompany?.watchlistedBy || [],
+      };
+    });
+  }, [sponsorData, initialSponsor.portfolio, initialSponsor.id]);
 
   const handlePortfolioUpdate = React.useCallback(() => {
-    // Refresh the page to get updated portfolio data
-    router.refresh();
-  }, [router]);
+    // The tRPC query will automatically refetch due to invalidation
+    // No need to refresh the page
+  }, []);
 
-  // Calculate metrics
-  const totalCompanies = sponsor.portfolio.length;
+  // Calculate metrics using hybrid portfolio
+  const totalCompanies = hybridPortfolio.length;
   const totalSectors = new Set(
-    sponsor.portfolio.map((p) => p.sector).filter(Boolean),
+    hybridPortfolio.map((p) => p.sector).filter(Boolean),
   ).size;
   const averageInvestmentAge =
-    sponsor.portfolio
+    hybridPortfolio
       .filter((p) => p.dateInvested)
       .reduce((acc, p) => {
         const years = p.dateInvested
@@ -70,9 +139,10 @@ export function SponsorDetailClient({
             (1000 * 60 * 60 * 24 * 365)
           : 0;
         return acc + years;
-      }, 0) / sponsor.portfolio.filter((p) => p.dateInvested).length || 0;
+      }, 0) / hybridPortfolio.filter((p) => p.dateInvested).length || 0;
 
-  const recentActivity = sponsor.portfolio.reduce((acc, p) => {
+  // Calculate recent activity from hybrid portfolio
+  const recentActivity = hybridPortfolio.reduce((acc, p) => {
     return acc + p.comments.length;
   }, 0);
 
@@ -127,12 +197,14 @@ export function SponsorDetailClient({
 
         {/* Portfolio Performance Chart */}
         <div className="px-4 lg:px-6">
-          <SponsorPortfolioChart sponsor={sponsor} />
+          <SponsorPortfolioChart
+            sponsor={{ ...sponsor, portfolio: hybridPortfolio }}
+          />
         </div>
 
         {/* Portfolio Companies Table */}
         <SponsorPortfolioTable
-          companies={sponsor.portfolio}
+          companies={hybridPortfolio}
           sponsorName={sponsor.name}
         />
 
