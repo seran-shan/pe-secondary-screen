@@ -21,7 +21,6 @@ import {
 } from "@tabler/icons-react";
 import { Loader2 } from "lucide-react";
 import { DeleteSponsorDialog } from "./delete-sponsor-dialog";
-import { AgentProgressModal, type AgentStep } from "./agent-progress-modal";
 import {
   DiscoveryConfirmationDialog,
   type DiscoveryMode,
@@ -46,9 +45,6 @@ export function SponsorActions({
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [confirmationDialogOpen, setConfirmationDialogOpen] =
     React.useState(false);
-  const [agentModalOpen, setAgentModalOpen] = React.useState(false);
-  const [agentSteps, setAgentSteps] = React.useState<AgentStep[]>([]);
-  const [agentStartTime, setAgentStartTime] = React.useState<Date | null>(null);
   const [isAgentRunning, setIsAgentRunning] = React.useState(false);
 
   // Query to check existing portfolio status - always enabled for button state
@@ -132,13 +128,11 @@ export function SponsorActions({
     Object.entries(runData.steps).forEach(([id, serverStep]) => {
       const step = stepMap.get(id);
       if (step && serverStep) {
-        step.status = serverStep.status as AgentStep["status"];
+        step.status = serverStep.status;
         step.count = serverStep.count;
         step.error = serverStep.error;
       }
     });
-
-    setAgentSteps(Array.from(stepMap.values()));
 
     // Handle run completion
     const isFinished = ["completed", "error", "cancelled"].includes(
@@ -175,52 +169,84 @@ export function SponsorActions({
     onPortfolioUpdate,
   ]);
 
-  const initializeAgentSteps = (): AgentStep[] => {
+  const initializeAgentSteps = () => {
     return [
       {
         id: "finder",
         name: "Finding URLs",
-        icon: () => null, // Will be overridden by modal
+        icon: () => null,
         description: "Searching for portfolio company pages",
-        status: "pending" as const,
+        status: "pending" as
+          | "pending"
+          | "running"
+          | "completed"
+          | "error"
+          | "cancelled",
+        count: undefined as number | undefined,
+        error: undefined as string | undefined,
       },
       {
         id: "extractor",
         name: "AI Extraction",
         icon: () => null,
         description: "Using AI to identify portfolio companies",
-        status: "pending" as const,
+        status: "pending" as
+          | "pending"
+          | "running"
+          | "completed"
+          | "error"
+          | "cancelled",
+        count: undefined as number | undefined,
+        error: undefined as string | undefined,
       },
       {
         id: "normalizer",
         name: "Normalizing Data",
         icon: () => null,
         description: "Cleaning and standardizing company data",
-        status: "pending" as const,
+        status: "pending" as
+          | "pending"
+          | "running"
+          | "completed"
+          | "error"
+          | "cancelled",
+        count: undefined as number | undefined,
+        error: undefined as string | undefined,
       },
       {
         id: "enricher",
         name: "Enriching Details",
         icon: () => null,
         description: "Adding additional company information",
-        status: "pending" as const,
+        status: "pending" as
+          | "pending"
+          | "running"
+          | "completed"
+          | "error"
+          | "cancelled",
+        count: undefined as number | undefined,
+        error: undefined as string | undefined,
       },
       {
         id: "writer",
         name: "Saving Results",
         icon: () => null,
         description: "Updating portfolio database",
-        status: "pending" as const,
+        status: "pending" as
+          | "pending"
+          | "running"
+          | "completed"
+          | "error"
+          | "cancelled",
+        count: undefined as number | undefined,
+        error: undefined as string | undefined,
       },
     ];
   };
 
   const startLiveDiscovery = async (mode: DiscoveryMode) => {
     const steps = initializeAgentSteps();
-    setAgentSteps(steps);
-    setAgentStartTime(new Date());
     setIsAgentRunning(true);
-    setAgentModalOpen(true);
 
     try {
       const res = await startMutation.mutateAsync({
@@ -272,20 +298,12 @@ export function SponsorActions({
 
     // Reset all state immediately
     setIsAgentRunning(false);
-    setAgentModalOpen(false);
-    setAgentSteps([]);
-    setAgentStartTime(null);
     setCurrentRunId(null);
     setRunData(null);
     setPollInterval(500);
     if (typeof window !== "undefined") {
       localStorage.removeItem("agent_current_run_id");
     }
-  };
-
-  const handleAgentComplete = () => {
-    setAgentModalOpen(false);
-    // Keep steps and start time for potential viewing later
   };
 
   return (
@@ -355,18 +373,6 @@ export function SponsorActions({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         sponsor={sponsor}
-      />
-
-      <AgentProgressModal
-        open={agentModalOpen}
-        onOpenChange={setAgentModalOpen}
-        sponsorName={sponsor.name}
-        steps={agentSteps}
-        onCancel={handleCancelAgent}
-        onComplete={handleAgentComplete}
-        startTime={agentStartTime ?? undefined}
-        discoveryMode={currentMode}
-        portfolioUrl={sponsor.portfolioUrl}
       />
 
       <DiscoveryConfirmationDialog
