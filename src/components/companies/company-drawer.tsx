@@ -61,14 +61,16 @@ export function CompanyDrawer(props: {
   if (!data) return null;
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[95vh]">
-        <DrawerHeader>
-          <DrawerTitle className="flex items-center gap-2">
+    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
+      <DrawerContent className="max-h-[95vh] w-[400px] sm:w-[500px]">
+        <DrawerHeader className="space-y-2">
+          <DrawerTitle className="flex items-center gap-3 text-xl">
             {data.asset}
-            <Badge variant="outline">{data.sponsor.name}</Badge>
+            <Badge variant="outline" className="text-xs">
+              {data.sponsor.name}
+            </Badge>
           </DrawerTitle>
-          <DrawerDescription>
+          <DrawerDescription className="text-sm">
             Portfolio company details and activity
           </DrawerDescription>
         </DrawerHeader>
@@ -108,7 +110,7 @@ export function CompanyDrawer(props: {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                <div className="flex flex-col gap-4 text-sm sm:flex-row sm:items-center sm:justify-between">
                   {data.dateInvested && (
                     <div className="flex items-center gap-2">
                       <IconCalendar className="h-4 w-4" />
@@ -119,17 +121,22 @@ export function CompanyDrawer(props: {
                     </div>
                   )}
                   {data.webpage && (
-                    <div className="flex items-center gap-2">
-                      <IconExternalLink className="h-4 w-4" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="hover:bg-primary hover:text-primary-foreground h-8 w-fit gap-2 text-xs font-medium transition-all"
+                    >
                       <a
                         href={data.webpage}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="flex items-center gap-2"
                       >
+                        <IconExternalLink className="h-3.5 w-3.5" />
                         Visit website
                       </a>
-                    </div>
+                    </Button>
                   )}
                 </div>
               </CardContent>
@@ -146,27 +153,39 @@ export function CompanyDrawer(props: {
               <CardContent className="space-y-4">
                 {/* Add Comment */}
                 {session?.user && (
-                  <div className="space-y-2">
-                    <Label htmlFor="comment">Add a comment</Label>
-                    <Textarea
-                      id="comment"
-                      placeholder="Share your thoughts..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      disabled={createComment.isPending}
-                    />
-                    <Button
-                      onClick={handleAddComment}
-                      disabled={!newComment.trim() || createComment.isPending}
-                      className="w-full"
-                    >
-                      {createComment.isPending ? (
-                        <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <IconSend className="mr-2 h-4 w-4" />
-                      )}
-                      {createComment.isPending ? "Adding..." : "Add Comment"}
-                    </Button>
+                  <div className="space-y-3">
+                    <Label htmlFor="comment" className="text-sm font-medium">
+                      Add a comment
+                    </Label>
+                    <div className="space-y-3">
+                      <Textarea
+                        id="comment"
+                        placeholder="Share your thoughts..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        disabled={createComment.isPending}
+                        className="min-h-[80px] resize-none"
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={handleAddComment}
+                          disabled={
+                            !newComment.trim() || createComment.isPending
+                          }
+                          size="sm"
+                          className="w-fit"
+                        >
+                          {createComment.isPending ? (
+                            <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <IconSend className="mr-2 h-4 w-4" />
+                          )}
+                          {createComment.isPending
+                            ? "Adding..."
+                            : "Add Comment"}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -202,9 +221,11 @@ export function CompanyDrawer(props: {
                       </div>
                     ))
                   ) : (
-                    <p className="text-muted-foreground py-8 text-center text-sm">
-                      No comments yet. Be the first to share your thoughts!
-                    </p>
+                    <div className="py-8 text-center">
+                      <p className="text-muted-foreground text-sm">
+                        No comments yet. Be the first to share your thoughts!
+                      </p>
+                    </div>
                   )}
                 </div>
               </CardContent>
