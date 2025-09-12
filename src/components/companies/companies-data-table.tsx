@@ -149,9 +149,9 @@ const createColumns = (
       ]),
   {
     accessorKey: "invested",
-    header: () => <div className="w-full text-right">Invested</div>,
+    header: () => <div className="w-full text-center">Invested</div>,
     cell: ({ row }) => (
-      <div className="text-right">
+      <div className="text-center">
         {row.original.dateInvested?.toLocaleDateString() ?? "-"}
       </div>
     ),
@@ -166,40 +166,55 @@ const createColumns = (
     size: 224,
   },
   {
+    accessorKey: "location",
+    header: () => <div className="w-full text-center">Location</div>,
+    cell: ({ row }) => (
+      <div className="w-32 truncate text-center">
+        {row.original.location ?? "-"}
+      </div>
+    ),
+    size: 192,
+  },
+  {
     accessorKey: "status",
-    header: "Status",
+    header: () => <div className="w-full text-center">Status</div>,
     cell: ({ row }) => {
       const status = row.original.status || "ACTIVE"; // Default to ACTIVE if status is missing
       return (
-        <Badge variant="outline" className="px-2 py-1">
-          {status === "EXITED" ? (
-            <span className="relative mr-2 inline-block size-2 rounded-full bg-rose-500" />
-          ) : (
-            <IconCircleCheckFilled className="mr-2 size-4 fill-emerald-500" />
-          )}
-          {status === "ACTIVE" ? "Active" : "Exited"}
-        </Badge>
+        <div className="flex justify-center">
+          <Badge variant="outline" className="px-2 py-1">
+            {status === "EXITED" ? (
+              <span className="relative mr-2 inline-block size-2 rounded-full bg-rose-500" />
+            ) : (
+              <IconCircleCheckFilled className="mr-2 size-4 fill-emerald-500" />
+            )}
+            {status === "ACTIVE" ? "Active" : "Exited"}
+          </Badge>
+        </div>
       );
     },
     size: 160,
   },
   {
     accessorKey: "source",
-    header: "Source",
-    cell: ({ row }) =>
-      row.original.webpage ? (
-        <a
-          href={row.original.webpage}
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground inline-flex items-center gap-1 hover:text-blue-600"
-          aria-label="Open source link"
-        >
-          <IconExternalLink className="size-4" />
-        </a>
-      ) : (
-        <span className="text-muted-foreground">-</span>
-      ),
+    header: () => <div className="w-full text-center">Source</div>,
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        {row.original.webpage ? (
+          <a
+            href={row.original.webpage}
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground inline-flex items-center gap-1 hover:text-blue-600"
+            aria-label="Open source link"
+          >
+            <IconExternalLink className="size-4" />
+          </a>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
+      </div>
+    ),
     size: 96,
   },
   {
@@ -695,6 +710,7 @@ function exportCsv(table: ReturnType<typeof useReactTable<FlexibleCompany>>) {
     "Sponsor",
     "Invested",
     "Sector",
+    "Location",
     "Source",
     "Status",
   ];
@@ -712,6 +728,7 @@ function exportCsv(table: ReturnType<typeof useReactTable<FlexibleCompany>>) {
             : "",
         ),
         safeCsv(r.sector ?? ""),
+        safeCsv(r.location ?? ""),
         safeCsv(r.webpage ?? ""),
         safeCsv((r.status || "ACTIVE") === "ACTIVE" ? "Active" : "Exited"),
       ].join(","),

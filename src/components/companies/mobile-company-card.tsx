@@ -61,6 +61,10 @@ export function MobileCompanyCard({ company }: MobileCompanyCardProps) {
           <p className="truncate">{company.sector ?? "-"}</p>
         </div>
         <div>
+          <p className="text-muted-foreground text-sm">Location</p>
+          <p className="truncate">{company.location ?? "-"}</p>
+        </div>
+        <div>
           <p className="text-muted-foreground text-sm">Status</p>
           <Badge variant="outline" className="px-2 py-1">
             {company.status === "EXITED" ? (
