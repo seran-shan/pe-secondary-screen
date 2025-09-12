@@ -88,6 +88,7 @@ import {
   IconLayoutColumns,
   IconPlus,
 } from "@tabler/icons-react";
+import { formatDate } from "@/lib/format";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCompanyCard } from "./mobile-company-card";
 import { useCompanyDrawer } from "./company-drawer-context";
@@ -152,7 +153,13 @@ const createColumns = (
     header: () => <div className="w-full text-center">Invested</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {row.original.dateInvested?.toLocaleDateString() ?? "-"}
+        {row.original.dateInvested
+          ? formatDate(row.original.dateInvested, {
+              year: "numeric",
+              month: "numeric",
+              day: "numeric",
+            })
+          : "-"}
       </div>
     ),
     size: 160,
@@ -347,7 +354,10 @@ export function CompaniesDataTable({
   });
 
   React.useEffect(() => {
-    table.getColumn("sponsor")?.setFilterValue(sponsorFilter ?? "");
+    const sponsorColumn = table.getColumn("sponsor");
+    if (sponsorColumn) {
+      sponsorColumn.setFilterValue(sponsorFilter ?? "");
+    }
   }, [sponsorFilter, table]);
 
   React.useEffect(() => {
@@ -722,9 +732,11 @@ function exportCsv(table: ReturnType<typeof useReactTable<FlexibleCompany>>) {
         safeCsv(r.sponsor.name ?? ""),
         safeCsv(
           r.dateInvested
-            ? typeof r.dateInvested === "string"
-              ? new Date(r.dateInvested).toLocaleDateString()
-              : r.dateInvested.toLocaleDateString()
+            ? formatDate(r.dateInvested, {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+              })
             : "",
         ),
         safeCsv(r.sector ?? ""),
