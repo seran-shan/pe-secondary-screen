@@ -62,34 +62,55 @@ import {
   IconCircleCheckFilled,
   IconExternalLink,
   IconLayoutColumns,
+  IconSparkles,
 } from "@tabler/icons-react";
 import { formatDate } from "@/lib/format";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCompanyCard } from "./mobile-company-card";
 import { useCompanyDrawer } from "./company-drawer-context";
+import { useCompanies } from "./companies-provider";
+import { cn } from "@/lib/utils";
 
 // Create flexible columns that can adapt based on props
-const createColumns = (hideSponsorColumn = false): ColumnDef<Company>[] => [
+const createColumns = (
+  hideSponsorColumn = false,
+  enrichingIds: Set<string>,
+): ColumnDef<Company>[] => [
   {
     id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
+    header: ({ table }) => {
+      const isAllEnriching = table
+        .getPreFilteredRowModel()
+        .rows.every((row) => enrichingIds.has(row.original.id));
+
+      return (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => {
+              const selectableRows = table
+                .getPreFilteredRowModel()
+                .rows.filter((row) => !enrichingIds.has(row.original.id));
+              selectableRows.forEach((row) => {
+                row.toggleSelected(!!value);
+              });
+            }}
+            aria-label="Select all"
+            disabled={isAllEnriching}
+          />
+        </div>
+      );
+    },
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
+          disabled={enrichingIds.has(row.original.id)}
         />
       </div>
     ),
@@ -226,6 +247,8 @@ export function CompaniesDataTable({
   data,
   hideSponsorColumn = false,
 }: CompaniesDataTableProps) {
+  const { enrichingIds, enrichCompanies } = useCompanies();
+
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -240,8 +263,8 @@ export function CompaniesDataTable({
   const { openCompanyDrawer } = useCompanyDrawer();
 
   const columns = React.useMemo(
-    () => createColumns(hideSponsorColumn),
-    [hideSponsorColumn],
+    () => createColumns(hideSponsorColumn, enrichingIds),
+    [hideSponsorColumn, enrichingIds],
   );
 
   const table = useReactTable({
@@ -338,6 +361,21 @@ export function CompaniesDataTable({
     );
   }
 
+  const handleEnrich = () => {
+    const selectedIds = table
+      .getFilteredSelectedRowModel()
+      .rows.map((row) => row.original.id);
+    if (selectedIds.length > 0) {
+      enrichCompanies(selectedIds);
+      table.resetRowSelection();
+    }
+  };
+
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+  const isEnrichButtonDisabled =
+    selectedRows.length === 0 ||
+    selectedRows.every((row) => enrichingIds.has(row.original.id));
+
   const content = (
     <div className="flex flex-col gap-4">
       {/* Header Section */}
@@ -386,6 +424,15 @@ export function CompaniesDataTable({
             </Select>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleEnrich}
+              disabled={isEnrichButtonDisabled}
+            >
+              <IconSparkles className="mr-2 size-4" />
+              Enrich Selected
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -454,7 +501,11 @@ export function CompaniesDataTable({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="hover:bg-muted/50 cursor-pointer"
+                    className={cn(
+                      "hover:bg-muted/50 cursor-pointer",
+                      enrichingIds.has(row.original.id) &&
+                        "bg-primary/10 animate-pulse",
+                    )}
                     onClick={(e) => {
                       const target = e.target as HTMLElement;
                       if (

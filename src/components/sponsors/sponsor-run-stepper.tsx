@@ -7,13 +7,7 @@ import { IconCheck, IconX, IconClock, IconLoader2 } from "@tabler/icons-react";
 import { defineStepper } from "@/components/stepper";
 import { type RunState } from "@/server/agents/run-registry";
 
-const ORDER = [
-  "finder",
-  "extractor",
-  "normalizer",
-  "enricher",
-  "writer",
-] as const;
+const ORDER = ["finder", "extractor", "normalizer", "writer"] as const;
 
 type StepId = (typeof ORDER)[number];
 
@@ -21,7 +15,6 @@ const LABEL: Record<string, string> = {
   finder: "Finding URLs",
   extractor: "AI Extraction",
   normalizer: "Normalizing Data",
-  enricher: "Enriching Details",
   writer: "Saving Results",
 };
 
@@ -29,7 +22,6 @@ const DESCRIPTION: Record<string, string> = {
   finder: "Discovering portfolio company URLs",
   extractor: "Extracting data using AI",
   normalizer: "Standardizing extracted data",
-  enricher: "Adding missing details and determining status",
   writer: "Saving results to database",
 };
 
@@ -38,7 +30,6 @@ const AgentStepper = defineStepper(
   { id: "finder", title: "Finder" },
   { id: "extractor", title: "Extractor" },
   { id: "normalizer", title: "Normalizer" },
-  { id: "enricher", title: "Enricher" },
   { id: "writer", title: "Writer" },
 );
 
@@ -138,9 +129,6 @@ export function SponsorRunStepper({ run }: { run: RunState }) {
           </Badge>
           <Badge variant="secondary">
             Normalized {run?.totals?.normalized ?? 0}
-          </Badge>
-          <Badge variant="secondary">
-            Enriched {run?.totals?.enriched ?? 0}
           </Badge>
         </div>
       </CardContent>

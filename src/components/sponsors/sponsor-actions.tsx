@@ -103,7 +103,7 @@ export function SponsorActions({
 
       const messages = {
         completed: `Added ${
-          runData.totals.enriched ?? 0
+          runData.totals.added ?? 0
         } new portfolio companies to ${sponsor.name}`,
         cancelled: "Portfolio discovery cancelled",
         error: runData.error ?? "Portfolio discovery failed",

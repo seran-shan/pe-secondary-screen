@@ -17,6 +17,7 @@ import Link from "next/link";
 import type { Sponsor, PortfolioCompany, Comment, User } from "@prisma/client";
 import { pusherClient } from "@/lib/pusher.client";
 import { type RunState } from "@/server/agents/run-registry";
+import { CompaniesProvider } from "../companies/companies-provider";
 
 type SponsorData = Sponsor & {
   portfolio: Array<
@@ -182,7 +183,9 @@ export function SponsorDetailClient({
         </div>
 
         {/* Portfolio Companies Table */}
-        <CompaniesDataTable data={sponsor.portfolio} hideSponsorColumn />
+        <CompaniesProvider sponsorId={sponsor.id}>
+          <CompaniesDataTable data={sponsor.portfolio} hideSponsorColumn />
+        </CompaniesProvider>
 
         {/* Contact Information */}
         {sponsor.contact && (
