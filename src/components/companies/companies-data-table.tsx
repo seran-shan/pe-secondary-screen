@@ -354,11 +354,12 @@ export function CompaniesDataTable({
   });
 
   React.useEffect(() => {
+    if (hideSponsorColumn) return;
     const sponsorColumn = table.getColumn("sponsor");
     if (sponsorColumn) {
       sponsorColumn.setFilterValue(sponsorFilter ?? "");
     }
-  }, [sponsorFilter, table]);
+  }, [sponsorFilter, table, hideSponsorColumn]);
 
   React.useEffect(() => {
     table.getColumn("sector")?.setFilterValue(sectorFilter ?? "");
