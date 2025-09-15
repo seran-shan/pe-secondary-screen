@@ -32,7 +32,7 @@ model Sponsor {
   updatedAt    DateTime           @updatedAt
   name         String             @unique
   contact      String?
-  portfolioUrl String?            @db.VarChar(512)
+  portfolioUrl String             @db.VarChar(512)
   portfolio    PortfolioCompany[]
 }
 

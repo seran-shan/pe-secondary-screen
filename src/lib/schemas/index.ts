@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
@@ -122,7 +123,7 @@ export const SponsorSchema = z.object({
   updatedAt: z.coerce.date(),
   name: z.string(),
   contact: z.string().nullable(),
-  portfolioUrl: z.string().nullable(),
+  portfolioUrl: z.string(),
 });
 
 export type Sponsor = z.infer<typeof SponsorSchema>;

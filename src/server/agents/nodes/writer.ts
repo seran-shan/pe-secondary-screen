@@ -22,20 +22,26 @@ export async function writerNode(state: typeof GraphState.State) {
     return state;
   }
 
+  const portfolioUrl = state.portfolioUrls?.[0];
+  const sponsorExists = await db.sponsor.findUnique({
+    where: { name: sponsorName },
+    select: { id: true },
+  });
+  if (!sponsorExists && !portfolioUrl) {
+    throw new Error(
+      `Cannot create sponsor "${sponsorName}" because no portfolio URL was found by the finder.`,
+    );
+  }
+
   // Upsert sponsor by name
   const sponsor = await db.sponsor.upsert({
     where: { name: sponsorName },
     update: {},
-    create: { name: sponsorName },
+    create: {
+      name: sponsorName,
+      portfolioUrl: portfolioUrl!, // Checked for existence above
+    },
   });
-
-  // Save discovered portfolio URL if sponsor doesn't have one
-  if (state.portfolioUrls?.[0] && !sponsor.portfolioUrl) {
-    await db.sponsor.update({
-      where: { id: sponsor.id },
-      data: { portfolioUrl: state.portfolioUrls[0] },
-    });
-  }
 
   let addedCount = 0;
   // Handle different modes

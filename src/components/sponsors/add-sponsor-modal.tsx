@@ -55,9 +55,7 @@ const addSponsorSchema = SponsorSchema.omit({
   portfolioUrl: z
     .string()
     .url("Invalid URL")
-    .max(512, "URL must be less than 512 characters")
-    .optional()
-    .or(z.literal("")),
+    .max(512, "URL must be less than 512 characters"),
   description: z
     .string()
     .max(500, "Description must be less than 500 characters")
@@ -268,7 +266,7 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
                 name="portfolioUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Portfolio URL</FormLabel>
+                    <FormLabel>Portfolio URL *</FormLabel>
                     <FormControl>
                       <Input
                         type="url"
