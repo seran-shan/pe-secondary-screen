@@ -15,6 +15,8 @@ import { api } from "@/trpc/react";
 import { IconArrowLeft, IconExternalLink, IconMail } from "@tabler/icons-react";
 import Link from "next/link";
 import type { Sponsor, PortfolioCompany, Comment, User } from "@prisma/client";
+import { pusherClient } from "@/lib/pusher.client";
+import { type RunState } from "@/server/agents/run-registry";
 
 type SponsorData = Sponsor & {
   portfolio: Array<
@@ -35,12 +37,17 @@ interface SponsorDetailClientProps {
 export function SponsorDetailClient({
   initialSponsor,
 }: SponsorDetailClientProps) {
-  // First get the active run status
-  const { data: activeRun } = api.agent.activeRunForSponsor.useQuery(
+  const [isAgentRunning, setIsAgentRunning] = React.useState(false);
+  const [currentRunId, setCurrentRunId] = React.useState<string | null>(null);
+  const [run, setRun] = React.useState<RunState | null>(null);
+
+  // Check for an active run once on mount, then rely on Pusher
+  const { data: activeRunForSponsor } = api.agent.activeRunForSponsor.useQuery(
     { sponsorId: initialSponsor.id },
     {
-      refetchInterval: 5000, // Reduced from 2s to 5s
-      staleTime: 10_000, // Consider data stale after 10 seconds
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      staleTime: Infinity,
     },
   );
 
@@ -48,130 +55,71 @@ export function SponsorDetailClient({
   const { data: sponsorData } = api.sponsor.getByIdWithPortfolio.useQuery(
     { id: initialSponsor.id },
     {
-      initialData: {
-        id: initialSponsor.id,
-        name: initialSponsor.name,
-        contact: initialSponsor.contact,
-        portfolioUrl: initialSponsor.portfolioUrl,
-        portfolio: initialSponsor.portfolio.map((p) => ({
-          asset: p.asset,
-          webpage: p.webpage ?? undefined,
-          sector: p.sector ?? undefined,
-          dateInvested: p.dateInvested
-            ? p.dateInvested.toISOString()
-            : undefined,
-        })),
-      },
-      refetchInterval: (_data) => {
-        // Only refetch if there's an active run, otherwise use longer interval
-        return activeRun ? 10000 : false; // 10 seconds during active runs, no polling otherwise
-      },
-      staleTime: 30_000, // Consider data stale after 30 seconds
+      staleTime: Infinity,
     },
   );
+
+  React.useEffect(() => {
+    // Sync initial running state from the server once
+    if (activeRunForSponsor) {
+      setIsAgentRunning(true);
+      if (activeRunForSponsor.runId) {
+        setCurrentRunId(activeRunForSponsor.runId);
+      }
+    }
+  }, [activeRunForSponsor, setCurrentRunId, setIsAgentRunning]);
+
+  React.useEffect(() => {
+    if (!currentRunId) return;
+
+    const channel = pusherClient.subscribe(`run-${currentRunId}`);
+    const onUpdate = (data: RunState) => {
+      setRun(data);
+    };
+
+    channel.bind("update", onUpdate);
+
+    return () => {
+      channel.unbind("update", onUpdate);
+      pusherClient.unsubscribe(`run-${currentRunId}`);
+    };
+  }, [currentRunId]);
 
   // Use live data if available, fallback to initial data
   const sponsor = sponsorData ?? {
     ...initialSponsor,
-    portfolio: initialSponsor.portfolio.map((p) => ({
-      asset: p.asset,
-      webpage: p.webpage ?? undefined,
-      sector: p.sector ?? undefined,
-      dateInvested: p.dateInvested ? p.dateInvested.toISOString() : undefined,
-    })),
+    portfolio: [],
   };
 
-  // Create a hybrid portfolio that combines live data with initial data for comments
-  const hybridPortfolio = React.useMemo(() => {
-    if (!sponsorData) {
-      // Add sponsor field to initial portfolio data
-      return initialSponsor.portfolio.map((p) => ({
-        ...p,
-        sponsor: {
-          name: sponsor.name,
-          id: sponsor.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          contact: sponsor.contact,
-          portfolioUrl: sponsor.portfolioUrl,
-        },
-      }));
-    }
-
-    // Create a map of initial portfolio companies by asset name for quick lookup
-    const initialMap = new Map(
-      initialSponsor.portfolio.map((p) => [p.asset, p]),
-    );
-
-    // Merge live data with initial data for comments
-    return sponsorData.portfolio.map((liveCompany) => {
-      const initialCompany = initialMap.get(liveCompany.asset);
-      return {
-        ...liveCompany,
-        // Convert dateInvested back to Date object if it exists
-        dateInvested: liveCompany.dateInvested
-          ? new Date(liveCompany.dateInvested)
-          : null,
-        // Ensure all required PortfolioCompany fields are present
-        id: initialCompany?.id ?? liveCompany.asset, // Use asset as fallback ID
-        sponsorId: initialSponsor.id,
-        createdAt: initialCompany?.createdAt ?? new Date(),
-        updatedAt: initialCompany?.updatedAt ?? new Date(),
-        description: initialCompany?.description ?? null,
-        location: initialCompany?.location ?? null,
-        status: initialCompany?.status ?? "ACTIVE",
-        // Convert undefined to null for sector and webpage to match expected types
-        sector: liveCompany.sector ?? null,
-        webpage: liveCompany.webpage ?? null,
-        // Keep comments from initial data
-        comments: initialCompany?.comments ?? [],
-        // Note: enrichment fields are not available in the current schema
-        // Add sponsor field
-        sponsor: {
-          name: sponsor.name,
-          id: sponsor.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          contact: sponsor.contact,
-          portfolioUrl: sponsor.portfolioUrl,
-        },
-      };
-    });
-  }, [
-    sponsorData,
-    initialSponsor.portfolio,
-    initialSponsor.id,
-    sponsor.name,
-    sponsor.id,
-    sponsor.contact,
-    sponsor.portfolioUrl,
-  ]);
-
-  const handlePortfolioUpdate = React.useCallback(() => {
-    // The tRPC query will automatically refetch due to invalidation
-    // No need to refresh the page
-  }, []);
-
-  // Calculate metrics using hybrid portfolio
-  const totalCompanies = hybridPortfolio.length;
+  // Calculate metrics for cards
+  const totalCompanies = sponsor.portfolio.length;
   const totalSectors = new Set(
-    hybridPortfolio.map((p) => p.sector).filter(Boolean),
+    sponsor.portfolio.map((p) => p.sector).filter(Boolean),
   ).size;
-  const averageInvestmentAge =
-    hybridPortfolio
-      .filter((p) => p.dateInvested)
-      .reduce((acc, p) => {
-        const years = p.dateInvested
-          ? (new Date().getTime() - p.dateInvested.getTime()) /
-            (1000 * 60 * 60 * 24 * 365)
-          : 0;
-        return acc + years;
-      }, 0) / hybridPortfolio.filter((p) => p.dateInvested).length || 0;
 
-  // Calculate recent activity from hybrid portfolio
-  const recentActivity = hybridPortfolio.reduce((acc, p) => {
-    return acc + p.comments.length;
+  const totalInvestmentAge = sponsor.portfolio
+    .filter((p) => p.dateInvested)
+    .reduce((acc, p) => {
+      const age =
+        (new Date().getTime() - new Date(p.dateInvested!).getTime()) /
+        (1000 * 60 * 60 * 24 * 365.25);
+      return acc + age;
+    }, 0);
+
+  const averageInvestmentAge =
+    totalCompanies > 0 ? totalInvestmentAge / totalCompanies : 0;
+
+  const recentActivity = sponsor.portfolio.reduce((acc, p) => {
+    return acc + (p.comments?.length ?? 0);
   }, 0);
+
+  const utils = api.useUtils();
+
+  const handlePortfolioUpdate = () => {
+    // Invalidate queries to refetch data
+    void utils.sponsor.getByIdWithPortfolio.invalidate({ id: sponsor.id });
+    void utils.company.getAll.invalidate();
+  };
 
   return (
     <PageContainer scrollable={true}>
@@ -207,10 +155,16 @@ export function SponsorDetailClient({
           <SponsorActions
             sponsor={sponsor}
             onPortfolioUpdate={handlePortfolioUpdate}
+            run={run}
+            setRun={setRun}
+            currentRunId={currentRunId}
+            setCurrentRunId={setCurrentRunId}
+            isAgentRunning={isAgentRunning}
+            setIsAgentRunning={setIsAgentRunning}
           />
         </div>
 
-        {activeRun && <SponsorRunStepper runId={activeRun.runId} />}
+        {isAgentRunning && run && <SponsorRunStepper run={run} />}
 
         <Separator />
 
@@ -224,20 +178,11 @@ export function SponsorDetailClient({
 
         {/* Portfolio Performance Chart */}
         <div className="px-4 lg:px-6">
-          <SponsorPortfolioChart
-            sponsor={{ ...sponsor, portfolio: hybridPortfolio }}
-          />
+          <SponsorPortfolioChart sponsor={sponsor} />
         </div>
 
         {/* Portfolio Companies Table */}
-        <CompaniesDataTable
-          data={hybridPortfolio}
-          hideSponsorColumn={true}
-          showStatusTabs={false}
-          showAddButton={false}
-          title="Portfolio Companies"
-          description={`All companies in ${sponsor.name}'s portfolio (${hybridPortfolio.length} total)`}
-        />
+        <CompaniesDataTable data={sponsor.portfolio} hideSponsorColumn />
 
         {/* Contact Information */}
         {sponsor.contact && (

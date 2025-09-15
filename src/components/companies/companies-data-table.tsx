@@ -6,6 +6,8 @@ import {
   type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -14,38 +16,13 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import type { RouterOutputs } from "@/trpc/react";
-import type { PortfolioCompany, Comment } from "@prisma/client";
 
 type Company = RouterOutputs["company"]["getAll"][0];
 
-// Flexible type that can handle both company.getAll data and sponsor portfolio data
-type FlexibleCompany = Omit<
-  PortfolioCompany,
-  "enrichmentStatus" | "lastEnrichedAt" | "enrichmentError"
-> & {
-  comments: Comment[];
-  sponsor: {
-    name: string;
-    id?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-    contact?: string | null;
-    portfolioUrl?: string | null;
-  };
-  enrichmentStatus?: string | null;
-  lastEnrichedAt?: Date | null;
-  enrichmentError?: string | null;
-};
-
 interface CompaniesDataTableProps {
-  data: FlexibleCompany[];
+  data: Company[];
   // Optional props for different display modes
-  sponsorFilter?: string; // Pre-filter by sponsor name
   hideSponsorColumn?: boolean; // Hide sponsor column when showing single sponsor's companies
-  showStatusTabs?: boolean; // Show/hide status tabs (All/Active/Exited)
-  showAddButton?: boolean; // Show/hide add company button
-  title?: string; // Custom title for the table
-  description?: string; // Custom description
 }
 
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +45,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -86,7 +62,6 @@ import {
   IconCircleCheckFilled,
   IconExternalLink,
   IconLayoutColumns,
-  IconPlus,
 } from "@tabler/icons-react";
 import { formatDate } from "@/lib/format";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -94,9 +69,7 @@ import { MobileCompanyCard } from "./mobile-company-card";
 import { useCompanyDrawer } from "./company-drawer-context";
 
 // Create flexible columns that can adapt based on props
-const createColumns = (
-  hideSponsorColumn = false,
-): ColumnDef<FlexibleCompany>[] => [
+const createColumns = (hideSponsorColumn = false): ColumnDef<Company>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -146,7 +119,7 @@ const createColumns = (
             </Badge>
           ),
           size: 224,
-        } as ColumnDef<FlexibleCompany>,
+        } as ColumnDef<Company>,
       ]),
   {
     accessorKey: "invested",
@@ -250,15 +223,9 @@ const createColumns = (
 ];
 
 export function CompaniesDataTable({
-  data: initialData,
-  sponsorFilter: initialSponsorFilter,
+  data,
   hideSponsorColumn = false,
-  showStatusTabs = true,
-  showAddButton = true,
-  title,
-  description,
 }: CompaniesDataTableProps) {
-  const [data] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -270,60 +237,7 @@ export function CompaniesDataTable({
     pageIndex: 0,
     pageSize: 10,
   });
-  const [sponsorFilter, setSponsorFilter] = React.useState<string | undefined>(
-    initialSponsorFilter,
-  );
-  const [sectorFilter, setSectorFilter] = React.useState<string | undefined>(
-    undefined,
-  );
-  const [statusTab, setStatusTab] = React.useState<"all" | "active" | "exited">(
-    "all",
-  );
-  const isMobile = useIsMobile();
   const { openCompanyDrawer } = useCompanyDrawer();
-
-  const handleRowClick = React.useCallback(
-    (companyId: string) => {
-      const company = initialData.find((c) => c.id === companyId);
-      if (company) {
-        // Convert FlexibleCompany to Company type for the drawer
-        const companyForDrawer = {
-          ...company,
-          sponsor: {
-            name: company.sponsor.name,
-            id: "id" in company.sponsor ? company.sponsor.id : "",
-            createdAt:
-              "createdAt" in company.sponsor
-                ? company.sponsor.createdAt
-                : new Date(),
-            updatedAt:
-              "updatedAt" in company.sponsor
-                ? company.sponsor.updatedAt
-                : new Date(),
-            contact:
-              "contact" in company.sponsor ? company.sponsor.contact : null,
-            portfolioUrl:
-              "portfolioUrl" in company.sponsor
-                ? company.sponsor.portfolioUrl
-                : null,
-          },
-          comments: company.comments || [],
-        } as Company;
-        openCompanyDrawer(companyForDrawer);
-      }
-    },
-    [initialData, openCompanyDrawer],
-  );
-
-  const displayData = React.useMemo(() => {
-    if (!showStatusTabs) return data;
-
-    if (statusTab === "active")
-      return data.filter((d) => (d.status || "ACTIVE") === "ACTIVE");
-    if (statusTab === "exited")
-      return data.filter((d) => (d.status || "ACTIVE") === "EXITED");
-    return data;
-  }, [data, statusTab, showStatusTabs]);
 
   const columns = React.useMemo(
     () => createColumns(hideSponsorColumn),
@@ -331,7 +245,7 @@ export function CompaniesDataTable({
   );
 
   const table = useReactTable({
-    data: displayData,
+    data,
     columns,
     state: {
       sorting,
@@ -351,7 +265,33 @@ export function CompaniesDataTable({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+
+  const isMobile = useIsMobile();
+
+  React.useEffect(() => {
+    table.resetRowSelection();
+    table.resetPagination();
+  }, [data, table]);
+
+  const handleRowClick = React.useCallback(
+    (companyId: string) => {
+      const company = data.find((c) => c.id === companyId);
+      if (company) {
+        openCompanyDrawer(company);
+      }
+    },
+    [data, openCompanyDrawer],
+  );
+
+  const [sponsorFilter, setSponsorFilter] = React.useState<string | undefined>(
+    undefined,
+  );
+  const [sectorFilter, setSectorFilter] = React.useState<string | undefined>(
+    undefined,
+  );
 
   React.useEffect(() => {
     if (hideSponsorColumn) return;
@@ -365,42 +305,8 @@ export function CompaniesDataTable({
     table.getColumn("sector")?.setFilterValue(sectorFilter ?? "");
   }, [sectorFilter, table]);
 
-  const counts = React.useMemo(
-    () => ({
-      all: data.length,
-      active: data.filter((d) => (d.status || "ACTIVE") === "ACTIVE").length,
-      exited: data.filter((d) => (d.status || "ACTIVE") === "EXITED").length,
-    }),
-    [data],
-  );
-
   if (isMobile) {
-    const mobileData = table.getRowModel().rows.map((row) => {
-      const company = row.original;
-      // Convert FlexibleCompany to Company type for mobile cards
-      return {
-        ...company,
-        sponsor: {
-          name: company.sponsor.name,
-          id: "id" in company.sponsor ? company.sponsor.id : "",
-          createdAt:
-            "createdAt" in company.sponsor
-              ? company.sponsor.createdAt
-              : new Date(),
-          updatedAt:
-            "updatedAt" in company.sponsor
-              ? company.sponsor.updatedAt
-              : new Date(),
-          contact:
-            "contact" in company.sponsor ? company.sponsor.contact : null,
-          portfolioUrl:
-            "portfolioUrl" in company.sponsor
-              ? company.sponsor.portfolioUrl
-              : null,
-        },
-        comments: company.comments || [],
-      } as Company;
-    });
+    const mobileData = table.getRowModel().rows.map((row) => row.original);
     return (
       <div className="flex flex-col gap-4 p-4">
         {mobileData.map((company) => (
@@ -435,29 +341,7 @@ export function CompaniesDataTable({
   const content = (
     <div className="flex flex-col gap-4">
       {/* Header Section */}
-      {(title ?? description) && (
-        <div className="px-4 lg:px-6">
-          {title && <h3 className="text-lg font-semibold">{title}</h3>}
-          {description && (
-            <p className="text-muted-foreground text-sm">{description}</p>
-          )}
-        </div>
-      )}
-
       <div className="flex items-center justify-between px-4 lg:px-6">
-        {showStatusTabs && (
-          <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 lg:flex">
-            <TabsTrigger value="all">
-              All <Badge variant="secondary">{counts.all}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="active">
-              Active <Badge variant="secondary">{counts.active}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="exited">
-              Exited <Badge variant="secondary">{counts.exited}</Badge>
-            </TabsTrigger>
-          </TabsList>
-        )}
         <div className="flex w-full items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             {!hideSponsorColumn && (
@@ -469,7 +353,7 @@ export function CompaniesDataTable({
                   <SelectValue placeholder="Filter: Sponsor" />
                 </SelectTrigger>
                 <SelectContent align="start">
-                  {[...new Set(initialData.map((r) => r.sponsor.name))]
+                  {[...new Set(data.map((r) => r.sponsor.name))]
                     .sort()
                     .map((s) => (
                       <SelectItem key={s} value={s}>
@@ -489,9 +373,7 @@ export function CompaniesDataTable({
               <SelectContent align="start">
                 {[
                   ...new Set(
-                    initialData
-                      .map((r) => r.sector)
-                      .filter(Boolean) as string[],
+                    data.map((r) => r.sector).filter(Boolean) as string[],
                   ),
                 ]
                   .sort()
@@ -540,12 +422,6 @@ export function CompaniesDataTable({
             <Button size="sm" onClick={() => exportCsv(table)}>
               Export
             </Button>
-            {showAddButton && (
-              <Button size="sm" variant="secondary">
-                <IconPlus />
-                Add Company
-              </Button>
-            )}
           </div>
         </div>
       </div>
@@ -698,23 +574,10 @@ export function CompaniesDataTable({
     </div>
   );
 
-  // Return with or without tabs wrapper
-  if (showStatusTabs) {
-    return (
-      <Tabs
-        value={statusTab}
-        onValueChange={(v) => setStatusTab(v as typeof statusTab)}
-        className="w-full flex-col justify-start gap-6"
-      >
-        {content}
-      </Tabs>
-    );
-  }
-
   return content;
 }
 
-function exportCsv(table: ReturnType<typeof useReactTable<FlexibleCompany>>) {
+function exportCsv(table: ReturnType<typeof useReactTable<Company>>) {
   const rows = table.getRowModel().rows.map((r) => r.original);
   const headers = [
     "Company",

@@ -12,8 +12,17 @@ import {
 } from "@/lib/langsmith";
 
 import { send } from "@vercel/queue";
+import { pusherServer } from "@/lib/pusher.server";
 
 export const agentRouter = createTRPCRouter({
+  pusherAuth: publicProcedure
+    .input(z.object({ socket_id: z.string(), channel_name: z.string() }))
+    .mutation(({ input }) => {
+      const { socket_id, channel_name } = input;
+      const auth = pusherServer.authorizeChannel(socket_id, channel_name);
+      return auth;
+    }),
+
   activeRun: publicProcedure.query(async ({ ctx }) => {
     const userId = ctx.session?.user?.id;
     if (!userId) return null;
@@ -119,7 +128,7 @@ export const agentRouter = createTRPCRouter({
         })();
       }
 
-      return { runId: run.runId };
+      return run;
     }),
 
   cancel: publicProcedure

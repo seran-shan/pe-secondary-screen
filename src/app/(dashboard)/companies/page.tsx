@@ -10,7 +10,7 @@ export default function CompaniesPage() {
   const { data: companies, isLoading } = api.company.getAll.useQuery(
     undefined,
     {
-      staleTime: 60_000,
+      staleTime: Infinity,
     },
   );
 

@@ -5,20 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { IconCheck, IconX, IconClock, IconLoader2 } from "@tabler/icons-react";
 import { defineStepper } from "@/components/stepper";
-
-type RunState = {
-  runId: string;
-  status: "pending" | "running" | "completed" | "error" | "cancelled";
-  steps: Record<
-    string,
-    {
-      status: "pending" | "running" | "completed" | "error";
-      count?: number;
-      error?: string;
-    }
-  >;
-  totals?: Record<string, number>;
-};
+import { type RunState } from "@/server/agents/run-registry";
 
 const ORDER = [
   "finder",
@@ -27,6 +14,8 @@ const ORDER = [
   "enricher",
   "writer",
 ] as const;
+
+type StepId = (typeof ORDER)[number];
 
 const LABEL: Record<string, string> = {
   finder: "Finding URLs",
@@ -53,32 +42,7 @@ const AgentStepper = defineStepper(
   { id: "writer", title: "Writer" },
 );
 
-export function SponsorRunStepper({ runId }: { runId: string }) {
-  const [run, setRun] = React.useState<RunState | null>(null);
-
-  React.useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const fetchRun = async () => {
-      try {
-        const res = await fetch(`/api/agent/run/${runId}`);
-        if (res.ok) {
-          const data = (await res.json()) as RunState;
-          setRun(data);
-          if (["completed", "error", "cancelled"].includes(data.status)) {
-            return;
-          }
-        }
-      } catch {}
-      timer = setTimeout(() => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchRun();
-      }, 1200);
-    };
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    fetchRun();
-    return () => timer && clearTimeout(timer);
-  }, [runId]);
-
+export function SponsorRunStepper({ run }: { run: RunState }) {
   // Determine current step based on run status
   const getCurrentStep = () => {
     if (!run) return "finder";
@@ -102,12 +66,12 @@ export function SponsorRunStepper({ runId }: { runId: string }) {
     return ORDER[lastCompletedIndex + 1] ?? "finder";
   };
 
-  const getStepStatus = (stepId: string) => {
+  const getStepStatus = (stepId: StepId) => {
     if (!run) return "pending";
     return run.steps?.[stepId]?.status ?? "pending";
   };
 
-  const getStepIcon = (stepId: string, status: string) => {
+  const getStepIcon = (stepId: StepId, status: string) => {
     if (status === "completed") {
       return <IconCheck className="size-4 text-green-600" />;
     } else if (status === "running") {

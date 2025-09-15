@@ -20,26 +20,20 @@ interface SponsorsProviderProps {
 
 export function SponsorsProvider({ children }: SponsorsProviderProps) {
   // Real data from tRPC - single source of truth
-  const { data: sponsorsData, isLoading } = api.sponsor.getAll.useQuery(
+  const { data: sponsors, isLoading } = api.sponsor.getAll.useQuery(
+    {},
     {
-      search: "",
-      limit: 100,
-      offset: 0,
-    },
-    {
-      staleTime: 30_000,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      staleTime: Infinity,
     },
   );
 
-  const contextValue: SponsorsContextType = React.useMemo(
-    () => ({ sponsors: sponsorsData?.sponsors ?? [], isLoading }),
-    [sponsorsData?.sponsors, isLoading],
+  const value = React.useMemo(
+    () => ({ sponsors: sponsors?.sponsors ?? [], isLoading }),
+    [sponsors, isLoading],
   );
 
   return (
-    <SponsorsContext.Provider value={contextValue}>
+    <SponsorsContext.Provider value={value}>
       {children}
     </SponsorsContext.Provider>
   );

@@ -36,28 +36,40 @@ interface SponsorActionsProps {
     portfolioUrl?: string | null;
   };
   onPortfolioUpdate?: () => void;
+  run: RunState | null;
+  setRun: React.Dispatch<React.SetStateAction<RunState | null>>;
+  currentRunId: string | null;
+  setCurrentRunId: React.Dispatch<React.SetStateAction<string | null>>;
+  isAgentRunning: boolean;
+  setIsAgentRunning: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export function SponsorActions({
   sponsor,
   onPortfolioUpdate,
+  run: runData,
+  setRun: setRunData,
+  currentRunId: _currentRunId,
+  setCurrentRunId,
+  isAgentRunning,
+  setIsAgentRunning,
 }: SponsorActionsProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [confirmationDialogOpen, setConfirmationDialogOpen] =
     React.useState(false);
-  const [isAgentRunning, setIsAgentRunning] = React.useState(false);
 
   // Query to check existing portfolio status - always enabled for button state
   const { data: portfolioStatus } = api.agent.checkPortfolioStatus.useQuery({
     sponsorId: sponsor.id,
   });
 
-  // Disable discover if an active run exists for this sponsor
+  // Check for an active run once on mount, then rely on Pusher
   const { data: activeRunForSponsor } = api.agent.activeRunForSponsor.useQuery(
     { sponsorId: sponsor.id },
     {
-      refetchInterval: 10000, // Reduced from 3s to 10s
-      staleTime: 15_000, // Consider data stale after 15 seconds
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      staleTime: Infinity,
     },
   );
 
@@ -65,85 +77,34 @@ export function SponsorActions({
 
   // Live run endpoints
   const startMutation = api.agent.start.useMutation();
-  const [currentRunId, setCurrentRunId] = React.useState<string | null>(null);
-  const [pollInterval, setPollInterval] = React.useState(500);
-
-  // Use direct HTTP fetch instead of tRPC to avoid auth overhead
-  const [runData, setRunData] = React.useState<RunState | null>(null);
+  const completionToastShown = React.useRef(false);
 
   React.useEffect(() => {
-    // Reattach if a run is active from elsewhere
-    if (typeof window !== "undefined") {
-      const active = localStorage.getItem("agent_current_run_id");
-      if (active) setCurrentRunId(active);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (!currentRunId) return;
-
-    let timeoutId: NodeJS.Timeout;
-
-    const fetchRunData = async () => {
-      try {
-        const res = await fetch(`/api/agent/run/${currentRunId}`);
-        if (res.ok) {
-          const data = (await res.json()) as RunState;
-          setRunData(data);
-
-          // Smart polling: exponential backoff
-          if (["completed", "error", "cancelled"].includes(data.status)) {
-            // Stop polling when done
-            return;
-          } else {
-            // Exponential backoff: 500ms → 1s → 2s → 3s max
-            const nextInterval = Math.min(pollInterval * 1.5, 3000);
-            setPollInterval(nextInterval);
-            timeoutId = setTimeout(() => void fetchRunData(), nextInterval);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch run data:", err);
-        // Retry with longer interval on error
-        timeoutId = setTimeout(() => void fetchRunData(), 5000);
+    // Sync initial running state from the server once
+    if (activeRunForSponsor) {
+      setIsAgentRunning(true);
+      if (activeRunForSponsor.runId) {
+        setCurrentRunId(activeRunForSponsor.runId);
       }
-    };
+    }
+  }, [activeRunForSponsor, setCurrentRunId, setIsAgentRunning]);
 
-    // Start fetching immediately
-    void fetchRunData();
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [currentRunId, pollInterval]);
-
-  // Sync server run state to UI
   React.useEffect(() => {
     if (!runData) return;
-
-    const steps = initializeAgentSteps();
-    const stepMap = new Map(steps.map((s) => [s.id, s]));
-
-    // Update each step from server state
-    Object.entries(runData.steps).forEach(([id, serverStep]) => {
-      const step = stepMap.get(id);
-      if (step && serverStep) {
-        step.status = serverStep.status;
-        step.count = serverStep.count;
-        step.error = serverStep.error;
-      }
-    });
-
     // Handle run completion
     const isFinished = ["completed", "error", "cancelled"].includes(
       runData.status,
     );
-    if (isFinished) {
+    if (isFinished && !completionToastShown.current) {
+      completionToastShown.current = true;
       setIsAgentRunning(false);
       setCurrentRunId(null);
+      setRunData(null);
 
       const messages = {
-        completed: `Added ${runData.totals.enriched ?? 0} new portfolio companies to ${sponsor.name}`,
+        completed: `Added ${
+          runData.totals.enriched ?? 0
+        } new portfolio companies to ${sponsor.name}`,
         cancelled: "Portfolio discovery cancelled",
         error: runData.error ?? "Portfolio discovery failed",
       };
@@ -153,8 +114,6 @@ export function SponsorActions({
       else toast.error(messages.error);
 
       // Real-time refresh of sponsor data and companies list
-      void utils.sponsor.getByIdWithPortfolio.invalidate({ id: sponsor.id });
-      void utils.company.getAll.invalidate();
       onPortfolioUpdate?.();
       if (typeof window !== "undefined") {
         localStorage.removeItem("agent_current_run_id");
@@ -162,90 +121,18 @@ export function SponsorActions({
     }
   }, [
     runData,
-    sponsor.id,
-    sponsor.name,
-    utils.sponsor,
-    utils.company,
     onPortfolioUpdate,
+    sponsor.name,
+    utils.company,
+    utils.sponsor,
+    setCurrentRunId,
+    setIsAgentRunning,
+    setRunData,
   ]);
-
-  const initializeAgentSteps = () => {
-    return [
-      {
-        id: "finder",
-        name: "Finding URLs",
-        icon: () => null,
-        description: "Searching for portfolio company pages",
-        status: "pending" as
-          | "pending"
-          | "running"
-          | "completed"
-          | "error"
-          | "cancelled",
-        count: undefined as number | undefined,
-        error: undefined as string | undefined,
-      },
-      {
-        id: "extractor",
-        name: "AI Extraction",
-        icon: () => null,
-        description: "Using AI to identify portfolio companies",
-        status: "pending" as
-          | "pending"
-          | "running"
-          | "completed"
-          | "error"
-          | "cancelled",
-        count: undefined as number | undefined,
-        error: undefined as string | undefined,
-      },
-      {
-        id: "normalizer",
-        name: "Normalizing Data",
-        icon: () => null,
-        description: "Cleaning and standardizing company data",
-        status: "pending" as
-          | "pending"
-          | "running"
-          | "completed"
-          | "error"
-          | "cancelled",
-        count: undefined as number | undefined,
-        error: undefined as string | undefined,
-      },
-      {
-        id: "enricher",
-        name: "Enriching Details",
-        icon: () => null,
-        description: "Adding additional company information",
-        status: "pending" as
-          | "pending"
-          | "running"
-          | "completed"
-          | "error"
-          | "cancelled",
-        count: undefined as number | undefined,
-        error: undefined as string | undefined,
-      },
-      {
-        id: "writer",
-        name: "Saving Results",
-        icon: () => null,
-        description: "Updating portfolio database",
-        status: "pending" as
-          | "pending"
-          | "running"
-          | "completed"
-          | "error"
-          | "cancelled",
-        count: undefined as number | undefined,
-        error: undefined as string | undefined,
-      },
-    ];
-  };
 
   const startLiveDiscovery = async (mode: DiscoveryMode) => {
     setIsAgentRunning(true);
+    completionToastShown.current = false;
 
     try {
       const res = await startMutation.mutateAsync({
@@ -253,11 +140,13 @@ export function SponsorActions({
         mode,
       });
 
+      // Immediately set the run state from the server's response
+      setRunData(res);
       setCurrentRunId(res.runId);
+
       if (typeof window !== "undefined") {
         localStorage.setItem("agent_current_run_id", res.runId);
       }
-      setPollInterval(500); // Reset poll interval for new run
     } catch (err) {
       console.error(`[UI] Failed to start run`, err);
       setIsAgentRunning(false);

@@ -2,6 +2,16 @@ import { type GraphState, type PortfolioCompany } from "../state";
 import { runRegistry } from "@/server/agents/run-registry";
 import { env } from "@/env";
 import Firecrawl from "@mendable/firecrawl-js";
+import { promises as fs } from "fs";
+import path from "path";
+
+const logToFile = async (message: string | object) => {
+  const logFilePath = path.join(process.cwd(), "enricher.log");
+  const timestamp = new Date().toISOString();
+  const logMessage =
+    typeof message === "string" ? message : JSON.stringify(message, null, 2);
+  await fs.appendFile(logFilePath, `${timestamp}: ${logMessage}\n`);
+};
 
 // Constant schema; we’ll only vary "required"
 const ENRICHMENT_SCHEMA = {
@@ -54,8 +64,12 @@ const prefer = (current?: string | null, incoming?: string) => {
 };
 
 export async function enricherNode(state: typeof GraphState.State) {
+  await logToFile("Enricher node started.");
   const items = (state.normalized as PortfolioCompany[] | undefined) ?? [];
-  if (items.length === 0) return state;
+  if (items.length === 0) {
+    await logToFile("No items to enrich. Exiting.");
+    return state;
+  }
 
   const runId = state.runId;
   if (runId) await runRegistry.stepStart(runId, "enricher");
@@ -64,6 +78,7 @@ export async function enricherNode(state: typeof GraphState.State) {
   const enriched: PortfolioCompany[] = [];
 
   for (const item of items) {
+    await logToFile(`Processing item: ${item.asset}`);
     // Decide which fields we actually need
     const wantStatus = isBlank(item.status as string | undefined); // or set true if you always want to refresh
     const required: Array<keyof EnrichmentData> = [];
@@ -80,33 +95,46 @@ export async function enricherNode(state: typeof GraphState.State) {
       state.portfolioUrls,
     );
     let data: EnrichmentData | undefined;
+    await logToFile({ message: "URLs for extraction", urls });
+    await logToFile({ message: "Required fields", required });
 
     if (urls.length && required.length) {
-      const result = await firecrawl.extract({
-        urls,
-        schema: { ...ENRICHMENT_SCHEMA, required: required as string[] },
-        scrapeOptions: { fastMode: false },
-        enableWebSearch: true,
-        prompt:
-          `Enrich ONLY the requested fields for portfolio company "${item.asset}" (sponsor: "${state.input ?? ""}"). ` +
-          `Prefer sponsor portfolio pages; otherwise use company site / press releases. Ignore similarly named companies.`,
-      });
+      try {
+        const result = await firecrawl.extract({
+          urls,
+          schema: { ...ENRICHMENT_SCHEMA, required: required as string[] },
+          scrapeOptions: { fastMode: false },
+          enableWebSearch: true,
+          prompt:
+            `Enrich ONLY the requested fields for portfolio company "${item.asset}" (sponsor: "${state.input ?? ""}"). ` +
+            `Prefer sponsor portfolio pages; otherwise use company site / press releases. Ignore similarly named companies.`,
+        });
+        await logToFile({ message: "Firecrawl result", result });
 
-      // Normalize to array, merge first non-empty values
-      type FirecrawlItem = { data?: Record<string, unknown>; error?: string };
-      const results: FirecrawlItem[] = Array.isArray(result)
-        ? (result as FirecrawlItem[])
-        : [result as FirecrawlItem];
-      const combined: Record<string, unknown> = {};
-      for (const r of results) {
-        if (!r || r.error) continue;
-        const d = r.data;
-        if (!d) continue;
-        for (const k of Object.keys(d)) {
-          if (combined[k] == null && d[k] != null) combined[k] = d[k];
+        type FirecrawlResult = {
+          success?: boolean;
+          data?: EnrichmentData;
+          error?: string;
+        };
+        const firstResult = (
+          (Array.isArray(result) ? result : [result]) as FirecrawlResult[]
+        ).find((r) => r?.success && r.data);
+        data = firstResult?.data;
+
+        await logToFile({ message: "Combined data", data });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        await logToFile({
+          message: `Error processing item: ${item.asset}`,
+          error: errorMessage,
+        });
+        if (runId) {
+          await runRegistry.stepError(runId, "enricher", errorMessage);
         }
+        // We can choose to continue to the next item or re-throw
+        // For now, let's continue
       }
-      data = combined as EnrichmentData;
     }
 
     const next: PortfolioCompany = {
@@ -124,6 +152,7 @@ export async function enricherNode(state: typeof GraphState.State) {
           ? data.status
           : (item.status ?? "ACTIVE"),
     };
+    await logToFile({ message: "Enriched item", next });
 
     enriched.push(next);
     if (runId)
@@ -133,6 +162,7 @@ export async function enricherNode(state: typeof GraphState.State) {
   }
 
   state.enriched = enriched;
+  await logToFile("Enricher node finished.");
   if (runId)
     await runRegistry.stepComplete(runId, "enricher", enriched.length, {
       enriched: enriched.length,

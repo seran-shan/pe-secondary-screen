@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { kv } from "@vercel/kv";
+import { pusherServer } from "@/lib/pusher.server";
 
 export type StepId =
   | "finder"
@@ -112,6 +113,9 @@ class RunRegistry {
   }
 
   private async write(run: RunState) {
+    // Always publish the update
+    void pusherServer.trigger(`run-${run.runId}`, "update", run);
+
     if (this.kvAvailable) {
       try {
         await kv.set(this.key(run.runId), run, { ex: this.ttlSeconds });

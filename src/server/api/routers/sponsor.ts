@@ -37,11 +37,13 @@ export const sponsorRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           portfolio: {
-            select: {
-              asset: true,
-              webpage: true,
-              sector: true,
-              dateInvested: true,
+            include: {
+              comments: {
+                include: {
+                  author: true,
+                },
+              },
+              sponsor: true,
             },
             orderBy: { dateInvested: "desc" },
           },
@@ -52,20 +54,7 @@ export const sponsorRouter = createTRPCRouter({
         return null;
       }
 
-      return {
-        id: sponsor.id,
-        name: sponsor.name,
-        contact: sponsor.contact,
-        portfolioUrl: sponsor.portfolioUrl,
-        portfolio: sponsor.portfolio.map((p) => ({
-          asset: p.asset,
-          webpage: p.webpage ?? undefined,
-          sector: p.sector ?? undefined,
-          dateInvested: p.dateInvested
-            ? p.dateInvested.toISOString()
-            : undefined,
-        })),
-      };
+      return sponsor;
     }),
 
   findSimilar: publicProcedure
