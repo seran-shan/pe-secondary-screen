@@ -122,7 +122,8 @@ model Run {
   crawledCount       Int?
   extractedCount     Int
   normalizedCount    Int
-  enrichedCount      Int
+  enrichedCount      Int?
+  addedCount         Int?
   userId             String?
   user               User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
 }
