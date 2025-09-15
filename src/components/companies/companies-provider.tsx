@@ -13,8 +13,6 @@ import { useSession } from "next-auth/react";
 import { pusherClient } from "@/lib/pusher.client";
 import { toast } from "sonner";
 
-type Company = RouterOutputs["company"]["getAll"][0];
-
 interface CompaniesContextType {
   enrichingIds: Set<string>;
   enrichCompanies: (companyIds: string[]) => void;
