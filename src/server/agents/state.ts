@@ -11,6 +11,7 @@ export const GraphState = Annotation.Root({
   extracted: Annotation<unknown[] | undefined>(),
   normalized: Annotation<unknown[] | undefined>(),
   enriched: Annotation<unknown[] | undefined>(),
+  added: Annotation<number | undefined>(),
 });
 
 export const PortfolioCompanySchema = z.object({

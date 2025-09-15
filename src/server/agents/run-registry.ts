@@ -47,6 +47,7 @@ export interface RunState {
     extracted?: number;
     normalized?: number;
     enriched?: number;
+    added?: number;
   };
   createdAt: number;
   updatedAt: number;

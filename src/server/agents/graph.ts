@@ -4,19 +4,16 @@ import { finderNode } from "./nodes/finder";
 import { extractorNode } from "./nodes/extractor";
 import { normalizerNode } from "./nodes/normalizer";
 import { writerNode } from "./nodes/writer";
-import { enricherNode } from "./nodes/enricher";
 
 // Build the graph skeleton
 const builder = new StateGraph(GraphState)
   .addNode("Finder", finderNode)
   .addNode("Extractor", extractorNode)
   .addNode("Normalizer", normalizerNode)
-  .addNode("Enricher", enricherNode)
   .addNode("Writer", writerNode)
   .addEdge("Finder", "Extractor")
   .addEdge("Extractor", "Normalizer")
-  .addEdge("Normalizer", "Enricher")
-  .addEdge("Enricher", "Writer")
+  .addEdge("Normalizer", "Writer")
   .addEdge("Writer", "__end__")
   .addEdge("__start__", "Finder");
 

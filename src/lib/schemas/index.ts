@@ -94,6 +94,7 @@ export const RunScalarFieldEnumSchema = z.enum([
   "extractedCount",
   "normalizedCount",
   "enrichedCount",
+  "addedCount",
   "userId",
 ]);
 
@@ -348,7 +349,8 @@ export const RunSchema = z.object({
   crawledCount: z.number().int().nullable(),
   extractedCount: z.number().int(),
   normalizedCount: z.number().int(),
-  enrichedCount: z.number().int(),
+  enrichedCount: z.number().int().nullable(),
+  addedCount: z.number().int().nullable(),
   userId: z.string().nullable(),
 });
 

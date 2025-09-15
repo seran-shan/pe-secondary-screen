@@ -31,17 +31,12 @@ const workerHandler = async (message: AgentRunPayload, _metadata?: unknown) => {
     } as typeof GraphState.State);
 
     // finalize totals based on state and mark writer completion
-    await runRegistry.stepComplete(
-      runId,
-      "writer",
-      state.enriched?.length ?? 0,
-      {
-        portfolioUrls: state.portfolioUrls?.length ?? 0,
-        extracted: state.extracted?.length ?? 0,
-        normalized: state.normalized?.length ?? 0,
-        enriched: state.enriched?.length ?? 0,
-      },
-    );
+    await runRegistry.stepComplete(runId, "writer", state.added ?? 0, {
+      portfolioUrls: state.portfolioUrls?.length ?? 0,
+      extracted: state.extracted?.length ?? 0,
+      normalized: state.normalized?.length ?? 0,
+      added: state.added ?? 0,
+    });
     await runRegistry.completeRun(runId);
 
     // Log run in DB
@@ -53,7 +48,6 @@ const workerHandler = async (message: AgentRunPayload, _metadata?: unknown) => {
         portfolioUrlsCount: state.portfolioUrls?.length ?? 0,
         extractedCount: state.extracted?.length ?? 0,
         normalizedCount: state.normalized?.length ?? 0,
-        enrichedCount: state.enriched?.length ?? 0,
         userId: userId,
       },
     });

@@ -1,90 +1,67 @@
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { z } from "zod";
+import {
+  createTRPCRouter,
+  publicProcedure,
+  protectedProcedure,
+} from "@/server/api/trpc";
+import { db } from "@/server/db";
+import { pusherServer } from "@/lib/pusher.server";
+import { enrichCompany } from "@/server/services/enrichment";
 
 export const companyRouter = createTRPCRouter({
-  timeline: publicProcedure
-    .input(
-      z.object({
-        days: z.number().min(1).max(365).default(90),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - input.days);
-
-      // Get companies created in the specified time range
-      const companies = await ctx.db.portfolioCompany.findMany({
-        where: {
-          createdAt: {
-            gte: startDate,
-          },
-        },
-        select: {
-          createdAt: true,
-          sponsor: {
-            select: {
-              name: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-      });
-
-      // Group by date and create timeline data
-      const timelineMap = new Map<
-        string,
-        { date: string; companies: number; sponsors: Set<string> }
-      >();
-
-      // Initialize all dates in range with 0 companies
-      for (let i = 0; i < input.days; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - (input.days - 1) + i);
-        const dateStr = date.toISOString().split("T")[0];
-        if (dateStr) {
-          timelineMap.set(dateStr, {
-            date: dateStr,
-            companies: 0,
-            sponsors: new Set(),
-          });
-        }
-      }
-
-      // Add actual data
-      companies.forEach((company) => {
-        const dateStr = company.createdAt.toISOString().split("T")[0];
-        if (dateStr) {
-          const existing = timelineMap.get(dateStr);
-          if (existing) {
-            existing.companies += 1;
-            existing.sponsors.add(company.sponsor.name);
-          }
-        }
-      });
-
-      // Convert to array format for chart
-      return Array.from(timelineMap.values()).map(
-        ({ date, companies, sponsors }) => ({
-          date,
-          companies,
-          sponsors: sponsors.size,
-        }),
-      );
-    }),
-
   getAll: publicProcedure.query(async ({ ctx }) => {
-    return await ctx.db.portfolioCompany.findMany({
+    return ctx.db.portfolioCompany.findMany({
       include: {
-        sponsor: true,
         comments: {
           include: {
             author: true,
           },
         },
+        sponsor: true,
       },
-      orderBy: { createdAt: "desc" },
     });
   }),
+
+  enrich: protectedProcedure
+    .input(z.object({ companyIds: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const { companyIds } = input;
+      const userId = ctx.session.user.id; // For Pusher channel
+
+      // Fire and forget: don't await this so the mutation returns immediately
+      void (async () => {
+        for (const companyId of companyIds) {
+          try {
+            const company = await db.portfolioCompany.findUnique({
+              where: { id: companyId },
+              include: { sponsor: { select: { portfolioUrl: true } } },
+            });
+
+            if (!company) {
+              throw new Error(`Company with id ${companyId} not found.`);
+            }
+
+            const updatedCompany = await enrichCompany(company);
+
+            // Notify client of success
+            await pusherServer.trigger(
+              `user-${userId}`,
+              "enrichment-complete",
+              {
+                companyId,
+                company: updatedCompany,
+              },
+            );
+          } catch (error) {
+            // Notify client of failure
+            await pusherServer.trigger(`user-${userId}`, "enrichment-error", {
+              companyId,
+              error: error instanceof Error ? error.message : "Unknown error",
+            });
+          }
+        }
+      })();
+
+      return { success: true, companyIds };
+    }),
 });
