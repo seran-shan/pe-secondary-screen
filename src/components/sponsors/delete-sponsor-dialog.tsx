@@ -91,10 +91,11 @@ export function DeleteSponsorDialog({
             disabled={deleteSponsorMutation.isPending}
             className="w-full sm:w-auto"
           >
-            {deleteSponsorMutation.isPending && (
+            {deleteSponsorMutation.isPending ? (
               <IconLoader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <IconTrash className="mr-2 size-4" />
             )}
-            <IconTrash className="mr-2 size-4" />
             Delete Sponsor
           </Button>
         </DialogFooter>

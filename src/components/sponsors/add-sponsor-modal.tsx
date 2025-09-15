@@ -355,10 +355,11 @@ export function AddSponsorModal({ open, onOpenChange }: AddSponsorModalProps) {
                   type="submit"
                   disabled={createSponsorMutation.isPending}
                 >
-                  {createSponsorMutation.isPending && (
+                  {createSponsorMutation.isPending ? (
                     <IconLoader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <IconPlus className="mr-2 size-4" />
                   )}
-                  <IconPlus className="mr-2 size-4" />
                   Create Sponsor
                 </Button>
               </DialogFooter>
