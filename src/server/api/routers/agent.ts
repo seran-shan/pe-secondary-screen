@@ -10,8 +10,7 @@ import {
   createRunMetadata,
   configureLangSmith,
 } from "@/lib/langsmith";
-
-import { send } from "@vercel/queue";
+import { qstash } from "@/lib/qstash";
 import { pusherServer } from "@/lib/pusher.server";
 
 export const agentRouter = createTRPCRouter({
@@ -78,13 +77,19 @@ export const agentRouter = createTRPCRouter({
       // Try to enqueue background job (works on Vercel). Fallback to inline run in dev/local.
       let enqueued = false;
       try {
-        await send("agent-run", {
-          runId: run.runId,
-          sponsorName: sponsor.name,
-          sponsorId: sponsor.id,
-          portfolioUrl: sponsor.portfolioUrl ?? null,
-          mode: input.mode,
-          userId: ctx.session?.user?.id ?? null,
+        if (!qstash) {
+          throw new Error("QStash client not initialized");
+        }
+        await qstash.publishJSON({
+          topic: "agent-run",
+          body: {
+            runId: run.runId,
+            sponsorName: sponsor.name,
+            sponsorId: sponsor.id,
+            portfolioUrl: sponsor.portfolioUrl ?? null,
+            mode: input.mode,
+            userId: ctx.session?.user?.id ?? null,
+          },
         });
         enqueued = true;
       } catch (err) {

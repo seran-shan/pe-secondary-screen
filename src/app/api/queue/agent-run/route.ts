@@ -1,9 +1,9 @@
-import { type NextRequest } from "next/server";
-import { handleCallback } from "@vercel/queue";
+import { type NextRequest, NextResponse } from "next/server";
 import { agentGraph } from "@/server/agents/graph";
 import { runRegistry } from "@/server/agents/run-registry";
 import { db } from "@/server/db";
 import { type GraphState } from "@/server/agents/state";
+import { verifyRequest } from "@/lib/qstash";
 
 export const runtime = "nodejs";
 export const maxDuration = 60; // seconds (adjust per Vercel plan)
@@ -17,8 +17,8 @@ type AgentRunPayload = {
   userId: string | null;
 };
 
-const workerHandler = async (message: AgentRunPayload, _metadata?: unknown) => {
-  const { runId, sponsorName, portfolioUrl, mode, userId } = message;
+async function handler(payload: AgentRunPayload) {
+  const { runId, sponsorName, portfolioUrl, mode, userId } = payload;
   try {
     await runRegistry.startRun(runId);
 
@@ -51,25 +51,21 @@ const workerHandler = async (message: AgentRunPayload, _metadata?: unknown) => {
         userId: userId,
       },
     });
+    return new NextResponse("OK", { status: 200 });
   } catch (err) {
     console.error(`[Agent:${runId}] Fatal error`, err);
     await runRegistry.failRun(
       runId,
       err instanceof Error ? err.message : String(err),
     );
+    return new NextResponse(err instanceof Error ? err.message : "Error", {
+      status: 500,
+    });
   }
-};
+}
 
-const handlers = {
-  "agent-run": {
-    worker: workerHandler,
-    default: workerHandler,
-  },
-} as const;
-
-// Cast to never to satisfy type constraints without using `any`
-export const POST = handleCallback(handlers as never);
+export const POST = verifyRequest(handler);
 
 export async function GET(_req: NextRequest) {
-  return new Response("OK", { status: 200 });
+  return new NextResponse("OK", { status: 200 });
 }
