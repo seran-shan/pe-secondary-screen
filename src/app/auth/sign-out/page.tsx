@@ -40,7 +40,7 @@ export default async function SignOutPage() {
               <form
                 action={async () => {
                   "use server";
-                  await signOut({ redirectTo: "/" });
+                  await signOut({ redirectTo: "/auth/sign-in" });
                 }}
                 className="space-y-4"
               >

@@ -10,12 +10,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatarProfile } from "@/components/user-avatar-profile";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { logoutAction } from "@/server/actions/auth";
 
 export function UserNav() {
   const { data: session } = useSession();
   const router = useRouter();
+
+  const handleLogout = async () => {
+    // Use server action - keeps all secrets on the server like a chad 😎
+    await logoutAction();
+  };
 
   if (session?.user) {
     return (
@@ -51,11 +57,7 @@ export function UserNav() {
             <DropdownMenuItem>New Team</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => signOut({ callbackUrl: "/auth/sign-in" })}
-          >
-            Sign out
-          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>Sign out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );

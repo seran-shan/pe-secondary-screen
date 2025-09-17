@@ -1,20 +1,37 @@
-import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { auth } from "@/server/auth";
-import { SignInForm } from "./sign-in-form";
+"use client";
 
-export default async function SignInPage() {
-  // Redirect if already signed in
-  const session = await auth();
-  if (session?.user) {
-    redirect("/");
+import { signIn, useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function SignInPage() {
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      // Automatically redirect to Keycloak
+      void signIn("keycloak");
+    } else if (status === "authenticated") {
+      // User is already authenticated, redirect to dashboard
+      void router.push("/");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="relative container grid min-h-screen flex-col items-center justify-center lg:max-w-none lg:grid-cols-1 lg:px-0">
-      <Suspense fallback={<div>Loading...</div>}>
-        <SignInForm />
-      </Suspense>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
+        <p className="text-sm text-gray-600">Redirecting to sign in...</p>
+      </div>
     </div>
   );
 }

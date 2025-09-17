@@ -31,7 +31,8 @@ import {
 import { UserAvatarProfile } from "@/components/user-avatar-profile";
 import { navItems } from "@/constants/data";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { logoutAction } from "@/server/actions/auth";
 import {
   IconBell,
   IconChevronRight,
@@ -65,6 +66,11 @@ export default function AppSidebar() {
   const router = useRouter();
   const handleSwitchTenant = (_tenantId: string) => {
     // Tenant switching functionality would be implemented here
+  };
+
+  const handleLogout = async () => {
+    // Server action keeps it clean and secure 🔒
+    await logoutAction();
   };
 
   const activeTenant = tenants[0];
@@ -195,9 +201,7 @@ export default function AppSidebar() {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => signOut({ callbackUrl: "/auth/sign-in" })}
-                >
+                <DropdownMenuItem onClick={handleLogout}>
                   <IconLogout className="mr-2 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>

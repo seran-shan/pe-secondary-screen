@@ -11,9 +11,10 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    AUTH_MICROSOFT_ENTRA_ID: z.string(),
-    AUTH_MICROSOFT_ENTRA_SECRET: z.string(),
-    AUTH_MICROSOFT_ENTRA_TENANT_ID: z.string(),
+    AUTH_KEYCLOAK_ID: z.string(),
+    AUTH_KEYCLOAK_SECRET: z.string(),
+    AUTH_KEYCLOAK_ISSUER: z.string().url(),
+    NEXTAUTH_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
     TAVILY_API_KEY: z.string().min(1),
     FIRECRAWL_API_KEY: z.string().min(1),
@@ -57,9 +58,10 @@ export const env = createEnv({
    */
   runtimeEnv: {
     AUTH_SECRET: process.env.AUTH_SECRET,
-    AUTH_MICROSOFT_ENTRA_ID: process.env.AUTH_MICROSOFT_ENTRA_ID,
-    AUTH_MICROSOFT_ENTRA_SECRET: process.env.AUTH_MICROSOFT_ENTRA_SECRET,
-    AUTH_MICROSOFT_ENTRA_TENANT_ID: process.env.AUTH_MICROSOFT_ENTRA_TENANT_ID,
+    AUTH_KEYCLOAK_ID: process.env.AUTH_KEYCLOAK_ID,
+    AUTH_KEYCLOAK_SECRET: process.env.AUTH_KEYCLOAK_SECRET,
+    AUTH_KEYCLOAK_ISSUER: process.env.AUTH_KEYCLOAK_ISSUER,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     DATABASE_URL: process.env.DATABASE_URL,
     TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY,

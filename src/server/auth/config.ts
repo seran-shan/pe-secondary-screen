@@ -1,6 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import MicrosoftEntraIdProvider from "next-auth/providers/microsoft-entra-id";
+import Keycloak from "next-auth/providers/keycloak";
 
 import { db } from "@/server/db";
 import { env } from "@/env";
@@ -18,6 +18,8 @@ declare module "next-auth" {
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
+    id_token?: string;
+    login_hint?: string;
   }
 
   // interface User {
@@ -33,10 +35,10 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    MicrosoftEntraIdProvider({
-      clientId: env.AUTH_MICROSOFT_ENTRA_ID,
-      clientSecret: env.AUTH_MICROSOFT_ENTRA_SECRET,
-      issuer: `https://login.microsoftonline.com/${env.AUTH_MICROSOFT_ENTRA_TENANT_ID}/v2.0`,
+    Keycloak({
+      clientId: env.AUTH_KEYCLOAK_ID,
+      clientSecret: env.AUTH_KEYCLOAK_SECRET,
+      issuer: env.AUTH_KEYCLOAK_ISSUER,
       allowDangerousEmailAccountLinking: true,
     }),
     /**
@@ -48,22 +50,36 @@ export const authConfig = {
   adapter: PrismaAdapter(db),
   pages: {
     signIn: "/auth/sign-in",
-    signOut: "/auth/sign-out",
     error: "/auth/error",
   },
   session: {
-    strategy: "database",
+    strategy: "jwt", // Need JWT strategy to access id_token for seamless logout
     maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
-    session: ({ session, user: _user }) => ({
+    session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: _user.id,
+        id: token.sub,
       },
+      id_token: token.id_token,
+      login_hint: token.login_hint,
     }),
+    jwt: ({ token, account, user, profile }) => {
+      // Persist the OAuth tokens and profile info
+      if (account) {
+        token.id_token = account.id_token;
+      }
+      if (user) {
+        token.sub = user.id;
+      }
+      // Extract login_hint from profile for Microsoft logout
+      if (profile?.login_hint) {
+        token.login_hint = profile.login_hint;
+      }
+      return token;
+    },
     async signIn({ user: _user, account: _account, profile: _profile }) {
       return true;
     },
