@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { CommentSchema } from "@/lib/schemas";
+import { pusherServer } from "@/lib/pusher.server";
 
 export const commentRouter = createTRPCRouter({
   create: protectedProcedure
@@ -11,7 +12,7 @@ export const commentRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.comment.create({
+      const newComment = await ctx.db.comment.create({
         data: {
           content: input.content,
           companyId: input.companyId,
@@ -28,6 +29,15 @@ export const commentRouter = createTRPCRouter({
           },
         },
       });
+
+      // Trigger a Pusher event for real-time updates
+      void pusherServer.trigger(
+        `company-${input.companyId}`,
+        "new-comment",
+        newComment,
+      );
+
+      return newComment;
     }),
 
   update: protectedProcedure
@@ -70,6 +80,27 @@ export const commentRouter = createTRPCRouter({
 
       return ctx.db.comment.delete({
         where: { id: input.id },
+      });
+    }),
+
+  getAllByCompanyId: protectedProcedure
+    .input(z.object({ companyId: z.string() }))
+    .query(({ ctx, input }) => {
+      return ctx.db.comment.findMany({
+        where: { companyId: input.companyId },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
       });
     }),
 });

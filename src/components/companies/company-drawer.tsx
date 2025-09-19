@@ -29,6 +29,7 @@ import {
 import { api } from "@/trpc/react";
 import { useSession } from "next-auth/react";
 import type { RouterOutputs } from "@/trpc/react";
+import { pusherClient } from "@/lib/pusher.client";
 
 type Company = RouterOutputs["company"]["getAll"][0];
 
@@ -41,11 +42,33 @@ export function CompanyDrawer(props: {
   const { data: session } = useSession();
   const router = useRouter();
   const [newComment, setNewComment] = React.useState("");
+  const utils = api.useUtils();
+
+  const { data: comments } = api.comment.getAllByCompanyId.useQuery(
+    { companyId: data?.id ?? "" },
+    { enabled: !!data?.id },
+  );
+
+  React.useEffect(() => {
+    if (!data?.id) return;
+
+    const channel = pusherClient.subscribe(`company-${data.id}`);
+    const onNewComment = () => {
+      utils.comment.getAllByCompanyId.invalidate({ companyId: data.id });
+    };
+
+    channel.bind("new-comment", onNewComment);
+
+    return () => {
+      channel.unbind("new-comment", onNewComment);
+      pusherClient.unsubscribe(`company-${data.id}`);
+    };
+  }, [data?.id, utils]);
 
   const createComment = api.comment.create.useMutation({
     onSuccess: () => {
       setNewComment("");
-      router.refresh();
+      utils.comment.getAllByCompanyId.invalidate({ companyId: data?.id });
     },
   });
 
@@ -147,7 +170,7 @@ export function CompanyDrawer(props: {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <IconMessageCircle className="h-5 w-5" />
-                  Comments ({data.comments?.length ?? 0})
+                  Comments ({comments?.length ?? 0})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -193,8 +216,8 @@ export function CompanyDrawer(props: {
 
                 {/* Comments List */}
                 <div className="space-y-4">
-                  {data.comments && data.comments.length > 0 ? (
-                    data.comments.map((comment) => (
+                  {comments && comments.length > 0 ? (
+                    comments.map((comment) => (
                       <div
                         key={comment.id}
                         className="bg-muted/50 flex gap-3 rounded-lg border p-3"
