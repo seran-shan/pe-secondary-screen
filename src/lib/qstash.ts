@@ -49,7 +49,10 @@ export function verifyRequest<T>(
       const jsonBody = JSON.parse(body) as T;
       return handler(jsonBody);
     } catch (e) {
-      return new NextResponse(`Invalid JSON body: ${e}`, { status: 400 });
+      const message = e instanceof Error ? e.message : "Malformed JSON";
+      return new NextResponse(`Invalid JSON body: ${message}`, {
+        status: 400,
+      });
     }
   };
 }
