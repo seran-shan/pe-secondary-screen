@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import {
   Drawer,
   DrawerContent,
@@ -40,7 +39,6 @@ export function CompanyDrawer(props: {
 }) {
   const { open, onOpenChange, data } = props;
   const { data: session } = useSession();
-  const router = useRouter();
   const [newComment, setNewComment] = React.useState("");
   const utils = api.useUtils();
 
@@ -54,7 +52,7 @@ export function CompanyDrawer(props: {
 
     const channel = pusherClient.subscribe(`company-${data.id}`);
     const onNewComment = () => {
-      utils.comment.getAllByCompanyId.invalidate({ companyId: data.id });
+      void utils.comment.getAllByCompanyId.invalidate({ companyId: data.id });
     };
 
     channel.bind("new-comment", onNewComment);
@@ -68,7 +66,7 @@ export function CompanyDrawer(props: {
   const createComment = api.comment.create.useMutation({
     onSuccess: () => {
       setNewComment("");
-      utils.comment.getAllByCompanyId.invalidate({ companyId: data?.id });
+      void utils.comment.getAllByCompanyId.invalidate({ companyId: data?.id });
     },
   });
 

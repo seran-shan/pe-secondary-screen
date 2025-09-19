@@ -1,21 +1,19 @@
-import { NextRequest } from "next/server";
 import { redirect } from "next/navigation";
 import { env } from "@/env";
+import { auth } from "@/server/auth";
 
-// Step 2 of two-step logout: After Microsoft logout, clean up Keycloak session
-export async function GET(request: NextRequest) {
-  // Generate Keycloak logout URL
-  const logoutUrl = new URL(
-    `${env.AUTH_KEYCLOAK_ISSUER}/protocol/openid-connect/logout`,
-  );
+export async function GET() {
+  const session = await auth();
+  const idToken = session?.id_token;
 
-  // Use client_id since Microsoft logout already happened
-  logoutUrl.searchParams.set("client_id", env.AUTH_KEYCLOAK_ID);
-  logoutUrl.searchParams.set(
-    "post_logout_redirect_uri",
-    `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/auth/sign-in`,
-  );
+  const params = new URLSearchParams();
+  if (idToken) {
+    params.set("id_token_hint", idToken);
+  }
+  params.set("post_logout_redirect_uri", `${env.NEXTAUTH_URL}/auth/sign-out`);
+  const logoutUrl = `${
+    env.AUTH_KEYCLOAK_ISSUER
+  }/protocol/openid-connect/logout?${params.toString()}`;
 
-  // Final redirect to clean up Keycloak session
-  redirect(logoutUrl.toString());
+  redirect(logoutUrl);
 }

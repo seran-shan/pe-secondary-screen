@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@/trpc/react";
-import type { RouterOutputs } from "@/trpc/react";
 import {
   createContext,
   useContext,
